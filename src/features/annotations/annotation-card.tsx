@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import {
   Eye,
   EyeOff,
@@ -71,6 +72,30 @@ function getContainerClass(type: AnnotationType) {
   return "border-[var(--serene-border)]";
 }
 
+function getCardVisualClass(type: AnnotationType) {
+  if (type === "post_it") {
+    return "rounded-xl shadow-[2px_5px_0_rgb(47_42_36_/_7%),var(--serene-shadow-soft)]";
+  }
+  if (type === "reflection" || type === "thought") {
+    return "rounded-[26px] shadow-[var(--serene-shadow-soft)]";
+  }
+  if (type === "highlight") {
+    return "rounded-xl border-dashed shadow-[var(--serene-shadow-soft)]";
+  }
+  if (type === "flag") {
+    return "rounded-xl border-l-4 shadow-[var(--serene-shadow-soft)]";
+  }
+  return "rounded-xl shadow-[var(--serene-shadow-soft)]";
+}
+
+function getCardStyle(type: AnnotationType): CSSProperties | undefined {
+  if (type === "post_it") {
+    return { transform: "rotate(-0.35deg)" };
+  }
+
+  return undefined;
+}
+
 function getReviewTransition(current: AnnotationReviewStatus) {
   if (current === "none") {
     return {
@@ -95,24 +120,32 @@ function renderContent(annotation: AnnotationRow) {
 
   if (annotation.type === "post_it") {
     return (
-      <p
-        className="rounded-md border border-black/10 p-3 text-sm leading-relaxed shadow-sm"
+      <div
+        className="relative rounded-lg border border-black/10 p-3 text-sm leading-relaxed shadow-[2px_4px_0_rgb(0_0_0_/_6%)]"
         style={{
           backgroundColor: annotation.color ?? "#FFE6A8",
           color: annotation.text_color ?? "#4A3A2A",
         }}
       >
-        {content}
-      </p>
+        <span className="absolute left-1/2 top-0 h-2 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/45 shadow-sm" />
+        <p className="whitespace-pre-wrap">{content}</p>
+      </div>
     );
   }
 
   if (annotation.type === "highlight") {
+    const highlightColor = annotation.highlight_color ?? "#F7E78A";
+
     return (
-      <p className="text-sm leading-relaxed">
+      <p className="rounded-lg border border-[color-mix(in_oklab,var(--annotation-border)_58%,transparent)] bg-[color-mix(in_oklab,var(--serene-surface)_58%,transparent)] px-3 py-2 text-sm leading-7">
         <mark
-          className="rounded px-1 py-0.5"
-          style={{ backgroundColor: annotation.highlight_color ?? "#F7E78A", color: "#2B2B2B" }}
+          className="rounded-sm bg-transparent px-1 py-0.5"
+          style={{
+            backgroundImage: `linear-gradient(transparent 54%, ${highlightColor} 54%)`,
+            boxDecorationBreak: "clone",
+            color: "#2B2B2B",
+            WebkitBoxDecorationBreak: "clone",
+          }}
         >
           {content}
         </mark>
@@ -122,16 +155,19 @@ function renderContent(annotation: AnnotationRow) {
 
   if (annotation.type === "reflection") {
     return (
-      <div className="annotation-detail rounded-[26px] border px-4 py-3">
-        <p className="literary text-[15px] leading-relaxed">{content}</p>
+      <div className="annotation-detail relative rounded-[28px] border px-5 py-4">
+        <span className="literary absolute left-4 top-2 text-3xl leading-none opacity-20">
+          &ldquo;
+        </span>
+        <p className="literary relative text-[15px] italic leading-relaxed">{content}</p>
       </div>
     );
   }
 
   if (annotation.type === "flag") {
     return (
-      <div className="annotation-detail flex items-start gap-2 rounded-md border px-3 py-2">
-        <span className="annotation-marker mt-0.5 inline-block h-5 w-1 rounded" />
+      <div className="annotation-detail relative flex items-start gap-3 rounded-lg border px-3 py-3">
+        <span className="annotation-marker mt-0.5 inline-block h-7 w-1.5 shrink-0 rounded-full" />
         <p className="text-sm leading-relaxed">{content}</p>
       </div>
     );
@@ -166,8 +202,8 @@ function renderContent(annotation: AnnotationRow) {
 
   if (annotation.type === "thought") {
     return (
-      <div className="annotation-detail rounded-[20px] border px-4 py-3">
-        <p className="literary text-[15px] leading-relaxed">{content}</p>
+      <div className="annotation-detail rounded-[22px] border px-4 py-3">
+        <p className="literary text-[15px] italic leading-relaxed">{content}</p>
       </div>
     );
   }
@@ -189,25 +225,27 @@ export function AnnotationCard({
   return (
     <article
       className={[
-        "rounded-2xl border bg-[var(--serene-surface)] p-4 shadow-sm",
+        "serene-card-enter border bg-[var(--serene-surface)] p-4 motion-safe:transition motion-safe:hover:-translate-y-0.5",
         getContainerClass(annotation.type),
+        getCardVisualClass(annotation.type),
       ].join(" ")}
+      style={getCardStyle(annotation.type)}
     >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex flex-wrap gap-2 text-xs">
-          <span className="rounded-full bg-[var(--serene-surface-soft)] px-2 py-1 text-[var(--serene-muted)]">
+          <span className="rounded-full border border-[color-mix(in_oklab,var(--serene-border)_70%,transparent)] bg-[color-mix(in_oklab,var(--serene-surface)_68%,transparent)] px-2.5 py-1 text-[var(--serene-muted)]">
             {annotationTypeLabel[annotation.type]}
           </span>
-          <span className="rounded-full bg-[var(--serene-surface-soft)] px-2 py-1 text-[var(--serene-muted)]">
+          <span className="rounded-full border border-[color-mix(in_oklab,var(--serene-border)_70%,transparent)] bg-[color-mix(in_oklab,var(--serene-surface)_68%,transparent)] px-2.5 py-1 text-[var(--serene-muted)]">
             {annotationReviewLabel[annotation.review_status]}
           </span>
           {annotation.page_number !== null && (
-            <span className="rounded-full bg-[var(--serene-surface-soft)] px-2 py-1 text-[var(--serene-muted)]">
+            <span className="rounded-full border border-[color-mix(in_oklab,var(--serene-border)_70%,transparent)] bg-[color-mix(in_oklab,var(--serene-surface)_68%,transparent)] px-2.5 py-1 text-[var(--serene-muted)]">
               Pag {annotation.page_number}
             </span>
           )}
           {annotation.is_private && (
-            <span className="rounded-full bg-[var(--serene-surface-soft)] px-2 py-1 text-[var(--serene-muted)]">
+            <span className="rounded-full border border-[color-mix(in_oklab,var(--serene-border)_70%,transparent)] bg-[color-mix(in_oklab,var(--serene-surface)_68%,transparent)] px-2.5 py-1 text-[var(--serene-muted)]">
               Privada
             </span>
           )}
@@ -226,7 +264,7 @@ export function AnnotationCard({
         <button
           type="button"
           onClick={() => onEdit(annotation)}
-          className="inline-flex items-center gap-1 rounded-full border border-[var(--serene-border)] px-3 py-1.5 text-xs"
+          className="inline-flex items-center gap-1 rounded-full border border-[color-mix(in_oklab,var(--serene-border)_82%,transparent)] bg-[color-mix(in_oklab,var(--serene-surface)_62%,transparent)] px-3 py-1.5 text-xs"
         >
           <Pencil className="size-3.5" />
           Editar
@@ -234,7 +272,7 @@ export function AnnotationCard({
         <button
           type="button"
           onClick={() => onToggleFavorite(annotation, !annotation.is_favorite)}
-          className="inline-flex items-center gap-1 rounded-full border border-[var(--serene-border)] px-3 py-1.5 text-xs"
+          className="inline-flex items-center gap-1 rounded-full border border-[color-mix(in_oklab,var(--serene-border)_82%,transparent)] bg-[color-mix(in_oklab,var(--serene-surface)_62%,transparent)] px-3 py-1.5 text-xs"
         >
           {annotation.is_favorite ? <StarOff className="size-3.5" /> : <Star className="size-3.5" />}
           {annotation.is_favorite ? "Remover favorita" : "Favoritar"}
@@ -242,7 +280,7 @@ export function AnnotationCard({
         <button
           type="button"
           onClick={() => onTogglePrivacy(annotation, !annotation.is_private)}
-          className="inline-flex items-center gap-1 rounded-full border border-[var(--serene-border)] px-3 py-1.5 text-xs"
+          className="inline-flex items-center gap-1 rounded-full border border-[color-mix(in_oklab,var(--serene-border)_82%,transparent)] bg-[color-mix(in_oklab,var(--serene-surface)_62%,transparent)] px-3 py-1.5 text-xs"
         >
           {annotation.is_private ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
           {annotation.is_private ? "Tornar publica" : "Tornar privada"}
@@ -250,14 +288,14 @@ export function AnnotationCard({
         <button
           type="button"
           onClick={() => onSetReviewStatus(annotation, reviewTransition.next)}
-          className="inline-flex items-center gap-1 rounded-full border border-[var(--serene-border)] px-3 py-1.5 text-xs"
+          className="inline-flex items-center gap-1 rounded-full border border-[color-mix(in_oklab,var(--serene-border)_82%,transparent)] bg-[color-mix(in_oklab,var(--serene-surface)_62%,transparent)] px-3 py-1.5 text-xs"
         >
           {reviewTransition.label}
         </button>
         <button
           type="button"
           onClick={() => onDelete(annotation)}
-          className="inline-flex items-center gap-1 rounded-full border border-[var(--serene-border)] px-3 py-1.5 text-xs text-[var(--serene-muted)]"
+          className="inline-flex items-center gap-1 rounded-full border border-[color-mix(in_oklab,var(--serene-border)_82%,transparent)] bg-[color-mix(in_oklab,var(--serene-surface)_62%,transparent)] px-3 py-1.5 text-xs text-[var(--serene-muted)]"
         >
           <Trash2 className="size-3.5" />
           Lixeira
