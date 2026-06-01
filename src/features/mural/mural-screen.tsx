@@ -443,10 +443,11 @@ function renderAnnotationContent(annotation: AnnotationRow) {
   if (annotation.type === "post_it") {
     return (
       <p
-        className="rounded-md border border-black/10 p-3 text-sm leading-relaxed shadow-sm"
+        className="rounded-lg border border-black/10 p-3 text-sm leading-relaxed"
         style={{
           backgroundColor: annotation.color ?? "#FFE6A8",
           color: annotation.text_color ?? "#4A3A2A",
+          boxShadow: "1px 3px 0 rgb(0 0 0 / 5%)",
         }}
       >
         {content}
@@ -458,7 +459,7 @@ function renderAnnotationContent(annotation: AnnotationRow) {
     return (
       <p className="text-sm leading-relaxed">
         <mark
-          className="rounded px-1 py-0.5"
+          className="rounded px-1 py-0.5 shadow-[0_1px_0_rgb(0_0_0_/_4%)]"
           style={{ backgroundColor: annotation.highlight_color ?? "#F7E78A", color: "#2B2B2B" }}
         >
           {content}
@@ -469,7 +470,7 @@ function renderAnnotationContent(annotation: AnnotationRow) {
 
   if (annotation.type === "reflection" || annotation.type === "thought") {
     return (
-      <div className="annotation-detail rounded-[22px] border px-3 py-2">
+      <div className="annotation-detail rounded-[24px] border px-3 py-2 shadow-[inset_0_1px_0_rgb(255_255_255_/_22%)]">
         <p className="literary text-[15px] leading-relaxed">{content}</p>
       </div>
     );
@@ -477,7 +478,7 @@ function renderAnnotationContent(annotation: AnnotationRow) {
 
   if (annotation.type === "flag") {
     return (
-      <div className="annotation-detail flex items-start gap-2 rounded-md border px-3 py-2">
+      <div className="annotation-detail flex items-start gap-2 rounded-lg border px-3 py-2">
         <span className="annotation-marker mt-0.5 inline-block h-5 w-1 rounded" />
         <p className="text-sm leading-relaxed">{content}</p>
       </div>
@@ -486,7 +487,7 @@ function renderAnnotationContent(annotation: AnnotationRow) {
 
   if (annotation.type === "idea") {
     return (
-      <div className="annotation-detail rounded-md border px-3 py-2">
+      <div className="annotation-detail rounded-lg border px-3 py-2">
         <p className="annotation-label text-[11px] font-semibold uppercase tracking-[0.14em]">
           Insight
         </p>
@@ -497,7 +498,7 @@ function renderAnnotationContent(annotation: AnnotationRow) {
 
   if (annotation.type === "doubt") {
     return (
-      <div className="annotation-detail rounded-md border px-3 py-2">
+      <div className="annotation-detail rounded-lg border px-3 py-2">
         <p className="annotation-label text-[11px] font-semibold uppercase tracking-[0.14em]">
           Pergunta
         </p>
@@ -508,7 +509,7 @@ function renderAnnotationContent(annotation: AnnotationRow) {
 
   if (annotation.type === "action") {
     return (
-      <div className="annotation-detail rounded-md border px-3 py-2">
+      <div className="annotation-detail rounded-lg border px-3 py-2">
         <p className="annotation-label text-[11px] font-semibold uppercase tracking-[0.14em]">
           Acao pratica
         </p>
@@ -546,6 +547,16 @@ function getAnnotationClass(type: AnnotationType) {
     return "annotation-tone-thought";
   }
   return "border-[var(--serene-border)] bg-[var(--serene-surface)]";
+}
+
+function getAnnotationSurfaceStyle(type: AnnotationType) {
+  if (type === "post_it") {
+    return "0 16px 30px rgb(0 0 0 / 9%), 2px 5px 0 rgb(0 0 0 / 5%)";
+  }
+  if (type === "reflection" || type === "thought") {
+    return "0 18px 38px rgb(0 0 0 / 8%)";
+  }
+  return "0 14px 30px rgb(0 0 0 / 7%)";
 }
 
 export function MuralScreen() {
@@ -1180,24 +1191,24 @@ export function MuralScreen() {
 
   return (
     <section className="mural-enter space-y-4">
-      <header className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4">
+      <header className="overflow-hidden rounded-[1.75rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_94%,white_6%),var(--serene-surface))] p-4 shadow-[var(--serene-shadow-soft)] dark:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_92%,black_8%),var(--serene-surface))]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => void closeMural()}
             disabled={saving}
-            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-3 py-2 text-sm disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)] disabled:opacity-60"
           >
             <ArrowLeft className="size-4" />
             Voltar para leitura
           </button>
 
           <div className="flex flex-wrap items-center gap-2 text-sm text-[var(--serene-muted)]">
-            <span className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 shadow-[var(--serene-shadow-soft)]">
               <MapIcon className="size-4" />
               Mural aberto sem pausar
             </span>
-            <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 tabular-nums">
+            <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 font-semibold tabular-nums text-[var(--serene-fg)] shadow-[var(--serene-shadow-soft)]">
               {formatReadingDuration(activeSeconds)}
             </span>
           </div>
@@ -1206,9 +1217,9 @@ export function MuralScreen() {
         <div className="mt-3 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--serene-muted)]">
-              Mural
+              Mesa de ideias
             </p>
-            <h1 className="mt-1 text-2xl font-semibold">{book.title}</h1>
+            <h1 className="mt-1 text-2xl font-semibold tracking-normal">{book.title}</h1>
             <p className="text-sm text-[var(--serene-muted)]">
               {book.author ?? "Autor nao informado"}
             </p>
@@ -1226,14 +1237,14 @@ export function MuralScreen() {
       )}
 
       {feedback && (
-        <p className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-2 text-sm">
+        <p className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-2 text-sm shadow-[var(--serene-shadow-soft)]">
           {feedback}
         </p>
       )}
 
       <div
         ref={viewportRef}
-        className="relative h-[68vh] min-h-[420px] overflow-auto rounded-2xl border border-[var(--serene-border)] bg-[#fbf9f2] shadow-inner dark:bg-[#211f1b] sm:min-h-[560px]"
+        className="relative h-[68vh] min-h-[420px] overflow-auto rounded-[2rem] border border-[color-mix(in_oklab,var(--serene-border)_82%,transparent)] bg-[#fbfaf5] shadow-[inset_0_1px_0_rgb(255_255_255_/_60%),inset_0_0_48px_rgb(94_74_51_/_7%),var(--serene-shadow-lift)] dark:bg-[#1f211d] dark:shadow-[inset_0_1px_0_rgb(255_255_255_/_5%),inset_0_0_56px_rgb(0_0_0_/_28%),var(--serene-shadow-lift)] sm:min-h-[560px]"
       >
         <div
           className="relative"
@@ -1241,9 +1252,14 @@ export function MuralScreen() {
             width: CANVAS_WIDTH,
             height: CANVAS_HEIGHT,
             backgroundImage: muralPreferences.calm_grid_enabled
-              ? "linear-gradient(rgba(138,106,77,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(138,106,77,.08) 1px, transparent 1px)"
+              ? "radial-gradient(circle at 18% 14%, color-mix(in oklab, var(--serene-surface) 76%, white 24%), transparent 25%), radial-gradient(circle at 78% 18%, color-mix(in oklab, var(--serene-accent) 13%, transparent), transparent 28%), linear-gradient(color-mix(in oklab, var(--serene-border) 42%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklab, var(--serene-border) 42%, transparent) 1px, transparent 1px)"
+              : "radial-gradient(circle at 18% 14%, color-mix(in oklab, var(--serene-surface) 76%, white 24%), transparent 25%), radial-gradient(circle at 78% 18%, color-mix(in oklab, var(--serene-accent) 13%, transparent), transparent 28%)",
+            backgroundPosition: muralPreferences.calm_grid_enabled
+              ? "0 0, 0 0, -1px -1px, -1px -1px"
               : undefined,
-            backgroundSize: muralPreferences.calm_grid_enabled ? "36px 36px" : undefined,
+            backgroundSize: muralPreferences.calm_grid_enabled
+              ? "auto, auto, 38px 38px, 38px 38px"
+              : undefined,
           }}
         >
           {annotations.map((annotation) => {
@@ -1257,8 +1273,8 @@ export function MuralScreen() {
               <article
                 key={annotation.id}
                 className={[
-                  "absolute overflow-hidden rounded-xl border p-3 shadow-sm transition-shadow touch-none",
-                  interaction?.id === position.id ? "shadow-lg" : "",
+                  "serene-soft-in absolute overflow-hidden rounded-2xl border p-3 transition-[box-shadow,transform,opacity] touch-none",
+                  interaction?.id === position.id ? "ring-2 ring-[var(--serene-accent)] ring-offset-2 ring-offset-transparent" : "",
                   getAnnotationClass(annotation.type),
                 ].join(" ")}
                 style={{
@@ -1268,37 +1284,38 @@ export function MuralScreen() {
                   height: rect.height,
                   zIndex: rect.zIndex,
                   transform: `rotate(${rect.rotation ?? 0}deg)`,
+                  boxShadow: getAnnotationSurfaceStyle(annotation.type),
                 }}
               >
                 <div
-                  className="flex cursor-grab items-start justify-between gap-2 active:cursor-grabbing"
+                  className="flex cursor-grab items-start justify-between gap-2 rounded-xl border border-black/5 bg-white/20 px-2 py-1.5 backdrop-blur-[1px] active:cursor-grabbing dark:bg-white/5"
                   onPointerDown={(event) =>
                     startInteraction(event, "annotation", "move", position.id, rect)
                   }
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-xs font-semibold uppercase tracking-[0.12em] opacity-70">
+                    <p className="truncate text-xs font-semibold uppercase tracking-[0.12em] opacity-75">
                       {annotationTypeLabel[annotation.type]}
                     </p>
                     {annotation.page_number !== null && (
                       <p className="text-xs opacity-70">Pag {annotation.page_number}</p>
                     )}
                   </div>
-                  <GripHorizontal className="size-4 shrink-0 opacity-50" />
+                  <GripHorizontal className="size-4 shrink-0 opacity-45" />
                 </div>
 
                 <div className="mt-2 max-h-[calc(100%-74px)] overflow-hidden">
                   {renderAnnotationContent(annotation)}
                 </div>
 
-                <div className="absolute bottom-2 left-2 flex gap-1">
+                <div className="absolute bottom-2 left-2 flex gap-1 opacity-85 transition hover:opacity-100">
                   <button
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
                       setModalState({ mode: "edit", annotation });
                     }}
-                    className="grid size-8 place-items-center rounded-full border border-black/10 bg-white/70 text-[#2f2a24]"
+                    className="grid size-8 place-items-center rounded-full border border-black/10 bg-white/75 text-[#2f2a24] shadow-sm backdrop-blur transition hover:bg-white dark:border-white/10 dark:bg-black/25 dark:text-[var(--serene-fg)]"
                     title="Editar anotacao"
                     aria-label="Editar anotacao"
                   >
@@ -1310,7 +1327,7 @@ export function MuralScreen() {
                       event.stopPropagation();
                       void handleDeleteAnnotation(annotation);
                     }}
-                    className="grid size-8 place-items-center rounded-full border border-black/10 bg-white/70 text-[#6f665d]"
+                    className="grid size-8 place-items-center rounded-full border border-black/10 bg-white/75 text-[#6f665d] shadow-sm backdrop-blur transition hover:bg-white dark:border-white/10 dark:bg-black/25 dark:text-[var(--serene-muted)]"
                     title="Enviar para Lixeira"
                     aria-label="Enviar anotacao para Lixeira"
                   >
@@ -1320,7 +1337,7 @@ export function MuralScreen() {
 
                 <button
                   type="button"
-                  className="absolute bottom-2 right-2 grid size-8 cursor-nwse-resize place-items-center rounded-full border border-black/10 bg-white/70 text-[#2f2a24]"
+                  className="absolute bottom-2 right-2 grid size-8 cursor-nwse-resize place-items-center rounded-full border border-black/10 bg-white/75 text-[#2f2a24] opacity-85 shadow-sm backdrop-blur transition hover:bg-white hover:opacity-100 dark:border-white/10 dark:bg-black/25 dark:text-[var(--serene-fg)]"
                   title="Redimensionar"
                   aria-label="Redimensionar anotacao"
                   onPointerDown={(event) =>
@@ -1341,7 +1358,7 @@ export function MuralScreen() {
             return (
               <article
                 key={suggestion.id}
-                className="mural-suggestion-enter absolute rounded-[28px] border border-dashed border-[#78a7a0] bg-[#f2fbf8] p-4 text-[#243f3b] shadow-sm touch-none dark:border-[#7fb3a9] dark:bg-[#21322f] dark:text-[#e5f7f2]"
+                className="mural-suggestion-enter absolute rounded-[30px] border border-dashed border-[#78a7a0]/80 bg-[#f4fbf8]/95 p-4 text-[#243f3b] shadow-[0_14px_30px_rgb(0_0_0_/_7%)] touch-none backdrop-blur-[1px] dark:border-[#7fb3a9]/70 dark:bg-[#21322f]/95 dark:text-[#e5f7f2]"
                 style={{
                   left: rect.x,
                   top: rect.y,
@@ -1369,7 +1386,7 @@ export function MuralScreen() {
                 </div>
                 <p className="mt-2 text-sm leading-relaxed">{copy.body}</p>
 
-                <div className="mt-3 flex gap-1">
+                <div className="mt-3 flex gap-1 opacity-90 transition hover:opacity-100">
                   <button
                     type="button"
                     onClick={(event) => {
@@ -1381,7 +1398,7 @@ export function MuralScreen() {
                         suggestion,
                       });
                     }}
-                    className="grid size-8 place-items-center rounded-full bg-[#37695f] text-white"
+                    className="grid size-8 place-items-center rounded-full bg-[#37695f] text-white shadow-sm transition hover:opacity-95"
                     title="Converter em anotacao"
                     aria-label="Converter sugestao em anotacao"
                   >
@@ -1393,7 +1410,7 @@ export function MuralScreen() {
                       event.stopPropagation();
                       void updateSuggestionStatus(suggestion, "hidden");
                     }}
-                    className="grid size-8 place-items-center rounded-full border border-[#78a7a0] bg-white/70 text-[#37695f] dark:bg-white/10 dark:text-[#e5f7f2]"
+                    className="grid size-8 place-items-center rounded-full border border-[#78a7a0] bg-white/75 text-[#37695f] shadow-sm transition hover:bg-white dark:bg-white/10 dark:text-[#e5f7f2]"
                     title="Ocultar sugestao"
                     aria-label="Ocultar sugestao"
                   >
@@ -1405,7 +1422,7 @@ export function MuralScreen() {
                       event.stopPropagation();
                       void updateSuggestionStatus(suggestion, "deleted");
                     }}
-                    className="grid size-8 place-items-center rounded-full border border-[#78a7a0] bg-white/70 text-[#37695f] dark:bg-white/10 dark:text-[#e5f7f2]"
+                    className="grid size-8 place-items-center rounded-full border border-[#78a7a0] bg-white/75 text-[#37695f] shadow-sm transition hover:bg-white dark:bg-white/10 dark:text-[#e5f7f2]"
                     title="Remover sugestao"
                     aria-label="Remover sugestao"
                   >
@@ -1417,7 +1434,7 @@ export function MuralScreen() {
           })}
 
           {annotations.length === 0 && visibleSuggestions.length === 0 && (
-            <div className="absolute left-1/2 top-1/2 w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5 text-center shadow-sm">
+            <div className="serene-soft-in absolute left-1/2 top-1/2 w-[320px] -translate-x-1/2 -translate-y-1/2 rounded-[1.75rem] border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_92%,transparent)] p-5 text-center shadow-[var(--serene-shadow-soft)] backdrop-blur">
               <h2 className="text-lg font-semibold">Um espaco limpo para pensar</h2>
               <p className="mt-2 text-sm text-[var(--serene-muted)]">
                 Crie a primeira anotacao pelo botao flutuante. Ela vai nascer no centro visivel do
@@ -1432,7 +1449,7 @@ export function MuralScreen() {
         <button
           type="button"
           onClick={() => void loadMural()}
-          className="grid size-11 place-items-center rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] shadow-lg"
+          className="grid size-11 place-items-center rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_92%,transparent)] text-[var(--serene-muted)] shadow-[var(--serene-shadow-lift)] backdrop-blur transition hover:text-[var(--serene-fg)]"
           title="Atualizar Mural"
           aria-label="Atualizar Mural"
         >
@@ -1448,7 +1465,7 @@ export function MuralScreen() {
               suggestion: null,
             })
           }
-          className="grid size-12 place-items-center rounded-full bg-[var(--serene-accent)] text-white shadow-lg"
+          className="grid size-12 place-items-center rounded-full bg-[var(--serene-accent)] text-white shadow-[var(--serene-shadow-lift)] transition hover:opacity-95"
           title="Nova anotacao no Mural"
           aria-label="Nova anotacao no Mural"
         >
