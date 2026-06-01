@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
+  BookOpen,
   Camera,
   CheckCircle2,
+  Clock3,
   Map as MapIcon,
   Minimize2,
   PauseCircle,
@@ -195,6 +197,22 @@ export function ReadingSessionScreen() {
 
     return "Sessao encerrada.";
   }, [session]);
+
+  const readingStateLabel = (() => {
+    if (session?.status === "paused") {
+      return "Pausada";
+    }
+    if (session?.status === "active") {
+      return "Em leitura";
+    }
+    if (session?.status === "finished") {
+      return "Finalizada";
+    }
+    return "Preparando";
+  })();
+  const pageProgressLabel = book?.total_pages
+    ? `de ${book.total_pages} paginas`
+    : "total de paginas opcional";
 
   useEffect(() => {
     if (!user) {
@@ -515,13 +533,13 @@ export function ReadingSessionScreen() {
   }
 
   return (
-    <section className="space-y-5">
-      <header className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5">
+    <section className="serene-soft-in space-y-5">
+      <header className="overflow-hidden rounded-[1.75rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_94%,white_6%),var(--serene-surface))] p-5 shadow-[var(--serene-shadow-soft)] dark:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_92%,black_8%),var(--serene-surface))]">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => void handleExitReading()}
-            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-3 py-2 text-sm"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)]"
             disabled={actionLoading}
           >
             {readingCloseBehavior === "close" ? (
@@ -533,46 +551,66 @@ export function ReadingSessionScreen() {
               ? `Voltar para ${backTarget.label}`
               : `Minimizar para ${backTarget.label}`}
           </button>
-          <button
-            type="button"
-            onClick={() => void handleOpenMural()}
-            disabled={!isSessionOpen || actionLoading}
-            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-3 py-2 text-sm disabled:opacity-60"
-          >
-            <MapIcon className="size-4" />
-            Abrir Mural
-          </button>
-          <button
-            type="button"
-            onClick={handleOpenCapture}
-            disabled={!isSessionOpen || actionLoading || Boolean(summary)}
-            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-3 py-2 text-sm disabled:opacity-60"
-            title="Preparar captura"
-          >
-            <Camera className="size-4" />
-            Captura
-          </button>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)]">
+              <BookOpen className="size-4" />
+              {readingStateLabel}
+            </span>
+            <button
+              type="button"
+              onClick={() => void handleOpenMural()}
+              disabled={!isSessionOpen || actionLoading}
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)] disabled:opacity-60"
+            >
+              <MapIcon className="size-4" />
+              Abrir Mural
+            </button>
+            <button
+              type="button"
+              onClick={handleOpenCapture}
+              disabled={!isSessionOpen || actionLoading || Boolean(summary)}
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)] disabled:opacity-60"
+              title="Preparar captura"
+            >
+              <Camera className="size-4" />
+              Captura
+            </button>
+          </div>
         </div>
 
-        <div className="mt-4 flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div>
+        <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(250px,320px)] lg:items-stretch">
+          <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-5 shadow-[var(--serene-shadow-soft)]">
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--serene-muted)]">
-              Leitura
+              Leitura iniciada
             </p>
-            <h1 className="mt-1 text-2xl font-semibold">{book.title}</h1>
+            <h1 className="mt-2 text-3xl font-semibold leading-tight tracking-normal">{book.title}</h1>
             <p className="text-sm text-[var(--serene-muted)]">
               {book.author ?? "Autor nao informado"}
             </p>
-            <p className="mt-2 text-sm text-[var(--serene-muted)]">{focusMessage}</p>
+            <p className="literary mt-4 max-w-2xl text-base leading-relaxed text-[var(--serene-muted)]">
+              {focusMessage}
+            </p>
           </div>
 
-          <div className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-4 py-3 text-right">
-            <p className="text-xs uppercase tracking-[0.16em] text-[var(--serene-muted)]">
+          <div className="rounded-2xl border border-[var(--serene-border)] bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--serene-accent)_12%,transparent),transparent_42%),var(--serene-surface-soft)] px-5 py-4 text-right shadow-[var(--serene-shadow-soft)]">
+            <div className="flex items-center justify-between gap-3 text-left">
+              <span className="grid size-10 place-items-center rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] text-[var(--serene-muted)]">
+                <Clock3 className="size-4" />
+              </span>
+              <span className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-1.5 text-xs text-[var(--serene-muted)]">
+                <span className="size-2 rounded-full bg-[var(--serene-accent)]" />
+                tempo real
+              </span>
+            </div>
+            <p className="mt-4 text-xs uppercase tracking-[0.16em] text-[var(--serene-muted)]">
               Tempo ativo
             </p>
-            <p className="mt-1 text-3xl font-semibold tabular-nums">{formatReadingDuration(activeSeconds)}</p>
-            <p className="mt-1 text-xs text-[var(--serene-muted)]">
-              Pausas: {formatReadingDuration(pausedSeconds)}
+            <p className="mt-1 text-4xl font-semibold tabular-nums leading-none sm:text-5xl">
+              {formatReadingDuration(activeSeconds)}
+            </p>
+            <p className="mt-3 text-xs text-[var(--serene-muted)]">
+              Pausas registradas: {formatReadingDuration(pausedSeconds)}
             </p>
           </div>
         </div>
@@ -585,51 +623,56 @@ export function ReadingSessionScreen() {
       )}
 
       {annotationFeedback && (
-        <p className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-2 text-sm">
+        <p className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-2 text-sm shadow-[var(--serene-shadow-soft)]">
           {annotationFeedback}
         </p>
       )}
 
       {!summary && (
-      <section className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5">
-        <div className="grid gap-3 md:grid-cols-[1fr_auto_auto] md:items-end">
-          <label className="grid gap-1 text-sm">
-            Pagina atual
-            <input
-              type="number"
-              min={0}
-              value={String(currentPage)}
-              onChange={(event) => {
-                const parsed = parsePageInput(event.target.value);
-                if (parsed !== null) {
-                  setCurrentPage(parsed);
-                }
-              }}
-              className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none"
-            />
-          </label>
+      <section className="rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5 shadow-[var(--serene-shadow-soft)]">
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+          <div className="grid gap-3 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+            <label className="grid gap-1 text-sm">
+              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
+                Pagina atual
+              </span>
+              <input
+                type="number"
+                min={0}
+                value={String(currentPage)}
+                onChange={(event) => {
+                  const parsed = parsePageInput(event.target.value);
+                  if (parsed !== null) {
+                    setCurrentPage(parsed);
+                  }
+                }}
+                className="h-11 rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-lg outline-none focus:ring-2 focus:ring-[var(--serene-accent)]"
+              />
+            </label>
 
-          <button
-            type="button"
-            onClick={() => void handleSaveCurrentPage()}
-            disabled={actionLoading}
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm disabled:opacity-60"
-          >
-            <Save className="size-4" />
-            Salvar pagina
-          </button>
+            <button
+              type="button"
+              onClick={() => void handleSaveCurrentPage()}
+              disabled={actionLoading}
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)] disabled:opacity-60"
+            >
+              <Save className="size-4" />
+              Salvar pagina
+            </button>
+          </div>
 
-          <div className="text-xs text-[var(--serene-muted)] md:text-right">
-            {book.total_pages ? `Total: ${book.total_pages} paginas` : "Total de paginas opcional"}
+          <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-4 py-3 text-xs text-[var(--serene-muted)] md:text-right">
+            <p className="font-semibold uppercase tracking-[0.14em]">Progresso</p>
+            <p className="mt-1 text-sm text-[var(--serene-fg)]">{pageProgressLabel}</p>
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => void handlePauseOrResume()}
             disabled={actionLoading || !canPause && !canResume}
-            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-4 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)] disabled:opacity-60"
           >
             {canPause ? <PauseCircle className="size-4" /> : <PlayCircle className="size-4" />}
             {canPause ? "Pausar" : "Retomar"}
@@ -642,7 +685,7 @@ export function ReadingSessionScreen() {
               setShowFinishPrompt(true);
             }}
             disabled={actionLoading || !canFinish}
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-5 py-2.5 text-sm font-semibold text-white shadow-[var(--serene-shadow-soft)] transition hover:opacity-95 disabled:opacity-60"
           >
             <CheckCircle2 className="size-4" />
             Finalizar leitura
@@ -652,34 +695,44 @@ export function ReadingSessionScreen() {
       )}
 
       {!summary && showFinishPrompt && (
-        <section className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5">
-          <h2 className="text-lg font-semibold">Finalizar sessao</h2>
-          <p className="mt-2 text-sm text-[var(--serene-muted)]">
-            Em qual pagina voce parou nesta sessao?
-          </p>
-          <div className="mt-3 flex flex-wrap items-end gap-2">
+        <section className="serene-soft-in rounded-[1.75rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_94%,white_6%),var(--serene-surface))] p-5 shadow-[var(--serene-shadow-soft)] dark:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_92%,black_8%),var(--serene-surface))]">
+          <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--serene-muted)]">
+                Guardar sessao
+              </p>
+              <h2 className="mt-1 text-lg font-semibold">Em qual pagina voce parou?</h2>
+              <p className="mt-2 text-sm text-[var(--serene-muted)]">
+                Esse ponto sera salvo como seu progresso atual deste livro.
+              </p>
+            </div>
+            <BookOpen className="size-5 text-[var(--serene-accent)]" />
+          </div>
+          <div className="mt-4 flex flex-wrap items-end gap-2">
             <label className="grid gap-1 text-sm">
-              Pagina final
+              <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
+                Pagina final
+              </span>
               <input
                 type="number"
                 min={0}
                 value={finishPageInput}
                 onChange={(event) => setFinishPageInput(event.target.value)}
-                className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none"
+                className="h-11 rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-lg outline-none focus:ring-2 focus:ring-[var(--serene-accent)]"
               />
             </label>
             <button
               type="button"
               onClick={() => void handleFinish()}
               disabled={actionLoading}
-              className="rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              className="rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--serene-shadow-soft)] transition hover:opacity-95 disabled:opacity-60"
             >
               Confirmar finalizacao
             </button>
             <button
               type="button"
               onClick={() => setShowFinishPrompt(false)}
-              className="rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm"
+              className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-4 py-2 text-sm text-[var(--serene-muted)] transition hover:text-[var(--serene-fg)]"
             >
               Cancelar
             </button>
@@ -710,7 +763,7 @@ export function ReadingSessionScreen() {
           setAnnotationModalOpen(true);
         }}
         disabled={!isSessionOpen || actionLoading}
-        className="fixed bottom-4 right-4 z-20 inline-flex size-12 items-center justify-center rounded-full bg-[var(--serene-accent)] text-white shadow-lg disabled:opacity-60 sm:bottom-6 sm:right-6"
+        className="fixed bottom-4 right-4 z-20 inline-flex size-12 items-center justify-center rounded-full bg-[var(--serene-accent)] text-white shadow-[var(--serene-shadow-lift)] transition hover:opacity-95 disabled:opacity-60 sm:bottom-6 sm:right-6"
         aria-label="Nova anotacao"
       >
         <Plus className="size-5" />

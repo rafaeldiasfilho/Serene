@@ -115,9 +115,9 @@ function getRitualNoteClass(type: AnnotationType) {
 
 function getFinishedMessage(status: SessionEndSummary["status"]) {
   if (status === "finished") {
-    return "Sess\u00e3o de leitura finalizada.";
+    return "Leitura guardada com sucesso.";
   }
-  return "Sess\u00e3o encerrada.";
+  return "Sess\u00e3o encerrada e guardada.";
 }
 
 function getReadingTimePhrase(activeSeconds: number, bookTitle: string) {
@@ -125,10 +125,10 @@ function getReadingTimePhrase(activeSeconds: number, bookTitle: string) {
   const minutes = Math.floor(activeSeconds / 60);
 
   if (minutes >= 40) {
-    return `Voc\u00ea dedicou ${duration} aos livros nesta sess\u00e3o.`;
+    return `Voc\u00ea guardou ${duration} de leitura profunda nesta sess\u00e3o.`;
   }
   if (minutes >= 20) {
-    return `Hoje voc\u00ea dedicou ${duration} \u00e0 leitura.`;
+    return `Hoje voc\u00ea dedicou ${duration} \u00e0 leitura, sem pressa.`;
   }
   if (activeSeconds > 0) {
     return `Mais um peda\u00e7o de ${bookTitle} foi guardado.`;
@@ -162,23 +162,28 @@ function SummaryPanel({
   const pagesRead = getPagesRead(summary.startPage, summary.endPage);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 rounded-[1.75rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_94%,white_6%),var(--serene-surface))] p-5 shadow-[var(--serene-shadow-soft)] dark:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_92%,black_8%),var(--serene-surface))]">
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="size-5 text-[var(--serene-accent)]" />
+            <span className="grid size-10 place-items-center rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] text-[var(--serene-accent)] shadow-[var(--serene-shadow-soft)]">
+              <CheckCircle2 className="size-5" />
+            </span>
             <h2 className="text-xl font-semibold">{getFinishedMessage(summary.status)}</h2>
           </div>
           <p className="literary mt-3 max-w-2xl text-lg leading-relaxed text-[var(--serene-muted)]">
             {getReadingTimePhrase(summary.activeSeconds, bookTitle)}
           </p>
+          <p className="mt-2 text-sm text-[var(--serene-muted)]">
+            Sua leitura ficou registrada com tempo ativo, paginas e anota\u00e7\u00f5es desta sess\u00e3o.
+          </p>
         </div>
 
-        <div className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-4 py-3 text-sm">
+        <div className="rounded-2xl border border-[var(--serene-border)] bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--serene-accent)_12%,transparent),transparent_44%),var(--serene-surface-soft)] px-4 py-3 text-sm shadow-[var(--serene-shadow-soft)]">
           <p className="text-xs uppercase tracking-[0.14em] text-[var(--serene-muted)]">
             Tempo ativo real
           </p>
-          <p className="mt-1 text-2xl font-semibold tabular-nums">
+          <p className="mt-1 text-3xl font-semibold tabular-nums">
             {formatReadingDuration(summary.activeSeconds)}
           </p>
         </div>
@@ -186,7 +191,7 @@ function SummaryPanel({
 
       <section className="grid gap-3 md:grid-cols-4">
         {summary.pausedSeconds > 0 && (
-          <div className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4">
+          <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 shadow-[var(--serene-shadow-soft)]">
             <Clock3 className="size-5 text-[var(--serene-accent)]" />
             <p className="mt-3 text-xs uppercase tracking-[0.14em] text-[var(--serene-muted)]">
               Pausas
@@ -194,7 +199,7 @@ function SummaryPanel({
             <p className="mt-1 text-lg font-semibold">{formatReadingDuration(summary.pausedSeconds)}</p>
           </div>
         )}
-        <div className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4">
+        <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 shadow-[var(--serene-shadow-soft)]">
           <BookOpen className="size-5 text-[var(--serene-accent)]" />
           <p className="mt-3 text-xs uppercase tracking-[0.14em] text-[var(--serene-muted)]">
             Paginas
@@ -208,7 +213,7 @@ function SummaryPanel({
               : `${pagesRead} ${pluralize(pagesRead, "p\u00e1gina", "p\u00e1ginas")} nesta sess\u00e3o`}
           </p>
         </div>
-        <div className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4">
+        <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 shadow-[var(--serene-shadow-soft)]">
           <Heart className="size-5 text-[var(--serene-accent)]" />
           <p className="mt-3 text-xs uppercase tracking-[0.14em] text-[var(--serene-muted)]">
             Favoritas
@@ -217,7 +222,7 @@ function SummaryPanel({
             {annotationsLoading ? "..." : favoriteCount}
           </p>
         </div>
-        <div className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4">
+        <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 shadow-[var(--serene-shadow-soft)]">
           <ListChecks className="size-5 text-[var(--serene-accent)]" />
           <p className="mt-3 text-xs uppercase tracking-[0.14em] text-[var(--serene-muted)]">
             Para revisar
@@ -226,7 +231,7 @@ function SummaryPanel({
         </div>
       </section>
 
-      <section className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4">
+      <section className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 shadow-[var(--serene-shadow-soft)]">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <h3 className="text-base font-semibold">Anota\u00e7\u00f5es desta sess\u00e3o</h3>
@@ -246,7 +251,7 @@ function SummaryPanel({
 
         <div className="mt-4 flex flex-wrap gap-2">
           {annotationsLoading ? (
-            <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-1.5 text-sm text-[var(--serene-muted)]">
+            <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-1.5 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)]">
               ...
             </span>
           ) : annotations.length > 0 ? (
@@ -254,7 +259,7 @@ function SummaryPanel({
               <span
                 key={item.type}
                 className={[
-                  "rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-1.5 text-sm",
+                  "rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-1.5 text-sm shadow-[var(--serene-shadow-soft)]",
                   item.count === 0 ? "text-[var(--serene-muted)] opacity-70" : "",
                 ].join(" ")}
               >
@@ -262,7 +267,7 @@ function SummaryPanel({
               </span>
             ))
           ) : (
-            <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-1.5 text-sm text-[var(--serene-muted)]">
+            <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-1.5 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)]">
               Nenhuma anota\u00e7\u00e3o registrada nesta sess\u00e3o
             </span>
           )}
@@ -270,7 +275,7 @@ function SummaryPanel({
       </section>
 
       {reviewLaterFeedback && (
-        <p className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 text-sm">
+        <p className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 text-sm shadow-[var(--serene-shadow-soft)]">
           {reviewLaterFeedback}
         </p>
       )}
@@ -278,7 +283,7 @@ function SummaryPanel({
       <div className="flex flex-wrap gap-2">
         <Link
           href={reviewHref}
-          className="inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white"
+          className="inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--serene-shadow-soft)] transition hover:opacity-95"
         >
           <BookOpen className="size-4" />
           Revisar anota\u00e7\u00f5es agora
@@ -287,7 +292,7 @@ function SummaryPanel({
           type="button"
           onClick={onReviewLater}
           disabled={reviewLaterLoading || annotationsLoading}
-          className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-4 py-2 text-sm text-[var(--serene-muted)] transition hover:text-[var(--serene-fg)] disabled:opacity-60"
         >
           {reviewLaterLoading ? "Guardando..." : "Revisar depois"}
         </button>
@@ -323,24 +328,27 @@ export function SessionEndRitual(props: SessionEndRitualProps) {
   }
 
   return (
-    <section className="session-end-ritual">
+    <section className="session-end-ritual overflow-hidden rounded-[1.75rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_94%,white_6%),var(--serene-surface))] p-5 shadow-[var(--serene-shadow-soft)] dark:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_92%,black_8%),var(--serene-surface))]">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--serene-muted)]">
             Mem\u00f3ria de leitura
           </p>
-          <h2 className="mt-1 text-xl font-semibold">Guardando sua leitura como mem\u00f3ria</h2>
+          <h2 className="mt-1 text-xl font-semibold">Guardando sua leitura dentro do livro</h2>
+          <p className="literary mt-2 max-w-2xl text-sm leading-relaxed text-[var(--serene-muted)]">
+            As anota\u00e7\u00f5es desta sess\u00e3o entram como pequenos marcadores do que ficou.
+          </p>
         </div>
         <button
           type="button"
           onClick={() => setShowSummary(true)}
-          className="rounded-full border border-[var(--serene-border)] px-3 py-1.5 text-sm"
+          className="shrink-0 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-1.5 text-sm text-[var(--serene-muted)] transition hover:text-[var(--serene-fg)]"
         >
-          Pular anima\u00e7\u00e3o
+          Ver resumo
         </button>
       </div>
 
-      <div className="session-ritual-stage mt-6">
+      <div className="session-ritual-stage mt-6 rounded-[2rem] border border-[color-mix(in_oklab,var(--serene-border)_76%,transparent)] bg-[radial-gradient(circle_at_center,color-mix(in_oklab,var(--serene-accent)_10%,transparent),transparent_48%),var(--serene-surface-soft)] shadow-[inset_0_1px_0_rgb(255_255_255_/_40%),var(--serene-shadow-soft)] dark:shadow-[inset_0_1px_0_rgb(255_255_255_/_6%),var(--serene-shadow-soft)]">
         <div className="session-ritual-book" aria-hidden="true">
           <div className="session-ritual-page session-ritual-page-left" />
           <div className="session-ritual-page session-ritual-page-right" />
@@ -378,6 +386,9 @@ export function SessionEndRitual(props: SessionEndRitualProps) {
           )}
         </div>
       </div>
+      <p className="mt-4 text-center text-sm text-[var(--serene-muted)]">
+        Em instantes, o resumo aparece com tempo, paginas e anota\u00e7\u00f5es salvas.
+      </p>
     </section>
   );
 }
