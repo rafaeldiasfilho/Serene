@@ -1,8 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { BookOpen, Camera, PlayCircle, Plus, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import {
+  BookOpen,
+  Camera,
+  Clock3,
+  LibraryBig,
+  PlayCircle,
+  Plus,
+  Sparkles,
+  X,
+} from "lucide-react";
+import { useEffect, useMemo, useState, type ComponentType } from "react";
 
 import { AuthPanel } from "@/components/auth/auth-panel";
 import { useAppState } from "@/components/providers/app-state-provider";
@@ -31,6 +40,66 @@ function fallbackColors(): AnnotationColorOption[] {
   }));
 }
 
+function getGreeting() {
+  const hour = new Date().getHours();
+
+  if (hour < 12) {
+    return "Bom dia";
+  }
+  if (hour < 18) {
+    return "Boa tarde";
+  }
+  return "Boa noite";
+}
+
+function getFirstName(name: string | null | undefined, fallback: string) {
+  return (name ?? fallback).trim().split(" ")[0] || "leitor";
+}
+
+function getProgress(currentPage: number, totalPages: number | null) {
+  if (!totalPages || totalPages <= 0) {
+    return 0;
+  }
+
+  return Math.min(100, Math.round((currentPage / totalPages) * 100));
+}
+
+function getCoverFallback(title: string) {
+  let hash = 0;
+
+  for (let index = 0; index < title.length; index += 1) {
+    hash = (hash * 31 + title.charCodeAt(index)) >>> 0;
+  }
+
+  const hue = 30 + (hash % 52);
+  return `linear-gradient(145deg, hsl(${hue} 28% 58%), hsl(${hue + 28} 24% 34%))`;
+}
+
+function StatCard({
+  helper,
+  icon: Icon,
+  label,
+  value,
+}: {
+  helper: string;
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <article className="rounded-xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_86%,transparent)] p-4 shadow-[var(--serene-shadow-soft)]">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs uppercase tracking-[0.14em] text-[var(--serene-muted)]">{label}</p>
+        <span className="grid size-8 place-items-center rounded-full bg-[var(--serene-surface-soft)] text-[var(--serene-accent)]">
+          <Icon className="size-4" />
+        </span>
+      </div>
+      <p className="literary mt-3 text-2xl leading-none">{value}</p>
+      <p className="mt-2 text-xs text-[var(--serene-muted)]">{helper}</p>
+    </article>
+  );
+}
+
 export function HomeClient() {
   const { authLoading, profile, profileState, user } = useAppState();
   const { books, loading } = useBookLibrary(user?.id ?? null);
@@ -56,6 +125,29 @@ export function HomeClient() {
       .filter((book) => book.status === "lendo" && book.show_in_home && book.id !== currentBook?.id)
       .slice(0, 4);
   }, [books, currentBook]);
+
+  const homeStats = useMemo(() => {
+    const readingCount = books.filter((book) => book.status === "lendo").length;
+    const readCount = books.filter((book) => book.status === "lido").length;
+    const historicalCount = books.filter(
+      (book) => book.reading_origin === "historico" || book.read_before_serene,
+    ).length;
+
+    return {
+      historicalCount,
+      readCount,
+      readingCount,
+      totalCount: books.length,
+    };
+  }, [books]);
+
+  const currentProgress = useMemo(() => {
+    if (!currentBook) {
+      return 0;
+    }
+
+    return getProgress(currentBook.current_page, currentBook.total_pages);
+  }, [currentBook]);
 
   const booksForAnnotations = useMemo(() => {
     return books.map((book) => ({
@@ -175,56 +267,95 @@ export function HomeClient() {
     setAnnotationModalOpen(true);
   }
 
-  return (
-    <section className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
-            Inicio
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold">Ola, {profile?.name ?? "leitor"}</h1>
-          <p className="mt-2 max-w-2xl text-sm text-[var(--serene-muted)]">
-            Um painel calmo para retomar seus livros sem pressa.
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              setCaptureDraft(null);
-              setCaptureDialogOpen(true);
-            }}
-            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-sm"
-            title="Preparar captura"
-          >
-            <Camera className="size-4" />
-            Captura
-          </button>
+  const firstName = getFirstName(profile?.name, user.email ?? "leitor");
 
-          <div className="flex items-center gap-3 rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-3">
-            <div className="grid size-11 place-items-center rounded-full bg-[var(--serene-surface-soft)] text-sm font-semibold">
-              {(profile?.name ?? user.email ?? "S").slice(0, 1).toUpperCase()}
-            </div>
-            <div>
-              <p className="text-sm font-medium">{profile?.name ?? user.email}</p>
-              <p className="text-xs text-[var(--serene-muted)]">Perfil conectado</p>
+  return (
+    <section className="space-y-7">
+      <div className="serene-soft-in overflow-hidden rounded-2xl border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_94%,white_6%),var(--serene-surface))] p-5 shadow-[var(--serene-shadow-soft)] sm:p-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="max-w-3xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
+              Inicio
+            </p>
+            <h1 className="literary mt-2 text-4xl leading-tight sm:text-5xl">
+              {getGreeting()}, {firstName}.
+            </h1>
+            <p className="literary mt-3 max-w-2xl text-base italic leading-relaxed text-[var(--serene-muted)]">
+              Um lugar quieto para voltar ao livro certo, guardar ideias e seguir lendo sem pressa.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                setCaptureDraft(null);
+                setCaptureDialogOpen(true);
+              }}
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_82%,transparent)] px-4 py-2 text-sm shadow-[var(--serene-shadow-soft)]"
+              title="Preparar captura"
+            >
+              <Camera className="size-4" />
+              Captura
+            </button>
+
+            <div className="flex items-center gap-3 rounded-xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_82%,transparent)] p-3 shadow-[var(--serene-shadow-soft)]">
+              <div className="grid size-11 place-items-center rounded-full bg-[var(--serene-surface-soft)] text-sm font-semibold text-[var(--serene-accent)]">
+                {(profile?.name ?? user.email ?? "S").slice(0, 1).toUpperCase()}
+              </div>
+              <div>
+                <p className="text-sm font-medium">{profile?.name ?? user.email}</p>
+                <p className="text-xs text-[var(--serene-muted)]">Perfil conectado</p>
+              </div>
             </div>
           </div>
+        </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            icon={LibraryBig}
+            label="Biblioteca"
+            value={homeStats.totalCount}
+            helper="livros guardados"
+          />
+          <StatCard
+            icon={BookOpen}
+            label="Em leitura"
+            value={homeStats.readingCount}
+            helper="caminhos abertos agora"
+          />
+          <StatCard
+            icon={Sparkles}
+            label="Lidos"
+            value={homeStats.readCount}
+            helper="memorias concluidas"
+          />
+          <StatCard
+            icon={Clock3}
+            label="Historico"
+            value={homeStats.historicalCount}
+            helper="leituras antes do SERENE"
+          />
         </div>
       </div>
 
       {annotationFeedback && (
-        <p className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-2 text-sm">
+        <p className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-2 text-sm shadow-[var(--serene-shadow-soft)]">
           {annotationFeedback}
         </p>
       )}
 
       {showCuriosity && (
-        <div className="flex items-start justify-between gap-4 rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4">
-          <p className="literary text-sm text-[var(--serene-muted)]">
-            Curiosidade literaria: reler um trecho favorito em outro dia pode revelar uma pergunta
-            nova, nao apenas uma resposta antiga.
-          </p>
+        <div className="serene-rise flex items-start justify-between gap-4 rounded-2xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_88%,var(--serene-surface-soft)_12%)] p-4 shadow-[var(--serene-shadow-soft)]">
+          <div className="flex gap-3">
+            <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-[var(--serene-surface-soft)] text-[var(--serene-accent)]">
+              <Sparkles className="size-4" />
+            </span>
+            <p className="literary text-sm leading-relaxed text-[var(--serene-muted)]">
+              Reler um trecho favorito em outro dia pode revelar uma pergunta nova, nao apenas uma
+              resposta antiga.
+            </p>
+          </div>
           <button
             type="button"
             onClick={() => setShowCuriosity(false)}
@@ -237,13 +368,13 @@ export function HomeClient() {
       )}
 
       {loading ? (
-        <div className="grid min-h-60 place-items-center rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)]">
+        <div className="grid min-h-60 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] shadow-[var(--serene-shadow-soft)]">
           <BrainLoader />
         </div>
       ) : books.length === 0 ? (
-        <div className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-6">
+        <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-6 shadow-[var(--serene-shadow-soft)]">
           <BookOpen className="size-8 text-[var(--serene-accent)]" />
-          <h2 className="mt-3 text-xl font-semibold">Comece pela Biblioteca</h2>
+          <h2 className="literary mt-3 text-2xl">Comece pela Biblioteca</h2>
           <p className="mt-2 max-w-xl text-sm text-[var(--serene-muted)]">
             Adicione seu primeiro livro quando quiser. SERENE mantem a organizacao simples desde o
             primeiro registro.
@@ -257,33 +388,48 @@ export function HomeClient() {
           </Link>
         </div>
       ) : (
-        <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-          <section className="rounded-lg border border-[var(--serene-accent)] bg-[var(--serene-surface)] p-5">
+        <div className="grid gap-5 lg:grid-cols-[1.45fr_0.85fr]">
+          <section className="overflow-hidden rounded-2xl border border-[color-mix(in_oklab,var(--serene-accent)_54%,transparent)] bg-[var(--serene-surface)] p-5 shadow-[var(--serene-shadow-soft)]">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
-              Livro atual
+              Continue de onde parou
             </p>
             {currentBook ? (
-              <div className="mt-4 flex flex-col gap-4 sm:flex-row">
-                <div className="grid aspect-[2/3] w-20 shrink-0 place-items-center overflow-hidden rounded-md border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] text-xs text-[var(--serene-muted)]">
+              <div className="mt-4 grid gap-5 md:grid-cols-[180px_1fr] md:items-end">
+                <div className="grid aspect-[2/3] w-36 max-w-full place-items-center overflow-hidden rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] text-center text-xs text-white shadow-[0_18px_42px_rgb(47_42_36_/_14%)] md:w-full">
                   {currentBook.cover_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={currentBook.cover_url} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    "Sem capa"
+                    <div
+                      className="grid h-full w-full place-items-center px-4"
+                      style={{ background: getCoverFallback(currentBook.title) }}
+                    >
+                      <span className="literary line-clamp-4 text-base leading-snug text-white/90">
+                        {currentBook.title}
+                      </span>
+                    </div>
                   )}
                 </div>
-                <div>
-                  <h2 className="text-2xl font-semibold">{currentBook.title}</h2>
+                <div className="min-w-0">
+                  <h2 className="literary text-3xl leading-tight">{currentBook.title}</h2>
                   <p className="mt-1 text-sm text-[var(--serene-muted)]">
                     {currentBook.author ?? "Autor nao informado"}
                   </p>
-                  <p className="mt-3 text-sm text-[var(--serene-muted)]">
-                    Pagina {currentBook.current_page}
-                    {currentBook.total_pages ? ` de ${currentBook.total_pages}` : ""}
-                  </p>
+                  <div className="mt-4 max-w-md">
+                    <div className="h-2 overflow-hidden rounded-full bg-[var(--serene-surface-soft)]">
+                      <div
+                        className="h-full rounded-full bg-[var(--serene-accent)]"
+                        style={{ width: `${currentProgress}%` }}
+                      />
+                    </div>
+                    <p className="mt-2 text-sm text-[var(--serene-muted)]">
+                      Pagina {currentBook.current_page}
+                      {currentBook.total_pages ? ` de ${currentBook.total_pages}` : ""}
+                    </p>
+                  </div>
                   <Link
                     href={`/leitura/${currentBook.id}?origem=inicio`}
-                    className="mt-4 inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white"
+                    className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-5 py-2.5 text-sm font-semibold text-white shadow-[var(--serene-shadow-soft)]"
                   >
                     <PlayCircle className="size-4" />
                     Iniciar ou retomar leitura
@@ -291,13 +437,13 @@ export function HomeClient() {
                 </div>
               </div>
             ) : (
-              <p className="mt-3 text-sm text-[var(--serene-muted)]">
-                Marque um livro como atual na Biblioteca para destaca-lo aqui.
-              </p>
+                <p className="mt-3 text-sm text-[var(--serene-muted)]">
+                  Marque um livro como atual na Biblioteca para destaca-lo aqui.
+                </p>
             )}
           </section>
 
-          <section className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5">
+          <section className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5 shadow-[var(--serene-shadow-soft)]">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
               Tambem lendo
             </p>
@@ -310,9 +456,9 @@ export function HomeClient() {
                 {otherReadingBooks.map((book) => (
                   <div
                     key={book.id}
-                    className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3"
+                    className="rounded-xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface-soft)_78%,var(--serene-surface)_22%)] p-3"
                   >
-                    <p className="truncate text-sm font-medium">{book.title}</p>
+                    <p className="literary truncate text-base">{book.title}</p>
                     <p className="truncate text-xs text-[var(--serene-muted)]">
                       {book.author ?? "Autor nao informado"}
                     </p>

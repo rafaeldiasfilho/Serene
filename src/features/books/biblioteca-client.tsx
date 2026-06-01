@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Plus, RefreshCw } from "lucide-react";
+import { BookOpen, LibraryBig, Plus, RefreshCw, Tags } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -92,6 +92,17 @@ export function BibliotecaClient() {
     [visibleBooks],
   );
 
+  const filterCounts = useMemo<Record<FilterValue, number>>(
+    () => ({
+      todos: books.length,
+      lendo: books.filter((book) => book.status === "lendo").length,
+      quero_ler: books.filter((book) => book.status === "quero_ler").length,
+      pausado: books.filter((book) => book.status === "pausado").length,
+      lido: books.filter((book) => book.status === "lido").length,
+    }),
+    [books],
+  );
+
   if (!envReady) {
     return (
       <section className="rounded-lg border border-amber-300 bg-amber-50 p-5 text-amber-800">
@@ -181,7 +192,7 @@ export function BibliotecaClient() {
 
   function renderBookGrid(bookList: BookWithCategories[]) {
     return (
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {bookList.map((book) => (
           <BookCard
             key={book.id}
@@ -197,14 +208,15 @@ export function BibliotecaClient() {
   }
 
   return (
-    <section className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
+    <section className="space-y-7">
+      <div className="serene-soft-in rounded-2xl border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_94%,white_6%),var(--serene-surface))] p-5 shadow-[var(--serene-shadow-soft)] sm:p-6">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <div className="max-w-3xl">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
             Biblioteca
           </p>
-          <h1 className="mt-2 text-3xl font-semibold">Seus livros, sem pressa</h1>
-          <p className="mt-2 max-w-2xl text-sm text-[var(--serene-muted)]">
+          <h1 className="literary mt-2 text-4xl leading-tight">Seus livros, sem pressa</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--serene-muted)]">
             Tudo aparece aqui mesmo sem categorias. Use categorias apenas quando elas deixarem sua
             leitura mais confortável.
           </p>
@@ -213,7 +225,7 @@ export function BibliotecaClient() {
           <button
             type="button"
             onClick={() => void refresh()}
-            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_78%,transparent)] px-4 py-2 text-sm shadow-[var(--serene-shadow-soft)]"
           >
             <RefreshCw className="size-4" />
             Atualizar
@@ -221,7 +233,7 @@ export function BibliotecaClient() {
           <button
             type="button"
             onClick={openCreateForm}
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white"
+            className="inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--serene-shadow-soft)]"
           >
             <Plus className="size-4" />
             Novo livro
@@ -229,14 +241,33 @@ export function BibliotecaClient() {
         </div>
       </div>
 
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_84%,transparent)] p-4">
+            <LibraryBig className="size-5 text-[var(--serene-accent)]" />
+            <p className="literary mt-3 text-2xl">{books.length}</p>
+            <p className="text-xs text-[var(--serene-muted)]">livros visiveis na Biblioteca</p>
+          </div>
+          <div className="rounded-xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_84%,transparent)] p-4">
+            <BookOpen className="size-5 text-[var(--serene-accent)]" />
+            <p className="literary mt-3 text-2xl">{filterCounts.lendo}</p>
+            <p className="text-xs text-[var(--serene-muted)]">leituras em andamento</p>
+          </div>
+          <div className="rounded-xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_84%,transparent)] p-4">
+            <Tags className="size-5 text-[var(--serene-accent)]" />
+            <p className="literary mt-3 text-2xl">{categories.length}</p>
+            <p className="text-xs text-[var(--serene-muted)]">categorias manuais opcionais</p>
+          </div>
+        </div>
+      </div>
+
       {feedback && (
-        <p className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-2 text-sm">
+        <p className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-2 text-sm shadow-[var(--serene-shadow-soft)]">
           {feedback}
         </p>
       )}
 
       {error && (
-        <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <p className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800 shadow-[var(--serene-shadow-soft)]">
           {error}
         </p>
       )}
@@ -255,8 +286,9 @@ export function BibliotecaClient() {
         />
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_280px]">
-        <div className="space-y-4">
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="space-y-5">
+          <section className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)]">
           <div className="flex flex-wrap gap-2">
             {filters.map((filter) => (
               <button
@@ -264,21 +296,24 @@ export function BibliotecaClient() {
                 type="button"
                 onClick={() => setActiveFilter(filter.value)}
                 className={[
-                  "rounded-full border px-3 py-1.5 text-sm",
+                  "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm",
                   activeFilter === filter.value
                     ? "border-[var(--serene-accent)] bg-[var(--serene-accent)] text-white"
-                    : "border-[var(--serene-border)] bg-[var(--serene-surface)] text-[var(--serene-muted)]",
+                    : "border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_78%,transparent)] text-[var(--serene-muted)] hover:bg-[var(--serene-surface-soft)]",
                 ].join(" ")}
               >
                 {filter.label}
+                <span className="rounded-full bg-black/10 px-1.5 py-0.5 text-[11px]">
+                  {filterCounts[filter.value]}
+                </span>
               </button>
             ))}
           </div>
 
-          <label className="grid max-w-xs gap-1 text-sm">
+          <label className="mt-4 grid max-w-xs gap-1 text-sm text-[var(--serene-muted)]">
             Ordenar por
             <select
-              className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none"
+              className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-[var(--serene-fg)] outline-none"
               value={orderBy}
               onChange={(event) => setOrderBy(event.target.value as OrderValue)}
             >
@@ -288,49 +323,50 @@ export function BibliotecaClient() {
               <option value="autor">autor</option>
             </select>
           </label>
+          </section>
 
           {loading ? (
-            <div className="grid min-h-64 place-items-center rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)]">
+            <div className="grid min-h-64 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] shadow-[var(--serene-shadow-soft)]">
               <div className="flex flex-col items-center gap-3">
                 <BrainLoader />
                 <p className="text-sm text-[var(--serene-muted)]">Buscando seus livros...</p>
               </div>
             </div>
           ) : books.length === 0 ? (
-            <div className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-6">
+            <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-6 shadow-[var(--serene-shadow-soft)]">
               <BookOpen className="size-8 text-[var(--serene-accent)]" />
-              <h2 className="mt-3 text-xl font-semibold">Sua Biblioteca está pronta</h2>
+              <h2 className="literary mt-3 text-2xl">Sua Biblioteca está pronta</h2>
               <p className="mt-2 max-w-xl text-sm text-[var(--serene-muted)]">
                 Adicione o primeiro livro quando quiser. A organização começa simples e cresce
                 apenas quando ajudar.
               </p>
             </div>
           ) : visibleBooks.length === 0 ? (
-            <div className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-6 text-sm text-[var(--serene-muted)]">
+            <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-6 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)]">
               Nenhum livro encontrado nesse filtro.
             </div>
           ) : activeFilter === "lido" ? (
             <div className="space-y-6">
-              <section className="space-y-3">
+              <section className="space-y-3 rounded-2xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_74%,transparent)] p-4 shadow-[var(--serene-shadow-soft)]">
                 <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
                   Histórico de leitura
                 </h2>
                 {historicalReadBooks.length > 0 ? (
                   renderBookGrid(historicalReadBooks)
                 ) : (
-                  <p className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 text-sm text-[var(--serene-muted)]">
+                  <p className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 text-sm text-[var(--serene-muted)]">
                     Nenhum livro histórico neste filtro.
                   </p>
                 )}
               </section>
-              <section className="space-y-3">
+              <section className="space-y-3 rounded-2xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_74%,transparent)] p-4 shadow-[var(--serene-shadow-soft)]">
                 <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
                   Lido no SERENE
                 </h2>
                 {sereneReadBooks.length > 0 ? (
                   renderBookGrid(sereneReadBooks)
                 ) : (
-                  <p className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 text-sm text-[var(--serene-muted)]">
+                  <p className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 text-sm text-[var(--serene-muted)]">
                     Nenhum livro concluído no SERENE neste filtro.
                   </p>
                 )}
@@ -341,9 +377,12 @@ export function BibliotecaClient() {
           )}
         </div>
 
-        <aside className="space-y-4">
-          <div className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4">
-            <h2 className="text-base font-semibold">Categorias manuais</h2>
+        <aside className="space-y-4 lg:sticky lg:top-28 lg:self-start">
+          <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)]">
+            <div className="flex items-center gap-2">
+              <Tags className="size-4 text-[var(--serene-accent)]" />
+              <h2 className="text-base font-semibold">Categorias manuais</h2>
+            </div>
             {categories.length === 0 ? (
               <p className="mt-2 text-sm text-[var(--serene-muted)]">
                 Você ainda não criou categorias. Seus livros continuam organizados normalmente na
@@ -354,7 +393,7 @@ export function BibliotecaClient() {
                 {categories.map((category) => (
                   <span
                     key={category.id}
-                    className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-3 py-1 text-sm"
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_78%,transparent)] px-3 py-1 text-sm"
                   >
                     <span
                       className="size-2 rounded-full"
@@ -367,11 +406,11 @@ export function BibliotecaClient() {
             )}
           </div>
 
-          <div className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4">
+          <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)]">
             <h2 className="text-base font-semibold">Criar categoria</h2>
             <div className="mt-3 grid gap-3">
               <input
-                className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-sm outline-none"
+                className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-sm outline-none"
                 placeholder="Nome da categoria"
                 value={newCategoryName}
                 onChange={(event) => setNewCategoryName(event.target.value)}
@@ -396,7 +435,7 @@ export function BibliotecaClient() {
               <button
                 type="button"
                 onClick={() => void handleCreateCategory()}
-                className="rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm"
+                className="rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_78%,transparent)] px-4 py-2 text-sm"
               >
                 Criar categoria
               </button>
