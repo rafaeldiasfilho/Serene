@@ -4,33 +4,50 @@
   --serene-bg: #f6f2ea;
   --serene-fg: #2f2a24;
   --serene-muted: #6f665d;
-  --serene-border: #d8ccc0;
+  --serene-border: #ded4c8;
+  --serene-border-soft: rgb(138 106 77 / 16%);
   --serene-accent: #8a6a4d;
   --serene-surface: #fffaf3;
   --serene-surface-soft: #eee6db;
   --serene-input: #fffdf9;
+  --serene-shadow-soft: 0 1px 2px rgb(47 42 36 / 4%), 0 10px 26px rgb(47 42 36 / 6%);
+  --serene-shadow-lift: 0 2px 8px rgb(47 42 36 / 6%), 0 18px 42px rgb(47 42 36 / 9%);
+  --serene-shadow-inner: inset 0 1px 0 rgb(255 255 255 / 42%);
+  --serene-ease-calm: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --serene-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --serene-transition-fast: 160ms var(--serene-ease-calm);
+  --serene-transition-base: 260ms var(--serene-ease-calm);
+  --serene-transition-slow: 420ms var(--serene-ease-enter);
 }
 
 html[data-theme="dark"] {
   --serene-bg: #1e1a17;
   --serene-fg: #f1ebe4;
   --serene-muted: #c0b5ab;
-  --serene-border: #3c342d;
+  --serene-border: #433a33;
+  --serene-border-soft: rgb(210 176 141 / 14%);
   --serene-accent: #d2b08d;
   --serene-surface: #29231f;
   --serene-surface-soft: #342d27;
   --serene-input: #211d19;
+  --serene-shadow-soft: 0 1px 2px rgb(0 0 0 / 22%), 0 12px 30px rgb(0 0 0 / 18%);
+  --serene-shadow-lift: 0 2px 8px rgb(0 0 0 / 24%), 0 20px 46px rgb(0 0 0 / 24%);
+  --serene-shadow-inner: inset 0 1px 0 rgb(255 255 255 / 6%);
 }
 
 html[data-theme="light"] {
   --serene-bg: #f6f2ea;
   --serene-fg: #2f2a24;
   --serene-muted: #6f665d;
-  --serene-border: #d8ccc0;
+  --serene-border: #ded4c8;
+  --serene-border-soft: rgb(138 106 77 / 16%);
   --serene-accent: #8a6a4d;
   --serene-surface: #fffaf3;
   --serene-surface-soft: #eee6db;
   --serene-input: #fffdf9;
+  --serene-shadow-soft: 0 1px 2px rgb(47 42 36 / 4%), 0 10px 26px rgb(47 42 36 / 6%);
+  --serene-shadow-lift: 0 2px 8px rgb(47 42 36 / 6%), 0 18px 42px rgb(47 42 36 / 9%);
+  --serene-shadow-inner: inset 0 1px 0 rgb(255 255 255 / 42%);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -38,11 +55,15 @@ html[data-theme="light"] {
     --serene-bg: #1e1a17;
     --serene-fg: #f1ebe4;
     --serene-muted: #c0b5ab;
-    --serene-border: #3c342d;
+    --serene-border: #433a33;
+    --serene-border-soft: rgb(210 176 141 / 14%);
     --serene-accent: #d2b08d;
     --serene-surface: #29231f;
     --serene-surface-soft: #342d27;
     --serene-input: #211d19;
+    --serene-shadow-soft: 0 1px 2px rgb(0 0 0 / 22%), 0 12px 30px rgb(0 0 0 / 18%);
+    --serene-shadow-lift: 0 2px 8px rgb(0 0 0 / 24%), 0 20px 46px rgb(0 0 0 / 24%);
+    --serene-shadow-inner: inset 0 1px 0 rgb(255 255 255 / 6%);
   }
 }
 
@@ -89,17 +110,90 @@ body {
   padding: 0;
 }
 
+html {
+  background: var(--serene-bg);
+}
+
 body {
   min-height: 100vh;
   font-family: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
   background: radial-gradient(circle at 20% 10%, rgb(255 255 255 / 25%), transparent 48%),
     radial-gradient(circle at 80% 0%, rgb(255 255 255 / 18%), transparent 46%),
     var(--serene-bg);
   color: var(--serene-fg);
+  transition:
+    background-color var(--serene-transition-slow),
+    color var(--serene-transition-base);
+}
+
+::selection {
+  background: color-mix(in oklab, var(--serene-accent) 26%, transparent);
+  color: var(--serene-fg);
+}
+
+:where(a, button, input, select, textarea) {
+  transition:
+    background-color var(--serene-transition-base),
+    border-color var(--serene-transition-base),
+    box-shadow var(--serene-transition-base),
+    color var(--serene-transition-base),
+    opacity var(--serene-transition-fast),
+    transform var(--serene-transition-base);
 }
 
 .literary {
   font-family: "Lora", ui-serif, Georgia, serif;
+}
+
+.serene-fade-in {
+  animation: serene-fade-in 360ms var(--serene-ease-enter) both;
+}
+
+.serene-rise {
+  animation: serene-rise 460ms var(--serene-ease-enter) both;
+}
+
+.serene-soft-in {
+  animation: serene-soft-in 520ms var(--serene-ease-enter) both;
+}
+
+.serene-card-enter {
+  animation: serene-card-enter 480ms var(--serene-ease-enter) both;
+}
+
+.serene-balloon-enter {
+  animation: serene-balloon-enter 540ms var(--serene-ease-enter) both;
+}
+
+.serene-brain-loader {
+  background:
+    radial-gradient(circle at 50% 35%, color-mix(in oklab, var(--serene-accent) 12%, transparent), transparent 58%),
+    color-mix(in oklab, var(--serene-surface) 86%, transparent);
+  box-shadow: var(--serene-shadow-soft), var(--serene-shadow-inner);
+  color: var(--serene-accent);
+}
+
+.serene-brain-loader-svg {
+  filter: drop-shadow(0 4px 10px rgb(47 42 36 / 8%));
+}
+
+.serene-brain-path {
+  stroke-dasharray: 120;
+  stroke-dashoffset: 120;
+  animation: serene-brain-draw 2800ms var(--serene-ease-calm) infinite;
+}
+
+.serene-brain-path-delay {
+  animation-delay: 180ms;
+}
+
+.serene-brain-stem {
+  opacity: 0.46;
+  transform-origin: center;
+  animation: serene-brain-breathe 2800ms var(--serene-ease-calm) infinite;
 }
 
 .annotation-tone-post-it,
@@ -295,15 +389,15 @@ html[data-theme="dark"] .annotation-tone-ocr {
 }
 
 .mural-enter {
-  animation: serene-mural-enter 220ms ease-out both;
+  animation: serene-soft-in 320ms var(--serene-ease-enter) both;
 }
 
 .mural-suggestion-enter {
-  animation: serene-mural-suggestion-enter 280ms ease-out both;
+  animation: serene-balloon-enter 380ms var(--serene-ease-enter) both;
 }
 
 .session-end-ritual {
-  animation: serene-summary-enter 260ms ease-out both;
+  animation: serene-rise 320ms var(--serene-ease-enter) both;
 }
 
 .session-ritual-stage {
@@ -471,33 +565,17 @@ html[data-theme="dark"] .annotation-tone-ocr {
   color: #4b3328;
 }
 
-@keyframes serene-mural-enter {
+@keyframes serene-fade-in {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.995);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
   }
 }
 
-@keyframes serene-mural-suggestion-enter {
-  from {
-    opacity: 0;
-    translate: 0 8px;
-    scale: 0.98;
-  }
-
-  to {
-    opacity: 1;
-    translate: 0 0;
-    scale: 1;
-  }
-}
-
-@keyframes serene-summary-enter {
+@keyframes serene-rise {
   from {
     opacity: 0;
     transform: translateY(8px);
@@ -506,6 +584,79 @@ html[data-theme="dark"] .annotation-tone-ocr {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes serene-soft-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes serene-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes serene-balloon-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.94);
+    filter: blur(1.5px);
+  }
+
+  70% {
+    opacity: 1;
+    filter: blur(0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes serene-brain-draw {
+  0% {
+    opacity: 0.34;
+    stroke-dashoffset: 120;
+  }
+
+  42%,
+  58% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+
+  100% {
+    opacity: 0.34;
+    stroke-dashoffset: -120;
+  }
+}
+
+@keyframes serene-brain-breathe {
+  0%,
+  100% {
+    opacity: 0.34;
+    transform: scale(0.98);
+  }
+
+  50% {
+    opacity: 0.62;
+    transform: scale(1);
   }
 }
 
