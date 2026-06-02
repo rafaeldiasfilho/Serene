@@ -144,9 +144,10 @@ Phase 15 keeps the existing data model and services intact while making the curr
 - Home curiosity text now references a real book from the user's library instead of a generic literary note.
 - The optional beta sample seed now includes multiple active reading books with covers and progress for Home testing.
 - Missing global visual token aliases are defined for light, dark, and system dark themes.
-- Annotation post-its are more physical: nearly square, lightly rotated, shadowed, and presented as a small paper stack.
-- Long annotation content in cards is shortened with `...` and can expand/retract locally.
-- Larger ideas from the original backlog, such as true post-it folders, full OCR, custom color management, stronger Mente drill-down, and minimized floating reading, remain documented in `TASKS.md` for safe future phases.
+- Annotation post-its now use a reusable physical paper visual: nearly square, lightly layered, softly shadowed, and compatible with light/dark themes.
+- Long post-it content is shortened with `...` and can expand/retract locally.
+- Multiple post-its in Anotacoes can appear as a physical stack that opens into a calm folder view with individual actions preserved.
+- Larger ideas from the original backlog, such as full OCR, custom color management, stronger Mente drill-down, and minimized floating reading, remain documented in `TASKS.md` for safe future phases.
 
 No Supabase schema, authentication, RLS, migrations, services, beta access rules, or data deletion behavior changed in Phase 15.
 

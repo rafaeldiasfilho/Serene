@@ -15,6 +15,11 @@ import {
   annotationTypeLabel,
 } from "@/features/annotations/annotation-definitions";
 import type { AnnotationRow } from "@/features/annotations/annotation-services";
+import {
+  POST_IT_PREVIEW_LIMIT,
+  PostItPaper,
+  getPostItDisplayContent,
+} from "@/features/annotations/post-it-paper";
 import type { AnnotationReviewStatus, AnnotationType } from "@/lib/supabase/database.types";
 
 type AnnotationCardProps = {
@@ -26,8 +31,6 @@ type AnnotationCardProps = {
   onTogglePrivacy: (annotation: AnnotationRow, nextValue: boolean) => void;
   onSetReviewStatus: (annotation: AnnotationRow, nextStatus: AnnotationReviewStatus) => void;
 };
-
-const CONTENT_PREVIEW_LIMIT = 220;
 
 function formatDateTime(value: string) {
   const date = new Date(value);
@@ -117,44 +120,15 @@ function getReviewTransition(current: AnnotationReviewStatus) {
   };
 }
 
-function getDisplayContent(content: string, expanded: boolean) {
-  if (expanded || content.length <= CONTENT_PREVIEW_LIMIT) {
-    return content;
-  }
-
-  return `${content.slice(0, CONTENT_PREVIEW_LIMIT).trimEnd()}...`;
-}
-
 function renderContent(annotation: AnnotationRow, content: string, expanded: boolean) {
   if (annotation.type === "post_it") {
-    const paperColor = annotation.color ?? "#FFE6A8";
-
     return (
-      <div className="relative mx-auto w-full max-w-[15.5rem] pb-2 pr-2">
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-2 translate-x-2 translate-y-2 rotate-1 rounded-[1.05rem] border border-black/10 opacity-35 shadow-sm"
-          style={{ backgroundColor: paperColor }}
-        />
-        <span
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-1 translate-x-1 translate-y-1 -rotate-1 rounded-[1.05rem] border border-black/10 opacity-45 shadow-sm"
-          style={{ backgroundColor: paperColor }}
-        />
-        <div
-          className={[
-            "relative rounded-[1.05rem] border border-black/10 p-4 text-sm leading-relaxed shadow-[2px_5px_0_rgb(0_0_0_/_7%)]",
-            expanded ? "min-h-56" : "aspect-square",
-          ].join(" ")}
-          style={{
-            backgroundColor: paperColor,
-            color: annotation.text_color ?? "#4A3A2A",
-          }}
-        >
-          <span className="absolute left-1/2 top-0 h-2 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/50 shadow-sm" />
-          <p className="whitespace-pre-wrap">{content}</p>
-        </div>
-      </div>
+      <PostItPaper
+        color={annotation.color}
+        content={content}
+        expanded={expanded}
+        textColor={annotation.text_color}
+      />
     );
   }
 
@@ -248,8 +222,8 @@ export function AnnotationCard({
   const reviewTransition = getReviewTransition(annotation.review_status);
   const [expanded, setExpanded] = useState(false);
   const rawContent = annotation.content?.trim() || "Sem conteudo";
-  const canExpand = rawContent.length > CONTENT_PREVIEW_LIMIT;
-  const displayContent = getDisplayContent(rawContent, expanded);
+  const canExpand = rawContent.length > POST_IT_PREVIEW_LIMIT;
+  const displayContent = getPostItDisplayContent(rawContent, expanded);
 
   function toggleExpanded() {
     if (!canExpand) {

@@ -21,6 +21,7 @@ import { OPEN_ANNOTATION_SHORTCUT_EVENT } from "@/lib/shortcuts";
 import { AnnotationCard } from "@/features/annotations/annotation-card";
 import { AnnotationModal, type AnnotationModalSubmitValue } from "@/features/annotations/annotation-modal";
 import { annotationTypeOptions } from "@/features/annotations/annotation-definitions";
+import { PostItStack } from "@/features/annotations/post-it-stack";
 import { useAnnotations } from "@/features/annotations/use-annotations";
 import type { AnnotationRow } from "@/features/annotations/annotation-services";
 import type { AnnotationReviewStatus, AnnotationType } from "@/lib/supabase/database.types";
@@ -28,6 +29,20 @@ import type { AnnotationReviewStatus, AnnotationType } from "@/lib/supabase/data
 type TypeFilter = "all" | AnnotationType;
 type ScopeFilter = "all" | "favorites" | "to_review";
 type BookFilter = "all" | "without_book" | string;
+type AnnotationViewItem =
+  | {
+      kind: "single";
+      annotation: AnnotationRow;
+    }
+  | {
+      kind: "post_it_stack";
+      annotations: AnnotationRow[];
+      key: string;
+    };
+
+function getPostItGroupKey(annotation: AnnotationRow) {
+  return annotation.book_id ?? "without-book";
+}
 
 function MetricTile({
   helper,
@@ -126,6 +141,54 @@ export function AnotacoesClient() {
     });
   }, [annotations, bookFilter, booksById, query, scopeFilter, typeFilter]);
 
+  const annotationViewItems = useMemo<AnnotationViewItem[]>(() => {
+    const postItGroups = new Map<string, AnnotationRow[]>();
+
+    filteredAnnotations.forEach((annotation) => {
+      if (annotation.type !== "post_it") {
+        return;
+      }
+
+      const key = getPostItGroupKey(annotation);
+      postItGroups.set(key, [...(postItGroups.get(key) ?? []), annotation]);
+    });
+
+    const stackKeys = new Set(
+      Array.from(postItGroups.entries())
+        .filter(([, group]) => group.length > 1)
+        .map(([key]) => key),
+    );
+    const renderedStacks = new Set<string>();
+
+    const items: AnnotationViewItem[] = [];
+
+    filteredAnnotations.forEach((annotation) => {
+      if (annotation.type !== "post_it") {
+        items.push({ kind: "single", annotation });
+        return;
+      }
+
+      const key = getPostItGroupKey(annotation);
+      if (!stackKeys.has(key)) {
+        items.push({ kind: "single", annotation });
+        return;
+      }
+
+      if (renderedStacks.has(key)) {
+        return;
+      }
+
+      renderedStacks.add(key);
+      items.push({
+        kind: "post_it_stack",
+        annotations: postItGroups.get(key) ?? [annotation],
+        key,
+      });
+    });
+
+    return items;
+  }, [filteredAnnotations]);
+
   useEffect(() => {
     function handleOpenAnnotationShortcut() {
       setEditingAnnotation(null);
@@ -222,7 +285,13 @@ export function AnotacoesClient() {
     }
 
     const result = await deleteAnnotationEntry(annotation.id);
-    setFeedback(result.ok ? "Anotação enviada para a Lixeira." : result.message);
+    setFeedback(
+      result.ok
+        ? annotation.type === "post_it"
+          ? "Post-it movido para a Lixeira."
+          : "Anotação enviada para a Lixeira."
+        : result.message,
+    );
   }
 
   async function handleToggleFavorite(annotation: AnnotationRow, nextValue: boolean) {
@@ -475,18 +544,39 @@ export function AnotacoesClient() {
         </section>
       ) : (
         <section className="grid gap-4 md:grid-cols-2">
-          {filteredAnnotations.map((annotation) => (
-            <AnnotationCard
-              key={annotation.id}
-              annotation={annotation}
-              bookTitle={annotation.book_id ? booksById.get(annotation.book_id)?.title ?? null : null}
-              onEdit={openEditModal}
-              onDelete={(item) => void handleDelete(item)}
-              onToggleFavorite={(item, next) => void handleToggleFavorite(item, next)}
-              onTogglePrivacy={(item, next) => void handleTogglePrivacy(item, next)}
-              onSetReviewStatus={(item, next) => void handleSetReviewStatus(item, next)}
-            />
-          ))}
+          {annotationViewItems.map((item) => {
+            if (item.kind === "post_it_stack") {
+              const firstAnnotation = item.annotations[0];
+
+              return (
+                <PostItStack
+                  key={`post-it-stack-${item.key}`}
+                  annotations={item.annotations}
+                  bookTitle={
+                    firstAnnotation?.book_id ? booksById.get(firstAnnotation.book_id)?.title ?? null : null
+                  }
+                  onEdit={openEditModal}
+                  onDelete={(annotation) => void handleDelete(annotation)}
+                  onToggleFavorite={(annotation, next) => void handleToggleFavorite(annotation, next)}
+                  onTogglePrivacy={(annotation, next) => void handleTogglePrivacy(annotation, next)}
+                  onSetReviewStatus={(annotation, next) => void handleSetReviewStatus(annotation, next)}
+                />
+              );
+            }
+
+            return (
+              <AnnotationCard
+                key={item.annotation.id}
+                annotation={item.annotation}
+                bookTitle={item.annotation.book_id ? booksById.get(item.annotation.book_id)?.title ?? null : null}
+                onEdit={openEditModal}
+                onDelete={(annotation) => void handleDelete(annotation)}
+                onToggleFavorite={(annotation, next) => void handleToggleFavorite(annotation, next)}
+                onTogglePrivacy={(annotation, next) => void handleTogglePrivacy(annotation, next)}
+                onSetReviewStatus={(annotation, next) => void handleSetReviewStatus(annotation, next)}
+              />
+            );
+          })}
         </section>
       )}
 

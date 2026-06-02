@@ -28,6 +28,10 @@ import {
   fallbackAnnotationColors,
 } from "@/features/annotations/annotation-definitions";
 import {
+  PostItPaper,
+  getPostItDisplayContent,
+} from "@/features/annotations/post-it-paper";
+import {
   createAnnotation,
   listAnnotationColors,
   softDeleteAnnotation,
@@ -442,16 +446,12 @@ function renderAnnotationContent(annotation: AnnotationRow) {
 
   if (annotation.type === "post_it") {
     return (
-      <p
-        className="rounded-lg border border-black/10 p-3 text-sm leading-relaxed"
-        style={{
-          backgroundColor: annotation.color ?? "#FFE6A8",
-          color: annotation.text_color ?? "#4A3A2A",
-          boxShadow: "1px 3px 0 rgb(0 0 0 / 5%)",
-        }}
-      >
-        {content}
-      </p>
+      <PostItPaper
+        color={annotation.color}
+        content={getPostItDisplayContent(content, false)}
+        size="mural"
+        textColor={annotation.text_color}
+      />
     );
   }
 
@@ -1032,7 +1032,11 @@ export function MuralScreen() {
       return;
     }
 
-    setFeedback("Anotacao enviada para a Lixeira.");
+    setFeedback(
+      annotation.type === "post_it"
+        ? "Post-it movido para a Lixeira."
+        : "Anotacao enviada para a Lixeira.",
+    );
     await loadMural();
   }
 
@@ -1273,7 +1277,10 @@ export function MuralScreen() {
               <article
                 key={annotation.id}
                 className={[
-                  "serene-soft-in absolute overflow-hidden rounded-2xl border p-3 transition-[box-shadow,transform,opacity] touch-none",
+                  "serene-soft-in absolute border transition-[box-shadow,transform,opacity] touch-none",
+                  annotation.type === "post_it"
+                    ? "overflow-visible rounded-[1.35rem] p-2"
+                    : "overflow-hidden rounded-2xl p-3",
                   interaction?.id === position.id ? "ring-2 ring-[var(--serene-accent)] ring-offset-2 ring-offset-transparent" : "",
                   getAnnotationClass(annotation.type),
                 ].join(" ")}
@@ -1304,7 +1311,7 @@ export function MuralScreen() {
                   <GripHorizontal className="size-4 shrink-0 opacity-45" />
                 </div>
 
-                <div className="mt-2 max-h-[calc(100%-74px)] overflow-hidden">
+                <div className={annotation.type === "post_it" ? "mt-2 overflow-visible" : "mt-2 max-h-[calc(100%-74px)] overflow-hidden"}>
                   {renderAnnotationContent(annotation)}
                 </div>
 

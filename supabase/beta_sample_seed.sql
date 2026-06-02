@@ -240,7 +240,14 @@ join public.books b
 cross join (
   values
     ('quick_note', 'Primeira nota de teste. Pode editar ou apagar quando quiser.', 24, 'none'),
-    ('reflection', 'Uma reflexão curta para sentir o fluxo de anotações.', 25, 'to_review')
+    ('reflection', 'Uma reflexao curta para sentir o fluxo de anotacoes.', 25, 'to_review'),
+    ('post_it', 'Voltar a esta ideia quando a semana estiver barulhenta.', 31, 'none'),
+    (
+      'post_it',
+      'Post-it longo para testar o recorte visual: esta nota deve parecer papel fisico, com texto limitado, reticencias e abertura suave quando o usuario quiser ler tudo com calma dentro da pilha.',
+      32,
+      'to_review'
+    )
 ) as a(type, content, page_number, review_status)
 where not exists (
   select 1

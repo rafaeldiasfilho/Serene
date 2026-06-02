@@ -449,14 +449,16 @@ Pending manual checks:
 - [x] Limit visible annotation text in cards and allow local expand/retract.
 - [x] Keep edit, favorite, privacy, review status, and Trash actions unchanged.
 - [x] Move the Trash action visually toward the lower-right action area in annotation cards.
+- [x] Create a reusable physical post-it paper renderer for annotation surfaces.
+- [x] Add grouped post-it piles in Anotacoes that open like a calm folder.
+- [x] Keep individual post-it edit/delete/favorite/privacy/review actions available inside the opened pile.
+- [x] Reuse the physical post-it visual in Mural and session-end ritual styling.
 - [x] Add a calm living-session detail to the reading timer area.
 - [x] Add a minimal cup/steam visual that suggests active reading without competing with the book.
 - [x] Add a softer paused state with short microcopy: `Volte com calma.`
 - [x] Keep reading controls and session logic unchanged.
 
 Deferred intentionally:
-- [ ] True grouped post-it piles that open side by side like a mobile folder.
-- [ ] Shared annotation visual renderer between Anotacoes and Mural, if duplication grows.
 - [ ] Full OCR extraction for photographed pages.
 - [ ] Physical post-it/photo detection and user confirmation before saving.
 - [ ] Optional marker classification for physical notes: `*`, `R`, `I`, `?`, `!`, `A`, `P`.
@@ -492,6 +494,27 @@ Validation:
 
 Validation:
 - [ ] Manual Home check: current book, all reading books, collapse/expand, quick note, photo dialog, light/dark, responsive.
+- [x] `git diff --check` passes.
+- [x] `npm run typecheck` passes.
+- [x] `npm run lint` passes.
+- [x] `npm run build` passes.
+
+## Phase 15C - Physical post-its and post-it piles
+
+- [x] Make post-its square or nearly square, physical, tactile, and visually distinct from common cards.
+- [x] Add soft paper layers, subtle tape, physical shadow, and dark-mode-compatible contrast.
+- [x] Limit long post-it text with `...` and allow local expand/retract.
+- [x] Avoid extra invisible clickable areas by making only the paper/folder surface interactive.
+- [x] Add a grouped post-it pile in Anotacoes when multiple post-its belong to the same book or no-book group.
+- [x] Let the post-it pile open into a side-by-side folder view and close back to the pile.
+- [x] Keep edit, delete to Lixeira, favorite, privacy, and review-status actions unchanged inside the folder.
+- [x] Update Mural post-its to use the same physical paper visual.
+- [x] Refine session-end post-it notes so they keep a stacked paper identity during the ritual.
+- [x] Add optional beta sample post-its with short and long content for visual testing.
+- [x] Preserve authentication, beta isolation, services, RLS, reading/session logic, and annotation CRUD logic.
+
+Validation:
+- [ ] Manual post-it flow: create, view, expand, edit, delete, open/close pile, light/dark, clickable areas.
 - [x] `git diff --check` passes.
 - [x] `npm run typecheck` passes.
 - [x] `npm run lint` passes.

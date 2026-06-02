@@ -335,6 +335,99 @@ body {
   white-space: nowrap;
 }
 
+.post-it-paper-wrap {
+  position: relative;
+  isolation: isolate;
+  margin-inline: auto;
+  max-width: 15.5rem;
+  padding: 0 0.55rem 0.55rem 0;
+  width: 100%;
+}
+
+.post-it-paper-layer {
+  pointer-events: none;
+  position: absolute;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 1.05rem;
+  background: var(--post-it-bg);
+  box-shadow: 0 8px 18px rgb(47 42 36 / 8%);
+}
+
+.post-it-paper-layer-back {
+  inset: 0.64rem 0 0 0.64rem;
+  opacity: 0.28;
+  transform: rotate(1.5deg);
+  z-index: -2;
+}
+
+.post-it-paper-layer-mid {
+  inset: 0.32rem 0.25rem 0.25rem 0.32rem;
+  opacity: 0.42;
+  transform: rotate(-1deg);
+  z-index: -1;
+}
+
+.post-it-paper {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgb(0 0 0 / 10%);
+  border-radius: 1.05rem;
+  background:
+    linear-gradient(180deg, rgb(255 255 255 / 18%), transparent 22%),
+    radial-gradient(circle at 20% 12%, rgb(255 255 255 / 18%), transparent 34%),
+    var(--post-it-bg);
+  box-shadow: 2px 5px 0 rgb(0 0 0 / 7%), 0 16px 30px rgb(47 42 36 / 10%);
+  color: var(--post-it-fg);
+  padding: 1rem;
+}
+
+.post-it-paper::after {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 12%), transparent 18%),
+    linear-gradient(180deg, transparent 64%, rgb(47 42 36 / 5%));
+  mix-blend-mode: multiply;
+}
+
+.post-it-paper-tape {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  height: 0.5rem;
+  width: 3.6rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 52%);
+  box-shadow: 0 1px 5px rgb(47 42 36 / 12%);
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+.post-it-paper-content {
+  position: relative;
+  z-index: 1;
+  white-space: pre-wrap;
+  color: var(--post-it-fg);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+html[data-theme="dark"] .post-it-paper,
+html[data-theme="dark"] .post-it-paper-layer {
+  border-color: rgb(255 255 255 / 13%);
+  box-shadow: 2px 5px 0 rgb(0 0 0 / 18%), 0 16px 32px rgb(0 0 0 / 24%);
+}
+
+@media (prefers-color-scheme: dark) {
+  html[data-theme="system"] .post-it-paper,
+  html[data-theme="system"] .post-it-paper-layer {
+    border-color: rgb(255 255 255 / 13%);
+    box-shadow: 2px 5px 0 rgb(0 0 0 / 18%), 0 16px 32px rgb(0 0 0 / 24%);
+  }
+}
+
 .annotation-tone-post-it,
 .annotation-tone-reflection,
 .annotation-tone-highlight,
@@ -645,8 +738,28 @@ html[data-theme="dark"] .annotation-tone-ocr {
 
 .session-ritual-note-post-it {
   border-color: #d5c19a;
+  border-radius: 14px;
   background: #fff8d8;
+  box-shadow: 2px 5px 0 rgb(47 42 36 / 8%), 0 14px 34px rgb(47 42 36 / 14%);
   color: #3f3428;
+}
+
+.session-ritual-note-post-it::before,
+.session-ritual-note-post-it::after {
+  content: "";
+  position: absolute;
+  inset: 5px -5px -5px 5px;
+  border: 1px solid rgb(47 42 36 / 10%);
+  border-radius: 14px;
+  background: #fff8d8;
+  opacity: 0.28;
+  z-index: -1;
+}
+
+.session-ritual-note-post-it::after {
+  inset: 9px -9px -9px 9px;
+  opacity: 0.18;
+  transform: rotate(1deg);
 }
 
 .session-ritual-note-reflection,
