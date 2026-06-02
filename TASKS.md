@@ -555,6 +555,11 @@ Future optional bridge:
 - [x] Make suggestion copy shorter, calmer, and more reading-focused.
 - [x] Add a calm session status strip for memories, saved positions, and suggestion limit.
 - [x] Make the Mural feel more like a mental map/whiteboard without adding visual noise.
+- [x] Product decision recorded: "O Mural do SERENE não usa canvas infinito nem pan/scroll livre. Ele é uma área fixa e visível."
+- [x] Replace the internal scrollable canvas with a fixed visible Mural area.
+- [x] Remove scroll-based placement for new Mural annotations.
+- [x] Keep moved annotations and suggested balloons constrained to the fixed visible area.
+- [x] Show a calm `mais memorias` summary instead of solving dense Murals with infinite scroll.
 - [x] Improve fallback placement so generated annotation/suggestion positions keep looking organized when the canvas is busier.
 - [x] Keep manual `+` annotation creation starting at the visible center.
 - [x] Keep suggested balloons movable and removable only through explicit actions.

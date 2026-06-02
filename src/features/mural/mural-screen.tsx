@@ -85,6 +85,11 @@ type Rect = {
   zIndex?: number;
 };
 
+type BoardSize = {
+  width: number;
+  height: number;
+};
+
 type ModalState =
   | {
       mode: "create";
@@ -120,6 +125,8 @@ const MIN_CARD_HEIGHT = 130;
 const AUTO_SUGGEST_AFTER_SECONDS = 90;
 const SUGGESTION_LIMIT = 5;
 const SUGGESTION_ENTRY_DELAY_MS = 110;
+const BOARD_PADDING = 18;
+const MAX_BOARD_ANNOTATIONS = 8;
 
 const suggestionTypes: AnnotationType[] = ["idea", "reflection", "doubt", "action", "thought"];
 
@@ -482,6 +489,129 @@ function getSuggestionProgressLabel(
   } - ${createdCount}/${SUGGESTION_LIMIT}`;
 }
 
+function getBoardAnnotationLimit(boardSize: BoardSize) {
+  if (boardSize.width < 640) {
+    return 5;
+  }
+  if (boardSize.width < 980) {
+    return 6;
+  }
+  return MAX_BOARD_ANNOTATIONS;
+}
+
+function getResponsiveCardSize(rect: Rect, boardSize: BoardSize, target: InteractionTarget) {
+  const baseWidth = target === "suggestion" ? SUGGESTION_WIDTH : CARD_WIDTH;
+  const baseHeight = target === "suggestion" ? SUGGESTION_HEIGHT : CARD_HEIGHT;
+  const maxWidth = Math.max(150, boardSize.width - BOARD_PADDING * 2);
+  const desiredWidth =
+    target === "suggestion"
+      ? clamp(boardSize.width * 0.22, 178, 250)
+      : clamp(boardSize.width * 0.26, 198, 300);
+  const widthScale = clamp(rect.width / baseWidth, 0.78, 1.22);
+  const width = clamp(desiredWidth * widthScale, 150, maxWidth);
+  const aspect = clamp(rect.height / Math.max(1, rect.width), 0.42, 0.82);
+  const fallbackAspect = baseHeight / baseWidth;
+  const height = clamp(
+    width * (Number.isFinite(aspect) ? aspect : fallbackAspect),
+    target === "suggestion" ? 106 : 118,
+    Math.max(118, boardSize.height - BOARD_PADDING * 2),
+  );
+
+  return { width, height };
+}
+
+function getBoardRenderRect(rect: Rect, boardSize: BoardSize, target: InteractionTarget): Rect {
+  const safeBoardWidth = Math.max(1, boardSize.width);
+  const safeBoardHeight = Math.max(1, boardSize.height);
+  const size = getResponsiveCardSize(rect, boardSize, target);
+  const logicalMaxX = Math.max(1, CANVAS_WIDTH - rect.width);
+  const logicalMaxY = Math.max(1, CANVAS_HEIGHT - rect.height);
+  const xRatio = clamp(rect.x / logicalMaxX, 0, 1);
+  const yRatio = clamp(rect.y / logicalMaxY, 0, 1);
+  const maxX = Math.max(BOARD_PADDING, safeBoardWidth - size.width - BOARD_PADDING);
+  const maxY = Math.max(BOARD_PADDING, safeBoardHeight - size.height - BOARD_PADDING);
+
+  return {
+    ...rect,
+    x: clamp(BOARD_PADDING + xRatio * Math.max(1, maxX - BOARD_PADDING), BOARD_PADDING, maxX),
+    y: clamp(BOARD_PADDING + yRatio * Math.max(1, maxY - BOARD_PADDING), BOARD_PADDING, maxY),
+    width: size.width,
+    height: size.height,
+  };
+}
+
+function getLogicalRectFromBoardRect(
+  renderRect: Rect,
+  sourceRect: Rect,
+  boardSize: BoardSize,
+  target: InteractionTarget,
+) {
+  const size = getResponsiveCardSize(sourceRect, boardSize, target);
+  const maxX = Math.max(BOARD_PADDING, boardSize.width - size.width - BOARD_PADDING);
+  const maxY = Math.max(BOARD_PADDING, boardSize.height - size.height - BOARD_PADDING);
+  const xRatio = clamp(
+    (renderRect.x - BOARD_PADDING) / Math.max(1, maxX - BOARD_PADDING),
+    0,
+    1,
+  );
+  const yRatio = clamp(
+    (renderRect.y - BOARD_PADDING) / Math.max(1, maxY - BOARD_PADDING),
+    0,
+    1,
+  );
+
+  return clampRect({
+    ...sourceRect,
+    x: xRatio * Math.max(1, CANVAS_WIDTH - sourceRect.width),
+    y: yRatio * Math.max(1, CANVAS_HEIGHT - sourceRect.height),
+  });
+}
+
+function avoidBoardOverlap(
+  rect: Rect,
+  blockedRects: Rect[],
+  boardSize: BoardSize,
+  fallbackIndex: number,
+) {
+  if (!blockedRects.some((blockedRect) => overlaps(rect, blockedRect, 12))) {
+    return rect;
+  }
+
+  const columns = boardSize.width < 640 ? 2 : boardSize.width < 980 ? 3 : 4;
+  const rows = Math.max(
+    2,
+    Math.floor((boardSize.height - BOARD_PADDING * 2) / Math.max(118, rect.height + 20)),
+  );
+  const totalSlots = columns * rows;
+
+  for (let step = 0; step < totalSlots; step += 1) {
+    const index = (fallbackIndex + step) % totalSlots;
+    const cellWidth = (boardSize.width - BOARD_PADDING * 2) / columns;
+    const cellHeight = (boardSize.height - BOARD_PADDING * 2) / rows;
+    const column = index % columns;
+    const row = Math.floor(index / columns);
+    const candidate = {
+      ...rect,
+      x: clamp(
+        BOARD_PADDING + column * cellWidth + Math.max(0, (cellWidth - rect.width) / 2),
+        BOARD_PADDING,
+        Math.max(BOARD_PADDING, boardSize.width - rect.width - BOARD_PADDING),
+      ),
+      y: clamp(
+        BOARD_PADDING + row * cellHeight + Math.max(0, (cellHeight - rect.height) / 2),
+        BOARD_PADDING,
+        Math.max(BOARD_PADDING, boardSize.height - rect.height - BOARD_PADDING),
+      ),
+    };
+
+    if (!blockedRects.some((blockedRect) => overlaps(candidate, blockedRect, 12))) {
+      return candidate;
+    }
+  }
+
+  return rect;
+}
+
 function renderAnnotationContent(annotation: AnnotationRow) {
   const content = annotation.content?.trim() || "Sem conteudo";
 
@@ -625,6 +755,10 @@ export function MuralScreen() {
   const [modalState, setModalState] = useState<ModalState | null>(null);
   const [clockMs, setClockMs] = useState(() => Date.now());
   const [interaction, setInteraction] = useState<Interaction | null>(null);
+  const [boardSize, setBoardSize] = useState<BoardSize>({
+    width: CANVAS_WIDTH,
+    height: CANVAS_HEIGHT,
+  });
 
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const latestInteractionRectRef = useRef<Rect | null>(null);
@@ -792,6 +926,29 @@ export function MuralScreen() {
   }, [loadMural]);
 
   useEffect(() => {
+    const currentElement = viewportRef.current;
+    if (!currentElement) {
+      return;
+    }
+
+    const measuredElement = currentElement;
+    const updateBoardSize = () => {
+      setBoardSize({
+        width: Math.max(320, measuredElement.clientWidth),
+        height: Math.max(420, measuredElement.clientHeight),
+      });
+    };
+
+    updateBoardSize();
+    const resizeObserver = new ResizeObserver(updateBoardSize);
+    resizeObserver.observe(currentElement);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
     if (!session || (session.status !== "active" && session.status !== "paused")) {
       return;
     }
@@ -872,8 +1029,12 @@ export function MuralScreen() {
     }
 
     function handlePointerMove(event: PointerEvent) {
-      const deltaX = event.clientX - activeInteraction.startClientX;
-      const deltaY = event.clientY - activeInteraction.startClientY;
+      const deltaX =
+        (event.clientX - activeInteraction.startClientX) *
+        (CANVAS_WIDTH / Math.max(1, boardSize.width));
+      const deltaY =
+        (event.clientY - activeInteraction.startClientY) *
+        (CANVAS_HEIGHT / Math.max(1, boardSize.height));
       const startRect = activeInteraction.startRect;
 
       const nextRect =
@@ -947,7 +1108,7 @@ export function MuralScreen() {
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("pointercancel", handlePointerUp);
     };
-  }, [interaction, loadMural, user]);
+  }, [boardSize.height, boardSize.width, interaction, loadMural, user]);
 
   const positionsByAnnotationId = useMemo(() => {
     return new Map(positions.map((position) => [position.annotation_id, position]));
@@ -976,6 +1137,42 @@ export function MuralScreen() {
   const positionCountLabel = `${positions.length} ${
     positions.length === 1 ? "posicao guardada" : "posicoes guardadas"
   }`;
+  const boardAnnotationLimit = getBoardAnnotationLimit(boardSize);
+  const boardAnnotations = annotations.slice(0, boardAnnotationLimit);
+  const hiddenAnnotationCount = Math.max(0, annotations.length - boardAnnotations.length);
+  const boardAnnotationItems = boardAnnotations.flatMap((annotation) => {
+    const position = positionsByAnnotationId.get(annotation.id);
+    if (!position) {
+      return [];
+    }
+
+    const logicalRect = clampRect(getPositionRect(position));
+    const rect = getBoardRenderRect(logicalRect, boardSize, "annotation");
+
+    return [{ annotation, position, logicalRect, rect }];
+  });
+  const blockedRenderRects = boardAnnotationItems.map((item) => item.rect);
+  const visibleSuggestionItems = visibleSuggestions.map((suggestion, index) => {
+    const logicalRect = clampRect(getSuggestionRect(suggestion));
+    const initialRect = getBoardRenderRect(logicalRect, boardSize, "suggestion");
+    const rect = avoidBoardOverlap(initialRect, blockedRenderRects, boardSize, index);
+    const visibleLogicalRect = getLogicalRectFromBoardRect(
+      rect,
+      logicalRect,
+      boardSize,
+      "suggestion",
+    );
+    const positionedSuggestion = {
+      ...suggestion,
+      x: visibleLogicalRect.x,
+      y: visibleLogicalRect.y,
+      width: visibleLogicalRect.width,
+      height: visibleLogicalRect.height,
+    };
+    blockedRenderRects.push(rect);
+
+    return { suggestion: positionedSuggestion, logicalRect: visibleLogicalRect, rect };
+  });
 
   function startInteraction(
     event: React.PointerEvent,
@@ -1013,19 +1210,9 @@ export function MuralScreen() {
   }
 
   function getVisibleCenterRect() {
-    const viewport = viewportRef.current;
-    if (!viewport) {
-      return {
-        x: CANVAS_WIDTH / 2 - CARD_WIDTH / 2,
-        y: CANVAS_HEIGHT / 2 - CARD_HEIGHT / 2,
-        width: CARD_WIDTH,
-        height: CARD_HEIGHT,
-      };
-    }
-
     return clampRect({
-      x: viewport.scrollLeft + viewport.clientWidth / 2 - CARD_WIDTH / 2,
-      y: viewport.scrollTop + viewport.clientHeight / 2 - CARD_HEIGHT / 2,
+      x: CANVAS_WIDTH / 2 - CARD_WIDTH / 2,
+      y: CANVAS_HEIGHT / 2 - CARD_HEIGHT / 2,
       width: CARD_WIDTH,
       height: CARD_HEIGHT,
     });
@@ -1302,7 +1489,7 @@ export function MuralScreen() {
           </p>
           <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[var(--serene-muted)]">
             Uma mesa aberta para aproximar trechos, ideias e perguntas deste livro, com posicoes
-            preservadas enquanto a leitura continua.
+            preservadas dentro de uma area fixa, enquanto a leitura continua.
           </p>
         </div>
 
@@ -1330,13 +1517,11 @@ export function MuralScreen() {
 
       <div
         ref={viewportRef}
-        className="relative h-[68vh] min-h-[420px] overflow-auto rounded-[2rem] border border-[color-mix(in_oklab,var(--serene-border)_82%,transparent)] bg-[#fbfaf5] shadow-[inset_0_1px_0_rgb(255_255_255_/_60%),inset_0_0_48px_rgb(94_74_51_/_7%),var(--serene-shadow-lift)] dark:bg-[#1f211d] dark:shadow-[inset_0_1px_0_rgb(255_255_255_/_5%),inset_0_0_56px_rgb(0_0_0_/_28%),var(--serene-shadow-lift)] sm:min-h-[560px]"
+        className="relative h-[68svh] max-h-[720px] min-h-[420px] overflow-hidden rounded-[2rem] border border-[color-mix(in_oklab,var(--serene-border)_82%,transparent)] bg-[#fbfaf5] shadow-[inset_0_1px_0_rgb(255_255_255_/_60%),inset_0_0_48px_rgb(94_74_51_/_7%),var(--serene-shadow-lift)] dark:bg-[#1f211d] dark:shadow-[inset_0_1px_0_rgb(255_255_255_/_5%),inset_0_0_56px_rgb(0_0_0_/_28%),var(--serene-shadow-lift)] sm:min-h-[520px]"
       >
         <div
-          className="relative"
+          className="absolute inset-0"
           style={{
-            width: CANVAS_WIDTH,
-            height: CANVAS_HEIGHT,
             backgroundImage: muralPreferences.calm_grid_enabled
               ? "radial-gradient(circle at 18% 14%, color-mix(in oklab, var(--serene-surface) 76%, white 24%), transparent 25%), radial-gradient(circle at 78% 18%, color-mix(in oklab, var(--serene-accent) 13%, transparent), transparent 28%), linear-gradient(color-mix(in oklab, var(--serene-border) 42%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklab, var(--serene-border) 42%, transparent) 1px, transparent 1px)"
               : "radial-gradient(circle at 18% 14%, color-mix(in oklab, var(--serene-surface) 76%, white 24%), transparent 25%), radial-gradient(circle at 78% 18%, color-mix(in oklab, var(--serene-accent) 13%, transparent), transparent 28%)",
@@ -1348,13 +1533,7 @@ export function MuralScreen() {
               : undefined,
           }}
         >
-          {annotations.map((annotation) => {
-            const position = positionsByAnnotationId.get(annotation.id);
-            if (!position) {
-              return null;
-            }
-            const rect = getPositionRect(position);
-
+          {boardAnnotationItems.map(({ annotation, position, logicalRect, rect }) => {
             return (
               <article
                 key={annotation.id}
@@ -1379,7 +1558,7 @@ export function MuralScreen() {
                 <div
                   className="flex cursor-grab items-start justify-between gap-2 rounded-xl border border-black/5 bg-white/20 px-2 py-1.5 backdrop-blur-[1px] active:cursor-grabbing dark:bg-white/5"
                   onPointerDown={(event) =>
-                    startInteraction(event, "annotation", "move", position.id, rect)
+                    startInteraction(event, "annotation", "move", position.id, logicalRect)
                   }
                 >
                   <div className="min-w-0">
@@ -1430,7 +1609,7 @@ export function MuralScreen() {
                   title="Redimensionar"
                   aria-label="Redimensionar anotacao"
                   onPointerDown={(event) =>
-                    startInteraction(event, "annotation", "resize", position.id, rect)
+                    startInteraction(event, "annotation", "resize", position.id, logicalRect)
                   }
                 >
                   <Maximize2 className="size-3.5" />
@@ -1439,8 +1618,7 @@ export function MuralScreen() {
             );
           })}
 
-          {visibleSuggestions.map((suggestion) => {
-            const rect = getSuggestionRect(suggestion);
+          {visibleSuggestionItems.map(({ suggestion, logicalRect, rect }) => {
             const type = normalizeSuggestionType(suggestion.suggested_type);
             const copy = suggestionCopy[type] ?? suggestionCopy.idea;
 
@@ -1464,16 +1642,16 @@ export function MuralScreen() {
                 <div
                   className="flex cursor-grab items-start justify-between gap-2 active:cursor-grabbing"
                   onPointerDown={(event) =>
-                    startInteraction(event, "suggestion", "move", suggestion.id, rect)
+                    startInteraction(event, "suggestion", "move", suggestion.id, logicalRect)
                   }
                 >
                   <div className="flex items-start gap-2">
                     <span className="mt-1.5 size-2 rounded-full bg-[#78a7a0] shadow-[0_0_0_4px_rgb(120_167_160_/_12%)]" />
                     <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] opacity-70">
-                      Sugestao {suggestion.suggested_slot}/5
-                    </p>
-                    <h2 className="mt-1 text-sm font-semibold">{copy.title}</h2>
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] opacity-70">
+                        Sugestao {suggestion.suggested_slot}/5
+                      </p>
+                      <h2 className="mt-1 text-sm font-semibold">{copy.title}</h2>
                     </div>
                   </div>
                   <GripHorizontal className="size-4 shrink-0 opacity-60" />
@@ -1487,7 +1665,7 @@ export function MuralScreen() {
                       event.stopPropagation();
                       setModalState({
                         mode: "create",
-                        rect,
+                        rect: logicalRect,
                         defaultType: type,
                         suggestion,
                       });
@@ -1533,6 +1711,18 @@ export function MuralScreen() {
               <p className="mt-2 text-sm text-[var(--serene-muted)]">
                 Crie a primeira anotacao pelo botao flutuante. Ela vai nascer no centro visivel do
                 Mural.
+              </p>
+            </div>
+          )}
+
+          {hiddenAnnotationCount > 0 && (
+            <div className="serene-soft-in absolute bottom-4 right-4 z-[90] max-w-[260px] rounded-[1.5rem] border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_92%,transparent)] px-4 py-3 text-sm shadow-[var(--serene-shadow-soft)] backdrop-blur">
+              <p className="font-semibold text-[var(--serene-fg)]">
+                +{hiddenAnnotationCount} memorias guardadas
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-[var(--serene-muted)]">
+                O Mural mostra o nucleo principal para preservar clareza. O restante continua em
+                Anotacoes.
               </p>
             </div>
           )}

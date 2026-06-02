@@ -166,6 +166,7 @@ Phase 15E refines the Mural without changing database structure or reading behav
 - Opening, closing, or using Mural does not pause reading time.
 - Suggested idea balloons remain capped at 5 per session and keep stable saved positions.
 - The Mural now presents itself more clearly as a calm mental map, with preserved positions and softer suggestion copy.
+- Product decision: "O Mural do SERENE não usa canvas infinito nem pan/scroll livre. Ele é uma área fixa e visível."
 
 No authentication, reading/session logic, annotation logic, Mente logic, beta access rules, or destructive deletion behavior changed in Phase 15D or Phase 15E.
 
