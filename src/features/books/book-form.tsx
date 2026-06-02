@@ -1,12 +1,20 @@
 "use client";
 
-import { Save, X } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import {
+  BookOpen,
+  FolderOpen,
+  Library,
+  Save,
+  ShieldCheck,
+  Sparkles,
+  X,
+  type LucideIcon,
+} from "lucide-react";
+import { type FormEvent, type ReactNode, useMemo, useState } from "react";
 
-import type { BookStatus, ReadingOrigin } from "@/lib/supabase/database.types";
-import type { BookInsert } from "@/features/books/book-services";
+import type { BookInsert, ManualCategoryRow } from "@/features/books/book-services";
 import type { BookWithCategories } from "@/features/books/use-book-library";
-import type { ManualCategoryRow } from "@/features/books/book-services";
+import type { BookStatus, ReadingOrigin } from "@/lib/supabase/database.types";
 
 const statusOptions: Array<{ value: BookStatus; label: string }> = [
   { value: "quero_ler", label: "Quero ler" },
@@ -49,6 +57,57 @@ type BookFormProps = {
   onCancel: () => void;
   onSubmit: (payload: Omit<BookInsert, "user_id">, categoryIds: string[]) => Promise<void>;
 };
+
+const fieldClass =
+  "rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2.5 text-sm text-[var(--serene-text)] outline-none transition duration-300 placeholder:text-[var(--serene-muted)] focus:border-[var(--serene-accent)] focus:ring-2 focus:ring-[var(--serene-accent-soft)]";
+
+const textareaClass =
+  "min-h-24 rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2.5 text-sm text-[var(--serene-text)] outline-none transition duration-300 placeholder:text-[var(--serene-muted)] focus:border-[var(--serene-accent)] focus:ring-2 focus:ring-[var(--serene-accent-soft)]";
+
+const checkboxClass =
+  "mt-0.5 size-4 shrink-0 rounded border-[var(--serene-border)] accent-[var(--serene-accent)]";
+
+function FormSection({
+  children,
+  description,
+  icon: Icon,
+  title,
+}: {
+  children: ReactNode;
+  description: string;
+  icon: LucideIcon;
+  title: string;
+}) {
+  return (
+    <section className="serene-soft-in rounded-[1.5rem] border border-[var(--serene-border)] bg-[var(--serene-paper)] p-4 shadow-[var(--serene-shadow-soft)] sm:p-5">
+      <div className="mb-4 flex items-start gap-3">
+        <span className="grid size-10 shrink-0 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-accent-soft)] text-[var(--serene-accent)]">
+          <Icon className="size-4" />
+        </span>
+        <div>
+          <h3 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
+            {title}
+          </h3>
+          <p className="mt-1 text-sm leading-relaxed text-[var(--serene-muted)]">{description}</p>
+        </div>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function FieldHint({ children }: { children: ReactNode }) {
+  return <span className="text-xs leading-relaxed text-[var(--serene-muted)]">{children}</span>;
+}
+
+function ChoiceText({ children, title }: { children: ReactNode; title: string }) {
+  return (
+    <span className="grid gap-0.5">
+      <span className="font-semibold text-[var(--serene-text)]">{title}</span>
+      <span className="text-xs leading-relaxed text-[var(--serene-muted)]">{children}</span>
+    </span>
+  );
+}
 
 function createInitialState(book: BookWithCategories | null): BookFormState {
   return {
@@ -119,9 +178,8 @@ export function BookForm({ book, categories, saving, onCancel, onSubmit }: BookF
       show_in_mente: form.show_in_mente,
       include_in_quick_exports: form.include_in_quick_exports,
       read_before_serene: readingOrigin === "historico" ? true : form.read_before_serene,
-      completed_inside_serene: readingOrigin === "serene" && status === "lido"
-        ? true
-        : form.completed_inside_serene,
+      completed_inside_serene:
+        readingOrigin === "serene" && status === "lido" ? true : form.completed_inside_serene,
     };
   }, [form]);
 
@@ -172,244 +230,331 @@ export function BookForm({ book, categories, saving, onCancel, onSubmit }: BookF
   return (
     <form
       onSubmit={handleSubmit}
-      className="grid gap-5 rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-sm"
+      className="serene-rise grid gap-5 rounded-[2rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-lift)] sm:p-5"
     >
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">{book ? "Editar livro" : "Novo livro"}</h2>
-          <p className="text-sm text-[var(--serene-muted)]">
-            Guarde apenas o necessário agora. Detalhes podem ser ajustados depois.
-          </p>
+        <div className="flex items-start gap-3">
+          <span className="grid size-11 shrink-0 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-accent-soft)] text-[var(--serene-accent)]">
+            <Library className="size-5" />
+          </span>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--serene-muted)]">
+              {book ? "Editar biblioteca" : "Guardar na biblioteca"}
+            </p>
+            <h2 className="mt-1 text-xl font-semibold text-[var(--serene-text)]">
+              {book ? "Cuidar deste livro" : "Guardar um novo livro"}
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--serene-muted)]">
+              Registre o essencial agora. Os detalhes podem amadurecer junto com a leitura.
+            </p>
+          </div>
         </div>
         <button
           type="button"
           onClick={onCancel}
-          className="grid size-9 place-items-center rounded-full border border-[var(--serene-border)] text-[var(--serene-muted)]"
+          className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition duration-300 hover:-translate-y-0.5 hover:border-[var(--serene-accent)] hover:text-[var(--serene-text)]"
           aria-label="Fechar formulário"
         >
           <X className="size-4" />
         </button>
       </div>
 
-      <div className="grid gap-3 md:grid-cols-2">
-        <label className="grid gap-1 text-sm md:col-span-2">
-          Título
-          <input
-            className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none focus:ring-2 focus:ring-[var(--serene-accent)]"
-            value={form.title}
-            onChange={(event) => updateField("title", event.target.value)}
-            required
-          />
-        </label>
-        <label className="grid gap-1 text-sm">
-          Autor
-          <input
-            className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none focus:ring-2 focus:ring-[var(--serene-accent)]"
-            value={form.author}
-            onChange={(event) => updateField("author", event.target.value)}
-          />
-        </label>
-        <label className="grid gap-1 text-sm">
-          Capa (URL)
-          <input
-            className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none focus:ring-2 focus:ring-[var(--serene-accent)]"
-            value={form.cover_url}
-            onChange={(event) => updateField("cover_url", event.target.value)}
-          />
-        </label>
-        <label className="grid gap-1 text-sm md:col-span-2">
-          Descrição
-          <textarea
-            className="min-h-20 rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none focus:ring-2 focus:ring-[var(--serene-accent)]"
-            value={form.description}
-            onChange={(event) => updateField("description", event.target.value)}
-          />
-        </label>
-        <label className="grid gap-1 text-sm">
-          Editora
-          <input
-            className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none focus:ring-2 focus:ring-[var(--serene-accent)]"
-            value={form.publisher}
-            onChange={(event) => updateField("publisher", event.target.value)}
-          />
-        </label>
-        <label className="grid gap-1 text-sm">
-          Edição
-          <input
-            className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none focus:ring-2 focus:ring-[var(--serene-accent)]"
-            value={form.edition}
-            onChange={(event) => updateField("edition", event.target.value)}
-          />
-        </label>
-        <label className="grid gap-1 text-sm">
-          Ano
-          <input
-            type="number"
-            min="1"
-            className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none focus:ring-2 focus:ring-[var(--serene-accent)]"
-            value={form.publication_year}
-            onChange={(event) => updateField("publication_year", event.target.value)}
-          />
-        </label>
-        <label className="grid gap-1 text-sm">
-          Páginas
-          <input
-            type="number"
-            min="1"
-            className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none focus:ring-2 focus:ring-[var(--serene-accent)]"
-            value={form.total_pages}
-            onChange={(event) => updateField("total_pages", event.target.value)}
-          />
-        </label>
-        <label className="grid gap-1 text-sm">
-          Página atual
-          <input
-            type="number"
-            min="0"
-            className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none focus:ring-2 focus:ring-[var(--serene-accent)]"
-            value={form.current_page}
-            onChange={(event) => updateField("current_page", event.target.value)}
-          />
-        </label>
-        <label className="grid gap-1 text-sm">
-          Status
-          <select
-            className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none focus:ring-2 focus:ring-[var(--serene-accent)]"
-            value={form.status}
-            onChange={(event) => updateField("status", event.target.value as BookStatus)}
-          >
-            {statusOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="grid gap-1 text-sm">
-          Origem
-          <select
-            className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none focus:ring-2 focus:ring-[var(--serene-accent)]"
-            value={form.reading_origin}
-            onChange={(event) => updateField("reading_origin", event.target.value as ReadingOrigin)}
-          >
-            {originOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      <FormSection
+        description="Os sinais principais para reconhecer este livro na sua estante."
+        icon={BookOpen}
+        title="Identidade do livro"
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)] md:col-span-2">
+            Título
+            <input
+              className={fieldClass}
+              value={form.title}
+              onChange={(event) => updateField("title", event.target.value)}
+              placeholder="Ex.: A montanha mágica"
+              required
+            />
+            <FieldHint>O nome que vai aparecer na sua Biblioteca.</FieldHint>
+          </label>
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
+            Autor
+            <input
+              className={fieldClass}
+              value={form.author}
+              onChange={(event) => updateField("author", event.target.value)}
+              placeholder="Quem escreveu"
+            />
+          </label>
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
+            Capa (URL)
+            <input
+              className={fieldClass}
+              value={form.cover_url}
+              onChange={(event) => updateField("cover_url", event.target.value)}
+              placeholder="Link da imagem, se tiver"
+            />
+          </label>
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)] md:col-span-2">
+            Descrição
+            <textarea
+              className={textareaClass}
+              value={form.description}
+              onChange={(event) => updateField("description", event.target.value)}
+              placeholder="Uma frase, contexto ou memória inicial sobre este livro."
+            />
+            <FieldHint>Opcional. Use como uma pequena nota de entrada para a leitura.</FieldHint>
+          </label>
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
+            Editora
+            <input
+              className={fieldClass}
+              value={form.publisher}
+              onChange={(event) => updateField("publisher", event.target.value)}
+              placeholder="Editora"
+            />
+          </label>
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
+            Edição
+            <input
+              className={fieldClass}
+              value={form.edition}
+              onChange={(event) => updateField("edition", event.target.value)}
+              placeholder="Edição, volume ou versão"
+            />
+          </label>
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
+            Ano
+            <input
+              type="number"
+              min="1"
+              className={fieldClass}
+              value={form.publication_year}
+              onChange={(event) => updateField("publication_year", event.target.value)}
+              placeholder="Ano de publicação"
+            />
+          </label>
+        </div>
+      </FormSection>
 
-      <div className="grid gap-2 rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3 text-sm md:grid-cols-2">
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={form.is_current}
-            onChange={(event) => updateField("is_current", event.target.checked)}
-          />
-          Livro atual
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={form.is_private}
-            onChange={(event) => updateField("is_private", event.target.checked)}
-          />
-          Privado
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={isHistorical || form.read_before_serene}
-            disabled={isHistorical}
-            onChange={(event) => updateField("read_before_serene", event.target.checked)}
-          />
-          Lido antes do SERENE
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={form.completed_inside_serene}
-            onChange={(event) => updateField("completed_inside_serene", event.target.checked)}
-          />
-          Concluído no SERENE
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={form.show_in_home}
-            onChange={(event) => updateField("show_in_home", event.target.checked)}
-          />
-          Mostrar no Início
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={form.show_in_notifications}
-            onChange={(event) => updateField("show_in_notifications", event.target.checked)}
-          />
-          Mostrar em notificações
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={form.show_in_mente}
-            onChange={(event) => updateField("show_in_mente", event.target.checked)}
-          />
-          Mostrar na Mente
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="checkbox"
-            checked={form.include_in_quick_exports}
-            onChange={(event) => updateField("include_in_quick_exports", event.target.checked)}
-          />
-          Incluir em exportações rápidas
-        </label>
-      </div>
+      <FormSection
+        description="Onde este livro está na sua jornada: desejo, leitura, pausa ou memória concluída."
+        icon={Sparkles}
+        title="Leitura e progresso"
+      >
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
+            Páginas
+            <input
+              type="number"
+              min="1"
+              className={fieldClass}
+              value={form.total_pages}
+              onChange={(event) => updateField("total_pages", event.target.value)}
+              placeholder="Total de páginas"
+            />
+          </label>
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
+            Página atual
+            <input
+              type="number"
+              min="0"
+              className={fieldClass}
+              value={form.current_page}
+              onChange={(event) => updateField("current_page", event.target.value)}
+              placeholder="Onde você está"
+            />
+          </label>
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
+            Status
+            <select
+              className={fieldClass}
+              value={form.status}
+              onChange={(event) => updateField("status", event.target.value as BookStatus)}
+            >
+              {statusOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
+            Origem
+            <select
+              className={fieldClass}
+              value={form.reading_origin}
+              onChange={(event) => updateField("reading_origin", event.target.value as ReadingOrigin)}
+            >
+              {originOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
 
-      <div className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3">
-        <p className="text-sm font-medium">Categorias</p>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <label className="flex items-start gap-3 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-3 text-sm shadow-[var(--serene-shadow-soft)]">
+            <input
+              className={checkboxClass}
+              type="checkbox"
+              checked={form.is_current}
+              onChange={(event) => updateField("is_current", event.target.checked)}
+            />
+            <ChoiceText title="Livro atual">
+              Dá mais presença a este livro no fluxo de leitura.
+            </ChoiceText>
+          </label>
+          <label
+            className={`flex items-start gap-3 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-3 text-sm shadow-[var(--serene-shadow-soft)] ${
+              isHistorical ? "opacity-75" : ""
+            }`}
+          >
+            <input
+              className={checkboxClass}
+              type="checkbox"
+              checked={isHistorical || form.read_before_serene}
+              disabled={isHistorical}
+              onChange={(event) => updateField("read_before_serene", event.target.checked)}
+            />
+            <ChoiceText title="Lido antes do SERENE">
+              Mantém separado o que já fazia parte da sua história.
+            </ChoiceText>
+          </label>
+          <label className="flex items-start gap-3 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-3 text-sm shadow-[var(--serene-shadow-soft)]">
+            <input
+              className={checkboxClass}
+              type="checkbox"
+              checked={form.completed_inside_serene}
+              onChange={(event) => updateField("completed_inside_serene", event.target.checked)}
+            />
+            <ChoiceText title="Concluído no SERENE">
+              Marca que a leitura foi finalizada dentro do app.
+            </ChoiceText>
+          </label>
+        </div>
+      </FormSection>
+
+      <FormSection
+        description="Escolha onde este livro aparece. Livros privados ficam mais reservados por padrão."
+        icon={ShieldCheck}
+        title="Privacidade e aparição"
+      >
+        <div className="grid gap-3 md:grid-cols-2">
+          <label className="flex items-start gap-3 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-3 text-sm shadow-[var(--serene-shadow-soft)]">
+            <input
+              className={checkboxClass}
+              type="checkbox"
+              checked={form.is_private}
+              onChange={(event) => updateField("is_private", event.target.checked)}
+            />
+            <ChoiceText title="Privado">
+              Ao marcar, o SERENE recolhe este livro das áreas de aparição automática.
+            </ChoiceText>
+          </label>
+          <label className="flex items-start gap-3 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-3 text-sm shadow-[var(--serene-shadow-soft)]">
+            <input
+              className={checkboxClass}
+              type="checkbox"
+              checked={form.show_in_home}
+              onChange={(event) => updateField("show_in_home", event.target.checked)}
+            />
+            <ChoiceText title="Mostrar no Início">
+              Permite que o livro apareça no espaço principal do app.
+            </ChoiceText>
+          </label>
+          <label className="flex items-start gap-3 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-3 text-sm shadow-[var(--serene-shadow-soft)]">
+            <input
+              className={checkboxClass}
+              type="checkbox"
+              checked={form.show_in_notifications}
+              onChange={(event) => updateField("show_in_notifications", event.target.checked)}
+            />
+            <ChoiceText title="Mostrar em notificações">
+              Mantém este livro disponível para lembretes e sinais suaves.
+            </ChoiceText>
+          </label>
+          <label className="flex items-start gap-3 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-3 text-sm shadow-[var(--serene-shadow-soft)]">
+            <input
+              className={checkboxClass}
+              type="checkbox"
+              checked={form.show_in_mente}
+              onChange={(event) => updateField("show_in_mente", event.target.checked)}
+            />
+            <ChoiceText title="Mostrar na Mente">
+              Inclui o livro nas leituras que formam sua mente leitora.
+            </ChoiceText>
+          </label>
+          <label className="flex items-start gap-3 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-3 text-sm shadow-[var(--serene-shadow-soft)] md:col-span-2">
+            <input
+              className={checkboxClass}
+              type="checkbox"
+              checked={form.include_in_quick_exports}
+              onChange={(event) => updateField("include_in_quick_exports", event.target.checked)}
+            />
+            <ChoiceText title="Incluir em exportações rápidas">
+              Deixa este livro pronto para compor exportações organizadas.
+            </ChoiceText>
+          </label>
+        </div>
+      </FormSection>
+
+      <FormSection
+        description="Categorias são opcionais: use apenas quando elas ajudarem sua biblioteca a respirar melhor."
+        icon={FolderOpen}
+        title="Categorias"
+      >
         {categories.length === 0 ? (
-          <p className="mt-2 text-sm text-[var(--serene-muted)]">
-            Você ainda não criou categorias. Seus livros continuam organizados normalmente na
-            Biblioteca. Crie categorias apenas se quiser separar seus livros do seu jeito.
-          </p>
+          <div className="rounded-2xl border border-dashed border-[var(--serene-border)] bg-[var(--serene-surface)] p-4">
+            <p className="text-sm leading-relaxed text-[var(--serene-muted)]">
+              Você ainda não criou categorias. Seus livros continuam organizados normalmente na
+              Biblioteca; crie categorias apenas se quiser separar leituras do seu jeito.
+            </p>
+          </div>
         ) : (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {categories.map((category) => (
-              <label
-                key={category.id}
-                className="flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-3 py-1 text-sm"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedCategoryIds.includes(category.id)}
-                  onChange={() => toggleCategory(category.id)}
-                />
-                <span
-                  className="size-2 rounded-full"
-                  style={{ backgroundColor: category.color ?? "var(--serene-accent)" }}
-                />
-                {category.name}
-              </label>
-            ))}
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category) => {
+              const selected = selectedCategoryIds.includes(category.id);
+
+              return (
+                <label
+                  key={category.id}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-sm font-semibold transition duration-300 ${
+                    selected
+                      ? "border-[var(--serene-accent)] bg-[var(--serene-accent-soft)] text-[var(--serene-text)]"
+                      : "border-[var(--serene-border)] bg-[var(--serene-surface)] text-[var(--serene-muted)] hover:border-[var(--serene-accent)] hover:text-[var(--serene-text)]"
+                  }`}
+                >
+                  <input
+                    className={checkboxClass}
+                    type="checkbox"
+                    checked={selected}
+                    onChange={() => toggleCategory(category.id)}
+                  />
+                  <span
+                    className="size-2.5 rounded-full"
+                    style={{ backgroundColor: category.color ?? "var(--serene-accent)" }}
+                  />
+                  {category.name}
+                </label>
+              );
+            })}
           </div>
         )}
-      </div>
+      </FormSection>
 
       {error && (
-        <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <p className="serene-soft-in rounded-2xl border border-amber-300/70 bg-amber-50/90 px-4 py-3 text-sm text-amber-900 shadow-[var(--serene-shadow-soft)] dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-100">
           {error}
         </p>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           type="submit"
           disabled={saving}
-          className="inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-5 py-2.5 text-sm font-semibold text-white shadow-[var(--serene-shadow-lift)] transition duration-300 hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Save className="size-4" />
           {saving ? "Salvando..." : "Salvar livro"}
@@ -417,7 +562,7 @@ export function BookForm({ book, categories, saving, onCancel, onSubmit }: BookF
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm"
+          className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-5 py-2.5 text-sm font-semibold text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition duration-300 hover:-translate-y-0.5 hover:border-[var(--serene-accent)] hover:text-[var(--serene-text)]"
         >
           Cancelar
         </button>
