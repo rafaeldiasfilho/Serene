@@ -8,6 +8,8 @@ export type MenteAutomaticCategoryRow =
   Database["public"]["Tables"]["automatic_mente_categories"]["Row"];
 export type MenteBookAutomaticCategoryRow =
   Database["public"]["Tables"]["book_automatic_mente_categories"]["Row"];
+export type MenteBookManualCategoryRow =
+  Database["public"]["Tables"]["book_manual_categories"]["Row"];
 export type MenteManualCategoryRow =
   Database["public"]["Tables"]["manual_categories"]["Row"];
 
@@ -17,6 +19,7 @@ export type MenteSourceData = {
   annotations: MenteAnnotationRow[];
   automaticCategories: MenteAutomaticCategoryRow[];
   automaticRelations: MenteBookAutomaticCategoryRow[];
+  manualRelations: MenteBookManualCategoryRow[];
   manualCategories: MenteManualCategoryRow[];
 };
 
@@ -45,6 +48,7 @@ export async function loadMenteSourceData(userId: string): Promise<ServiceResult
     annotationsResult,
     automaticCategoriesResult,
     automaticRelationsResult,
+    manualRelationsResult,
     manualCategoriesResult,
   ] = await Promise.all([
     supabase
@@ -74,6 +78,7 @@ export async function loadMenteSourceData(userId: string): Promise<ServiceResult
       .eq("user_id", userId)
       .order("created_at", { ascending: true }),
     supabase.from("book_automatic_mente_categories").select("*").eq("user_id", userId),
+    supabase.from("book_manual_categories").select("*").eq("user_id", userId),
     supabase
       .from("manual_categories")
       .select("*")
@@ -88,6 +93,7 @@ export async function loadMenteSourceData(userId: string): Promise<ServiceResult
     annotationsResult.error ??
     automaticCategoriesResult.error ??
     automaticRelationsResult.error ??
+    manualRelationsResult.error ??
     manualCategoriesResult.error;
 
   if (firstError) {
@@ -101,6 +107,7 @@ export async function loadMenteSourceData(userId: string): Promise<ServiceResult
       annotations: annotationsResult.data ?? [],
       automaticCategories: automaticCategoriesResult.data ?? [],
       automaticRelations: automaticRelationsResult.data ?? [],
+      manualRelations: manualRelationsResult.data ?? [],
       manualCategories: manualCategoriesResult.data ?? [],
     },
     error: null,

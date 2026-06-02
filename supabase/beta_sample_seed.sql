@@ -275,6 +275,96 @@ join (
  and links.shelf_name = sh.name
 on conflict (user_id, book_id, shelf_id) do nothing;
 
+update public.books b
+set
+  reading_origin = 'historico',
+  read_before_serene = true,
+  estimated_reading_seconds = 21600,
+  estimated_reading_source = 'beta_sample',
+  estimated_reading_confidence = 'media',
+  show_in_mente = true,
+  updated_at = now()
+from seed_beta_user s
+where b.user_id = s.user_id
+  and b.source = 'beta_sample'
+  and b.title = 'Memoria de leitura';
+
+insert into public.automatic_mente_categories (
+  user_id,
+  name,
+  description,
+  confidence,
+  source,
+  created_at,
+  updated_at
+)
+select
+  s.user_id,
+  c.name,
+  c.description,
+  c.confidence,
+  'beta_sample',
+  now(),
+  now()
+from seed_beta_user s
+cross join (
+  values
+    ('Filosofia', 'Presenca, sentido e modo de viver.', 0.9::numeric),
+    ('Psicologia', 'Padroes mentais, emocoes e autoconsciencia.', 0.88::numeric),
+    ('Literatura', 'Narrativas, simbolos e memoria imaginativa.', 0.86::numeric),
+    ('Estudos', 'Aprendizado, metodo e caderno aberto.', 0.84::numeric),
+    ('Desenvolvimento pessoal', 'Habitos, identidade e crescimento sem pressa.', 0.82::numeric),
+    ('Historia', 'Memoria, tempo e contexto de leitura.', 0.78::numeric)
+) as c(name, description, confidence)
+where not exists (
+  select 1
+  from public.automatic_mente_categories existing
+  where existing.user_id = s.user_id
+    and lower(existing.name) = lower(c.name)
+);
+
+insert into public.book_automatic_mente_categories (
+  user_id,
+  book_id,
+  automatic_category_id,
+  confidence,
+  reason,
+  created_at
+)
+select
+  s.user_id,
+  b.id,
+  c.id,
+  links.confidence,
+  links.reason,
+  now()
+from seed_beta_user s
+join public.books b
+  on b.user_id = s.user_id
+ and b.source = 'beta_sample'
+join (
+  values
+    ('Um livro para respirar', 'Filosofia', 0.9::numeric, 'Leitura ligada a presenca, calma e modo de viver.'),
+    ('Um livro para respirar', 'Psicologia', 0.78::numeric, 'Anotacoes apontam para ritmo mental e autocuidado.'),
+    ('A biblioteca interior', 'Literatura', 0.92::numeric, 'Narrativa sobre memoria leitora e imaginacao.'),
+    ('A biblioteca interior', 'Estudos', 0.82::numeric, 'Livro usado como base de observacao e caderno.'),
+    ('Cadernos de marca-texto', 'Estudos', 0.91::numeric, 'Marca-textos e metodo de leitura aparecem como sinal forte.'),
+    ('Cadernos de marca-texto', 'Desenvolvimento pessoal', 0.77::numeric, 'Progresso e pratica de leitura recorrente.'),
+    ('Notas de uma leitura tranquila', 'Psicologia', 0.86::numeric, 'Notas sobre mente, habitos e conforto.'),
+    ('Memoria de leitura', 'Literatura', 0.88::numeric, 'Livro historico que guarda narrativa pessoal.'),
+    ('Memoria de leitura', 'Historia', 0.8::numeric, 'Registro antigo usado como memoria de percurso.')
+) as links(book_title, category_name, confidence, reason)
+  on links.book_title = b.title
+join public.automatic_mente_categories c
+  on c.user_id = s.user_id
+ and lower(c.name) = lower(links.category_name)
+where not exists (
+  select 1
+  from public.book_automatic_mente_categories existing
+  where existing.book_id = b.id
+    and existing.automatic_category_id = c.id
+);
+
 insert into public.annotations (
   user_id,
   book_id,
@@ -305,6 +395,7 @@ cross join (
   values
     ('quick_note', 'Primeira nota de teste. Pode editar ou apagar quando quiser.', 24, 'none'),
     ('reflection', 'Uma reflexao curta para sentir o fluxo de anotacoes.', 25, 'to_review'),
+    ('highlight', 'Uma frase marcada porque parecia organizar a leitura por dentro.', 28, 'none'),
     ('post_it', 'Voltar a esta ideia quando a semana estiver barulhenta.', 31, 'none'),
     (
       'post_it',

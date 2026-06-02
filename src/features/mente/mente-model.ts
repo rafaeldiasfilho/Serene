@@ -30,10 +30,12 @@ export type MenteCategory = {
   name: string;
   description: string | null;
   color: string;
+  percentage: number;
   confidence: number | null;
   source: "saved" | "inferred";
   bookIds: string[];
   books: MenteBookRow[];
+  annotationPreviews: MenteAnnotationPreview[];
   annotationCount: number;
   sessionCount: number;
   realSeconds: number;
@@ -50,7 +52,10 @@ export type MenteAnnotationPreview = {
   id: string;
   type: MenteAnnotationRow["type"];
   content: string;
+  bookId: string | null;
   bookTitle: string | null;
+  bookAuthor: string | null;
+  bookCoverUrl: string | null;
   createdAt: string;
 };
 
@@ -65,7 +70,7 @@ export type MenteConversation = {
   id: string;
   categoryName: string;
   color: string;
-  bookTitles: string[];
+  books: MenteBookRow[];
   reason: string;
 };
 
@@ -159,6 +164,80 @@ const topicRules: TopicRule[] = [
     ],
   },
   {
+    name: "Negocios",
+    description: "Decisoes, estrategia, lideranca e criacao de valor.",
+    color: "#C08A9B",
+    keywords: [
+      "negocio",
+      "empresa",
+      "empreend",
+      "lideranca",
+      "estrateg",
+      "mercado",
+      "gestao",
+      "cliente",
+    ],
+  },
+  {
+    name: "Estudos",
+    description: "Aprendizado, metodo, pesquisa e livros que pedem caderno aberto.",
+    color: "#8DAA6A",
+    keywords: [
+      "estudo",
+      "aprender",
+      "aprendizado",
+      "metodo",
+      "pesquisa",
+      "caderno",
+      "curso",
+      "aula",
+    ],
+  },
+  {
+    name: "Historia",
+    description: "Tempo, memoria coletiva, contexto e transformacoes humanas.",
+    color: "#B99A72",
+    keywords: [
+      "historia",
+      "historico",
+      "memoria",
+      "civilizacao",
+      "politica",
+      "guerra",
+      "seculo",
+      "tempo",
+    ],
+  },
+  {
+    name: "Matematica",
+    description: "Raciocinio, padroes, numeros e estruturas de pensamento.",
+    color: "#7C9BB0",
+    keywords: [
+      "matematica",
+      "numero",
+      "calculo",
+      "logica",
+      "probabilidade",
+      "estatistica",
+      "padrao",
+    ],
+  },
+  {
+    name: "Espiritualidade",
+    description: "Silencio, transcendencia, sentido e praticas interiores.",
+    color: "#A68ABD",
+    keywords: [
+      "espiritual",
+      "alma",
+      "silencio",
+      "meditacao",
+      "oracao",
+      "transcend",
+      "sagrado",
+      "presenca",
+    ],
+  },
+  {
     name: "Literatura",
     description: "Narrativas, simbolos e imaginacao que continuam reverberando.",
     color: "#D28F84",
@@ -239,11 +318,16 @@ function createAnnotationPreview(
   annotation: MenteAnnotationRow,
   bookById: Map<string, MenteBookRow>,
 ): MenteAnnotationPreview {
+  const book = annotation.book_id ? bookById.get(annotation.book_id) ?? null : null;
+
   return {
     id: annotation.id,
     type: annotation.type,
     content: getAnnotationContent(annotation),
-    bookTitle: annotation.book_id ? bookById.get(annotation.book_id)?.title ?? null : null,
+    bookId: book?.id ?? null,
+    bookTitle: book?.title ?? null,
+    bookAuthor: book?.author ?? null,
+    bookCoverUrl: book?.cover_url ?? null,
     createdAt: annotation.created_at,
   };
 }
@@ -290,12 +374,17 @@ function ensureCategory(
   return draft;
 }
 
-function bookSignal(book: MenteBookRow, annotations: MenteAnnotationRow[]) {
+function bookSignal(
+  book: MenteBookRow,
+  annotations: MenteAnnotationRow[],
+  manualCategoryNames: string[],
+) {
   return normalizeText(
     [
       book.title,
       book.author,
       book.description,
+      ...manualCategoryNames,
       ...annotations.map((annotation) => annotation.content),
     ]
       .filter(Boolean)
@@ -343,6 +432,26 @@ export function buildMenteInsight(source: MenteSourceData): MenteInsight {
   const categoryById = new Map(
     source.automaticCategories.map((category) => [category.id, category]),
   );
+  const manualCategoryById = new Map(
+    source.manualCategories.map((category) => [category.id, category]),
+  );
+  const manualCategoryNamesByBook = new Map<string, string[]>();
+
+  for (const relation of source.manualRelations) {
+    if (!visibleBookIds.has(relation.book_id)) {
+      continue;
+    }
+
+    const manualCategory = manualCategoryById.get(relation.category_id);
+    if (!manualCategory) {
+      continue;
+    }
+
+    const current = manualCategoryNamesByBook.get(relation.book_id) ?? [];
+    current.push(manualCategory.name);
+    manualCategoryNamesByBook.set(relation.book_id, current);
+  }
+
   const categories = new Map<string, DraftCategory>();
 
   for (const relation of source.automaticRelations) {
@@ -369,7 +478,11 @@ export function buildMenteInsight(source: MenteSourceData): MenteInsight {
   }
 
   for (const book of source.books) {
-    const signal = bookSignal(book, annotationsByBook.get(book.id) ?? []);
+    const signal = bookSignal(
+      book,
+      annotationsByBook.get(book.id) ?? [],
+      manualCategoryNamesByBook.get(book.id) ?? [],
+    );
 
     for (const rule of topicRules) {
       if (!hasTopicMatch(signal, rule)) {
@@ -411,7 +524,7 @@ export function buildMenteInsight(source: MenteSourceData): MenteInsight {
     }
   }
 
-  const categoryList = Array.from(categories.values())
+  const draftCategoryList = Array.from(categories.values())
     .filter((category) => category.bookIds.size > 0)
     .map<MenteCategory>((category) => {
       const bookIds = Array.from(category.bookIds);
@@ -446,10 +559,21 @@ export function buildMenteInsight(source: MenteSourceData): MenteInsight {
         name: category.name,
         description: category.description,
         color: category.color,
+        percentage: 0,
         confidence: category.confidence,
         source: category.source,
         bookIds,
         books,
+        annotationPreviews: categoryAnnotations
+          .filter((annotation) => getAnnotationContent(annotation).length > 0)
+          .sort((a, b) => {
+            if (a.is_favorite !== b.is_favorite) {
+              return a.is_favorite ? -1 : 1;
+            }
+            return b.created_at.localeCompare(a.created_at);
+          })
+          .map((annotation) => createAnnotationPreview(annotation, bookById))
+          .slice(0, 4),
         annotationCount: categoryAnnotations.length,
         sessionCount: categorySessions.length,
         realSeconds,
@@ -463,6 +587,18 @@ export function buildMenteInsight(source: MenteSourceData): MenteInsight {
       };
     })
     .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, "pt-BR"));
+
+  const totalCategoryScore = draftCategoryList.reduce(
+    (total, category) => total + Math.max(category.score, 1),
+    0,
+  );
+  const categoryList = draftCategoryList.map((category) => ({
+    ...category,
+    percentage:
+      totalCategoryScore > 0
+        ? Math.max(1, Math.round((Math.max(category.score, 1) / totalCategoryScore) * 100))
+        : 0,
+  }));
 
   const realSeconds = sumSeconds(sessions);
   const estimatedHistoricalSeconds = source.books.reduce(
@@ -507,14 +643,15 @@ export function buildMenteInsight(source: MenteSourceData): MenteInsight {
     .filter((category) => category.books.length > 1)
     .slice(0, 3)
     .map<MenteConversation>((category) => {
-      const bookTitles = category.books.slice(0, 3).map((book) => book.title);
+      const books = category.books.slice(0, 3);
+      const bookTitles = books.map((book) => book.title);
       const [firstBook, secondBook] = bookTitles;
 
       return {
         id: category.id,
         categoryName: category.name,
         color: category.color,
-        bookTitles,
+        books,
         reason:
           firstBook && secondBook
             ? `${firstBook} e ${secondBook} aparecem juntos em ${category.name}.`

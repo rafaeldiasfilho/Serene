@@ -84,7 +84,7 @@ where email = 'admin@example.com';
 
 ## Project status
 
-SERENE is implemented through Phase 15E - Mural Refinement.
+SERENE is implemented through Phase 15F - Mente Strengthening.
 
 Current quality gates:
 
@@ -168,7 +168,14 @@ Phase 15E refines the Mural without changing database structure or reading behav
 - The Mural now presents itself more clearly as a calm mental map, with preserved positions and softer suggestion copy.
 - Product decision: "O Mural do SERENE não usa canvas infinito nem pan/scroll livre. Ele é uma área fixa e visível."
 
-No authentication, reading/session logic, annotation logic, Mente logic, beta access rules, or destructive deletion behavior changed in Phase 15D or Phase 15E.
+Phase 15F strengthens Mente as an automatic interpretation of the user's reading life:
+
+- Mente remains separate from manual Biblioteca shelves.
+- Area weights are approximate and interpretive, not productivity metrics.
+- Area details show related books with covers, related annotations, real SERENE reading time, and estimated historical reading time separately.
+- The beta sample seed now includes automatic Mente areas and multi-area books for testing.
+
+No authentication, reading/session logic, annotation CRUD logic, beta access rules, RLS, or destructive deletion behavior changed in Phase 15D, Phase 15E, or Phase 15F.
 
 ## Phase 13 notes
 

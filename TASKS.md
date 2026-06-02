@@ -466,7 +466,7 @@ Deferred intentionally:
 - [ ] A single user-facing color manager in Configuracoes, if the data model is expanded safely.
 - [ ] User-created custom colors, only if the database supports it without risky migration.
 - [ ] Onboarding prompt for already-read books, softly presented and never forced.
-- [ ] Stronger Mente drill-down by area with related books, notes, and area statistics.
+- [x] Stronger Mente drill-down by area with related books, notes, and area statistics.
 - [ ] Optional minimized floating reading session if requested as a behavior change.
 - [ ] Seed/demo data showing multiple active readings, post-its, highlights, reflections, Mural suggestions, and Mente data, only with approval and never against production data.
 - [ ] Future finishing animation refinement: notes entering an open book, then the book closing.
@@ -544,6 +544,33 @@ Validation:
 
 Future optional bridge:
 - [ ] Mente may suggest creating a Biblioteca shelf from a strong automatic category, but the user must always choose whether to create it.
+
+## Phase 15F - Mente strengthening
+
+- [x] Keep the screen named `Mente`; do not use visible `Minha Mente` wording.
+- [x] Add a central symbolic brain visual for automatic reading areas.
+- [x] Add approximate area percentages/weights.
+- [x] Let the user select an area and see books, annotations, real time, and estimated historical time.
+- [x] Show book covers or elegant fallbacks wherever Mente lists related books.
+- [x] Keep real SERENE reading time separate from estimated historical time.
+- [x] Use books, descriptions, annotations, automatic relations, and existing manual categories as signals.
+- [x] Keep Mente independent from Biblioteca shelves; manual organization remains separate.
+- [x] Keep the existing optional manual-category bridge, without creating shelves automatically.
+- [x] Add a richer empty state encouraging already-read books without forcing it.
+- [x] Update beta sample data with automatic Mente areas, multi-area books, related notes, covers, real reading time, and estimated historical time.
+- [x] Avoid database migrations; Phase 15F uses existing tables and safe seed updates.
+- [x] Preserve authentication, beta isolation, Supabase schema, RLS, Biblioteca, Estantes, Leitura, Mural, Anotacoes, Lixeira, Exportacao, and Beta logic.
+
+Future:
+- [ ] Mente may later suggest creating a Biblioteca shelf from a strong automatic category, for example: "Voce tem muitos livros ligados a Filosofia. Criar estante Filosofia?" This must be optional and never automatic.
+
+Validation:
+- [ ] Manual Mente flow: brain visual, area selection, covers/fallbacks, percentages, real vs estimated time, empty state, light/dark, responsive.
+- [ ] Browser QA after applying pending database fixes in the target Supabase project.
+- [x] `git diff --check` passes.
+- [x] `npm run typecheck` passes.
+- [x] `npm run lint` passes.
+- [x] `npm run build` passes.
 
 ## Phase 15E - Mural refinement
 
