@@ -432,3 +432,40 @@ Pending manual checks:
 - [ ] Cross-account isolation needs two real beta accounts.
 - [ ] `/beta` admin access needs one profile marked `role = 'admin'`.
 - [ ] Vercel deployment smoke test after env vars are configured.
+
+## Phase 15 - Forgotten ideas rescue and experience refinement
+
+- [x] Keep the Home screen centered on books currently in reading.
+- [x] Show the current book as the main visual focus.
+- [x] Keep secondary reading books visible with covers and progress, without competing with the current book.
+- [x] Add a calm show/hide control for the reading section.
+- [x] Keep quick annotation and capture/photo placeholder entry points on Home.
+- [x] Replace the generic Home curiosity with a book-specific note based only on the user's own library.
+- [x] Preserve the dismissible curiosity behavior.
+- [x] Keep the profile avatar block visible on Home.
+- [x] Consolidate missing visual token aliases used by the polished interface.
+- [x] Refine annotation post-its so they feel more physical, smaller, square, and tactile.
+- [x] Add a light post-it stack effect in annotation cards.
+- [x] Limit visible annotation text in cards and allow local expand/retract.
+- [x] Keep edit, favorite, privacy, review status, and Trash actions unchanged.
+- [x] Move the Trash action visually toward the lower-right action area in annotation cards.
+
+Deferred intentionally:
+- [ ] True grouped post-it piles that open side by side like a mobile folder.
+- [ ] Shared annotation visual renderer between Anotacoes and Mural, if duplication grows.
+- [ ] Full OCR extraction for photographed pages.
+- [ ] Physical post-it/photo detection and user confirmation before saving.
+- [ ] Optional marker classification for physical notes: `*`, `R`, `I`, `?`, `!`, `A`, `P`.
+- [ ] A single user-facing color manager in Configuracoes, if the data model is expanded safely.
+- [ ] User-created custom colors, only if the database supports it without risky migration.
+- [ ] Onboarding prompt for already-read books, softly presented and never forced.
+- [ ] Stronger Mente drill-down by area with related books, notes, and area statistics.
+- [ ] Optional minimized floating reading session if requested as a behavior change.
+- [ ] Seed/demo data showing multiple active readings, post-its, highlights, reflections, Mural suggestions, and Mente data, only with approval and never against production data.
+- [ ] Future finishing animation refinement: notes entering an open book, then the book closing.
+
+Validation:
+- [ ] Basic browser flow: login, Home, Biblioteca, reading, pause/resume, note, Mural timer continuity, finish session, Anotacoes, Mente, themes, feedback.
+- [x] `npm run typecheck` passes.
+- [x] `npm run lint` passes.
+- [x] `npm run build` passes.

@@ -7,8 +7,11 @@
   --serene-border: #ded4c8;
   --serene-border-soft: rgb(138 106 77 / 16%);
   --serene-accent: #8a6a4d;
+  --serene-accent-soft: rgb(138 106 77 / 12%);
   --serene-surface: #fffaf3;
   --serene-surface-soft: #eee6db;
+  --serene-paper: #fff7ed;
+  --serene-text: var(--serene-fg);
   --serene-input: #fffdf9;
   --serene-shadow-soft: 0 1px 2px rgb(47 42 36 / 4%), 0 10px 26px rgb(47 42 36 / 6%);
   --serene-shadow-lift: 0 2px 8px rgb(47 42 36 / 6%), 0 18px 42px rgb(47 42 36 / 9%);
@@ -27,8 +30,11 @@ html[data-theme="dark"] {
   --serene-border: #433a33;
   --serene-border-soft: rgb(210 176 141 / 14%);
   --serene-accent: #d2b08d;
+  --serene-accent-soft: rgb(210 176 141 / 14%);
   --serene-surface: #29231f;
   --serene-surface-soft: #342d27;
+  --serene-paper: #241f1b;
+  --serene-text: var(--serene-fg);
   --serene-input: #211d19;
   --serene-shadow-soft: 0 1px 2px rgb(0 0 0 / 22%), 0 12px 30px rgb(0 0 0 / 18%);
   --serene-shadow-lift: 0 2px 8px rgb(0 0 0 / 24%), 0 20px 46px rgb(0 0 0 / 24%);
@@ -42,8 +48,11 @@ html[data-theme="light"] {
   --serene-border: #ded4c8;
   --serene-border-soft: rgb(138 106 77 / 16%);
   --serene-accent: #8a6a4d;
+  --serene-accent-soft: rgb(138 106 77 / 12%);
   --serene-surface: #fffaf3;
   --serene-surface-soft: #eee6db;
+  --serene-paper: #fff7ed;
+  --serene-text: var(--serene-fg);
   --serene-input: #fffdf9;
   --serene-shadow-soft: 0 1px 2px rgb(47 42 36 / 4%), 0 10px 26px rgb(47 42 36 / 6%);
   --serene-shadow-lift: 0 2px 8px rgb(47 42 36 / 6%), 0 18px 42px rgb(47 42 36 / 9%);
@@ -58,8 +67,11 @@ html[data-theme="light"] {
     --serene-border: #433a33;
     --serene-border-soft: rgb(210 176 141 / 14%);
     --serene-accent: #d2b08d;
+    --serene-accent-soft: rgb(210 176 141 / 14%);
     --serene-surface: #29231f;
     --serene-surface-soft: #342d27;
+    --serene-paper: #241f1b;
+    --serene-text: var(--serene-fg);
     --serene-input: #211d19;
     --serene-shadow-soft: 0 1px 2px rgb(0 0 0 / 22%), 0 12px 30px rgb(0 0 0 / 18%);
     --serene-shadow-lift: 0 2px 8px rgb(0 0 0 / 24%), 0 20px 46px rgb(0 0 0 / 24%);

@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties, type KeyboardEvent } from "react";
 import {
   Eye,
   EyeOff,
@@ -26,6 +26,8 @@ type AnnotationCardProps = {
   onTogglePrivacy: (annotation: AnnotationRow, nextValue: boolean) => void;
   onSetReviewStatus: (annotation: AnnotationRow, nextStatus: AnnotationReviewStatus) => void;
 };
+
+const CONTENT_PREVIEW_LIMIT = 220;
 
 function formatDateTime(value: string) {
   const date = new Date(value);
@@ -74,7 +76,7 @@ function getContainerClass(type: AnnotationType) {
 
 function getCardVisualClass(type: AnnotationType) {
   if (type === "post_it") {
-    return "rounded-xl shadow-[2px_5px_0_rgb(47_42_36_/_7%),var(--serene-shadow-soft)]";
+    return "rounded-[1.25rem] shadow-[3px_7px_0_rgb(47_42_36_/_7%),var(--serene-shadow-soft)]";
   }
   if (type === "reflection" || type === "thought") {
     return "rounded-[26px] shadow-[var(--serene-shadow-soft)]";
@@ -90,7 +92,7 @@ function getCardVisualClass(type: AnnotationType) {
 
 function getCardStyle(type: AnnotationType): CSSProperties | undefined {
   if (type === "post_it") {
-    return { transform: "rotate(-0.35deg)" };
+    return { transform: "rotate(-0.55deg)" };
   }
 
   return undefined;
@@ -115,20 +117,43 @@ function getReviewTransition(current: AnnotationReviewStatus) {
   };
 }
 
-function renderContent(annotation: AnnotationRow) {
-  const content = annotation.content?.trim() || "Sem conteudo";
+function getDisplayContent(content: string, expanded: boolean) {
+  if (expanded || content.length <= CONTENT_PREVIEW_LIMIT) {
+    return content;
+  }
 
+  return `${content.slice(0, CONTENT_PREVIEW_LIMIT).trimEnd()}...`;
+}
+
+function renderContent(annotation: AnnotationRow, content: string, expanded: boolean) {
   if (annotation.type === "post_it") {
+    const paperColor = annotation.color ?? "#FFE6A8";
+
     return (
-      <div
-        className="relative rounded-lg border border-black/10 p-3 text-sm leading-relaxed shadow-[2px_4px_0_rgb(0_0_0_/_6%)]"
-        style={{
-          backgroundColor: annotation.color ?? "#FFE6A8",
-          color: annotation.text_color ?? "#4A3A2A",
-        }}
-      >
-        <span className="absolute left-1/2 top-0 h-2 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/45 shadow-sm" />
-        <p className="whitespace-pre-wrap">{content}</p>
+      <div className="relative mx-auto w-full max-w-[15.5rem] pb-2 pr-2">
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-2 translate-x-2 translate-y-2 rotate-1 rounded-[1.05rem] border border-black/10 opacity-35 shadow-sm"
+          style={{ backgroundColor: paperColor }}
+        />
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-1 translate-x-1 translate-y-1 -rotate-1 rounded-[1.05rem] border border-black/10 opacity-45 shadow-sm"
+          style={{ backgroundColor: paperColor }}
+        />
+        <div
+          className={[
+            "relative rounded-[1.05rem] border border-black/10 p-4 text-sm leading-relaxed shadow-[2px_5px_0_rgb(0_0_0_/_7%)]",
+            expanded ? "min-h-56" : "aspect-square",
+          ].join(" ")}
+          style={{
+            backgroundColor: paperColor,
+            color: annotation.text_color ?? "#4A3A2A",
+          }}
+        >
+          <span className="absolute left-1/2 top-0 h-2 w-14 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/50 shadow-sm" />
+          <p className="whitespace-pre-wrap">{content}</p>
+        </div>
       </div>
     );
   }
@@ -221,6 +246,27 @@ export function AnnotationCard({
   onSetReviewStatus,
 }: AnnotationCardProps) {
   const reviewTransition = getReviewTransition(annotation.review_status);
+  const [expanded, setExpanded] = useState(false);
+  const rawContent = annotation.content?.trim() || "Sem conteudo";
+  const canExpand = rawContent.length > CONTENT_PREVIEW_LIMIT;
+  const displayContent = getDisplayContent(rawContent, expanded);
+
+  function toggleExpanded() {
+    if (!canExpand) {
+      return;
+    }
+
+    setExpanded((value) => !value);
+  }
+
+  function handleContentKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (!canExpand || (event.key !== "Enter" && event.key !== " ")) {
+      return;
+    }
+
+    event.preventDefault();
+    toggleExpanded();
+  }
 
   return (
     <article
@@ -253,14 +299,34 @@ export function AnnotationCard({
         <p className="text-xs text-[var(--serene-muted)]">{formatDateTime(annotation.created_at)}</p>
       </div>
 
-      <div className="mt-3">{renderContent(annotation)}</div>
+      <div className="mt-3">
+        <div
+          role={canExpand ? "button" : undefined}
+          tabIndex={canExpand ? 0 : undefined}
+          onClick={toggleExpanded}
+          onKeyDown={handleContentKeyDown}
+          className={canExpand ? "cursor-pointer rounded-xl focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--serene-accent)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--serene-surface)]" : undefined}
+          aria-expanded={canExpand ? expanded : undefined}
+        >
+          {renderContent(annotation, displayContent, expanded)}
+        </div>
+        {canExpand && (
+          <button
+            type="button"
+            onClick={toggleExpanded}
+            className="mt-2 text-xs font-semibold text-[var(--serene-accent)] hover:underline"
+          >
+            {expanded ? "Recolher" : "Expandir"}
+          </button>
+        )}
+      </div>
 
       <p className="mt-3 text-xs text-[var(--serene-muted)]">
         {bookTitle ?? "Sem livro vinculado"}
         {annotation.session_id ? " - vinculada a sessao de leitura" : ""}
       </p>
 
-      <div className="mt-4 flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={() => onEdit(annotation)}
@@ -295,7 +361,7 @@ export function AnnotationCard({
         <button
           type="button"
           onClick={() => onDelete(annotation)}
-          className="inline-flex items-center gap-1 rounded-full border border-[color-mix(in_oklab,var(--serene-border)_82%,transparent)] bg-[color-mix(in_oklab,var(--serene-surface)_62%,transparent)] px-3 py-1.5 text-xs text-[var(--serene-muted)]"
+          className="ml-auto inline-flex items-center gap-1 rounded-full border border-[color-mix(in_oklab,var(--serene-border)_82%,transparent)] bg-[color-mix(in_oklab,var(--serene-surface)_62%,transparent)] px-3 py-1.5 text-xs text-[var(--serene-muted)]"
         >
           <Trash2 className="size-3.5" />
           Lixeira

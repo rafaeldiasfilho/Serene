@@ -4,6 +4,8 @@ import Link from "next/link";
 import {
   BookOpen,
   Camera,
+  ChevronDown,
+  ChevronUp,
   Clock3,
   LibraryBig,
   PlayCircle,
@@ -202,6 +204,7 @@ export function HomeClient() {
     fallbackColors(),
   );
   const [annotationFeedback, setAnnotationFeedback] = useState<string | null>(null);
+  const [readingSectionOpen, setReadingSectionOpen] = useState(true);
 
   const readingBooks = useMemo(() => {
     return books.filter((book) => book.status === "lendo" && book.show_in_home);
@@ -219,6 +222,22 @@ export function HomeClient() {
   const otherReadingBooks = useMemo(() => {
     return readingBooks.filter((book) => book.id !== currentBook?.id);
   }, [currentBook, readingBooks]);
+
+  const curiosityBook = useMemo(() => {
+    return currentBook ?? readingBooks[0] ?? books[0] ?? null;
+  }, [books, currentBook, readingBooks]);
+
+  const curiosityText = useMemo(() => {
+    if (!curiosityBook) {
+      return null;
+    }
+
+    if (curiosityBook.author) {
+      return `Voltar a ${curiosityBook.title}, de ${curiosityBook.author}, pode revelar uma pergunta que passou em silêncio na leitura anterior.`;
+    }
+
+    return `Voltar a ${curiosityBook.title} pode revelar uma pergunta que passou em silêncio na leitura anterior.`;
+  }, [curiosityBook]);
 
   const homeStats = useMemo(() => {
     const readingCount = books.filter((book) => book.status === "lendo").length;
@@ -439,12 +458,22 @@ export function HomeClient() {
                 Livros abertos agora
               </h2>
             </div>
-            <p className="text-sm text-[var(--serene-muted)]">
+            <button
+              type="button"
+              onClick={() => setReadingSectionOpen((value) => !value)}
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-2 text-sm font-semibold text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:-translate-y-0.5 hover:border-[var(--serene-accent)] hover:text-[var(--serene-fg)]"
+              aria-expanded={readingSectionOpen}
+            >
               {readingBooks.length} {readingBooks.length === 1 ? "leitura ativa" : "leituras ativas"}
-            </p>
+              {readingSectionOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+            </button>
           </div>
 
-          {readingBooks.length === 0 ? (
+          {!readingSectionOpen ? (
+            <div className="mt-5 rounded-[1.5rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)]">
+              Leituras recolhidas. Abra novamente quando quiser ver as capas na mesa.
+            </div>
+          ) : readingBooks.length === 0 ? (
             <div className="mt-5 rounded-[1.5rem] border border-dashed border-[var(--serene-border)] bg-[var(--serene-surface)] p-5">
               <p className="text-sm leading-relaxed text-[var(--serene-muted)]">
                 Nenhum livro está marcado como em leitura agora. Quando você iniciar uma leitura, a
@@ -475,7 +504,7 @@ export function HomeClient() {
                     className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-5 py-2.5 text-sm font-semibold text-white shadow-[var(--serene-shadow-soft)] transition hover:-translate-y-0.5 hover:brightness-105"
                   >
                     <PlayCircle className="size-4" />
-                    Continuar leitura
+                    Iniciar leitura
                   </Link>
                 </div>
               </div>
@@ -525,15 +554,14 @@ export function HomeClient() {
           />
         </section>
 
-        {showCuriosity && (
+        {showCuriosity && curiosityText && (
           <aside className="serene-soft-in flex items-start justify-between gap-4 rounded-[1.5rem] border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_88%,var(--serene-surface-soft)_12%)] p-4 shadow-[var(--serene-shadow-soft)]">
             <div className="flex gap-3">
               <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-full bg-[var(--serene-surface-soft)] text-[var(--serene-accent)]">
                 <Sparkles className="size-4" />
               </span>
               <p className="literary text-sm leading-relaxed text-[var(--serene-muted)]">
-                Reler um trecho favorito em outro dia pode revelar uma pergunta nova, não apenas
-                uma resposta antiga.
+                {curiosityText}
               </p>
             </div>
             <button

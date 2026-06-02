@@ -80,7 +80,7 @@ where email = 'admin@example.com';
 
 ## Project status
 
-SERENE is implemented through Phase 14 - Private Beta.
+SERENE is implemented through Phase 15 - Forgotten Ideas Rescue and Experience Refinement.
 
 Current quality gates:
 
@@ -132,6 +132,21 @@ Manual beta validation checklist:
 - Regular user cannot access `/beta`.
 
 Pending manual checks: cross-account isolation and admin/regular access should be verified with two real beta accounts in the deployed Supabase project.
+
+## Phase 15 notes
+
+Phase 15 keeps the existing data model and services intact while making the current experience closer to the original SERENE intention:
+
+- Home now treats active reading books as the center of the first screen.
+- The current book remains the main focus, while other books in reading stay visible with covers and progress.
+- The Home reading section can be calmly collapsed and reopened.
+- Home curiosity text now references a real book from the user's library instead of a generic literary note.
+- Missing global visual token aliases are defined for light, dark, and system dark themes.
+- Annotation post-its are more physical: nearly square, lightly rotated, shadowed, and presented as a small paper stack.
+- Long annotation content in cards is shortened with `...` and can expand/retract locally.
+- Larger ideas from the original backlog, such as true post-it folders, full OCR, custom color management, stronger Mente drill-down, and minimized floating reading, remain documented in `TASKS.md` for safe future phases.
+
+No Supabase schema, authentication, RLS, migrations, services, beta access rules, or data deletion behavior changed in Phase 15.
 
 ## Phase 13 notes
 
