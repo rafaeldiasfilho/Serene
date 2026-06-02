@@ -59,6 +59,10 @@ For existing Supabase projects, apply incremental fixes in order. Phase 14 is:
 
 - `supabase/fixes/010_private_beta_feedback_admin.sql`
 
+Phase 15D adds Biblioteca shelves:
+
+- `supabase/fixes/011_biblioteca_shelves.sql`
+
 Private beta users must use individual Supabase Auth accounts. Do not use one shared demo account for testers. To enable a beta user, create their Auth user, then mark their profile:
 
 ```sql
@@ -80,7 +84,7 @@ where email = 'admin@example.com';
 
 ## Project status
 
-SERENE is implemented through Phase 15 - Forgotten Ideas Rescue and Experience Refinement.
+SERENE is implemented through Phase 15D - Biblioteca Shelves.
 
 Current quality gates:
 
@@ -135,7 +139,7 @@ Pending manual checks: cross-account isolation and admin/regular access should b
 
 ## Phase 15 notes
 
-Phase 15 keeps the existing data model and services intact while making the current experience closer to the original SERENE intention:
+Phase 15 keeps the experience closer to the original SERENE intention through small, controlled refinements:
 
 - Home now treats active reading books as the center of the first screen.
 - The current book remains the main focus, while other books in reading stay visible with covers and progress.
@@ -149,7 +153,14 @@ Phase 15 keeps the existing data model and services intact while making the curr
 - Multiple post-its in Anotacoes can appear as a physical stack that opens into a calm folder view with individual actions preserved.
 - Larger ideas from the original backlog, such as full OCR, custom color management, stronger Mente drill-down, and minimized floating reading, remain documented in `TASKS.md` for safe future phases.
 
-No Supabase schema, authentication, RLS, migrations, services, beta access rules, or data deletion behavior changed in Phase 15.
+Phase 15D adds manual Biblioteca shelves with a safe many-to-many relation:
+
+- `public.shelves` stores user-created shelves.
+- `public.book_shelves` lets one book belong to multiple shelves.
+- Removing a shelf does not remove its books.
+- Shelves are manual Biblioteca organization; Mente remains automatic interpretation.
+
+No authentication, reading/session logic, annotation logic, Mente logic, beta access rules, or destructive deletion behavior changed in Phase 15D.
 
 ## Phase 13 notes
 

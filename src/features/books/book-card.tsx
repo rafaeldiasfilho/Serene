@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Edit3, PlayCircle, Trash2, X } from "lucide-react";
+import { BookOpen, Edit3, LibraryBig, PlayCircle, Trash2, X } from "lucide-react";
 
 import type { BookStatus } from "@/lib/supabase/database.types";
 import type { BookWithCategories } from "@/features/books/use-book-library";
@@ -27,6 +27,7 @@ type BookCardProps = {
   book: BookWithCategories;
   compact?: boolean;
   onEdit: (book: BookWithCategories) => void;
+  onManageShelves?: (book: BookWithCategories) => void;
   onSoftDelete: (book: BookWithCategories) => void;
   onStartReading?: (book: BookWithCategories) => void;
   onRemoveCategory?: (bookId: string, categoryId: string) => void;
@@ -69,6 +70,7 @@ export function BookCard({
   book,
   compact = false,
   onEdit,
+  onManageShelves,
   onSoftDelete,
   onStartReading,
   onRemoveCategory,
@@ -180,6 +182,15 @@ export function BookCard({
               ))}
             </div>
           )}
+
+          {book.shelves.length > 0 && (
+            <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_78%,transparent)] px-2.5 py-1 text-[11px] text-[var(--serene-muted)]">
+              <LibraryBig className="size-3" />
+              {book.shelves.length === 1
+                ? "1 estante"
+                : `${book.shelves.length} estantes`}
+            </div>
+          )}
         </div>
       </div>
 
@@ -202,6 +213,16 @@ export function BookCard({
           <Edit3 className="size-3.5" />
           Editar
         </button>
+        {onManageShelves && (
+          <button
+            type="button"
+            onClick={() => onManageShelves(book)}
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_74%,transparent)] px-3 py-1.5 text-xs"
+          >
+            <LibraryBig className="size-3.5" />
+            Estantes
+          </button>
+        )}
         <button
           type="button"
           onClick={() => onSoftDelete(book)}

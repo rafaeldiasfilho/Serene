@@ -1,6 +1,17 @@
 "use client";
 
-import { BookOpen, LibraryBig, Plus, RefreshCw, Tags } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpen,
+  Check,
+  Edit3,
+  LibraryBig,
+  Plus,
+  RefreshCw,
+  Tags,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -9,7 +20,11 @@ import { useAppState } from "@/components/providers/app-state-provider";
 import { BrainLoader } from "@/components/ui/brain-loader";
 import { BookCard } from "@/features/books/book-card";
 import { BookForm } from "@/features/books/book-form";
-import { useBookLibrary, type BookWithCategories } from "@/features/books/use-book-library";
+import {
+  useBookLibrary,
+  type BookWithCategories,
+  type ShelfWithBooks,
+} from "@/features/books/use-book-library";
 import type { BookInsert } from "@/features/books/book-services";
 import type { BookStatus } from "@/lib/supabase/database.types";
 
@@ -33,6 +48,16 @@ const statusOrder: Record<BookStatus, number> = {
 
 const categoryColors = ["#7EA6A1", "#8DAA6A", "#C7A35A", "#8A9CCF", "#C08A9B", "#9D958A"];
 
+type ShelfFormState =
+  | {
+      mode: "create";
+      shelf: null;
+    }
+  | {
+      mode: "edit";
+      shelf: ShelfWithBooks;
+    };
+
 function sortBooks(books: BookWithCategories[], order: OrderValue) {
   return [...books].sort((a, b) => {
     if (order === "alfabetica") {
@@ -52,19 +77,159 @@ function isHistorical(book: BookWithCategories) {
   return book.reading_origin === "historico" || book.read_before_serene;
 }
 
+function hashTitle(title: string) {
+  let hash = 0;
+
+  for (let index = 0; index < title.length; index += 1) {
+    hash = (hash * 31 + title.charCodeAt(index)) >>> 0;
+  }
+
+  return hash;
+}
+
+function getFallbackCover(title: string) {
+  const hash = hashTitle(title);
+  const hue = 28 + (hash % 54);
+  const secondHue = hue + 28;
+
+  return {
+    background: `linear-gradient(145deg, hsl(${hue} 28% 58%), hsl(${secondHue} 23% 34%))`,
+  };
+}
+
+function ShelfCoverPreview({ books }: { books: BookWithCategories[] }) {
+  const previewBooks = books.slice(0, 4);
+
+  return (
+    <div className="relative flex min-h-20 items-end gap-1 overflow-hidden rounded-2xl border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_86%,var(--serene-surface-soft)_14%),var(--serene-surface-soft))] px-3 pb-3 pt-4">
+      <span className="pointer-events-none absolute inset-x-3 bottom-2 h-1 rounded-full bg-[color-mix(in_oklab,var(--serene-accent)_36%,var(--serene-border)_64%)] opacity-45" />
+      {previewBooks.length === 0 ? (
+        <div className="relative grid h-16 w-11 place-items-center rounded-lg border border-dashed border-[var(--serene-border)] bg-[var(--serene-surface)] text-[var(--serene-muted)]">
+          <BookOpen className="size-4" />
+        </div>
+      ) : (
+        previewBooks.map((book, index) => (
+          <div
+            key={book.id}
+            className="relative grid aspect-[2/3] w-10 shrink-0 place-items-center overflow-hidden rounded-md border border-white/40 bg-[var(--serene-surface-soft)] text-center text-[8px] text-white shadow-[0_10px_22px_rgb(47_42_36_/_12%)]"
+            style={{
+              transform: `translateY(${index % 2 === 0 ? 0 : 4}px) rotate(${index % 2 === 0 ? -1 : 1}deg)`,
+            }}
+          >
+            {book.cover_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={book.cover_url} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div className="grid h-full w-full place-items-center px-1" style={getFallbackCover(book.title)}>
+                <span className="line-clamp-3 text-white/90">{book.title}</span>
+              </div>
+            )}
+          </div>
+        ))
+      )}
+    </div>
+  );
+}
+
+function ShelfCard({
+  active,
+  onDelete,
+  onEdit,
+  onManageBooks,
+  onOpen,
+  shelf,
+}: {
+  active: boolean;
+  onDelete: (shelf: ShelfWithBooks) => void;
+  onEdit: (shelf: ShelfWithBooks) => void;
+  onManageBooks: (shelf: ShelfWithBooks) => void;
+  onOpen: (shelf: ShelfWithBooks) => void;
+  shelf: ShelfWithBooks;
+}) {
+  return (
+    <article
+      className={[
+        "serene-card-enter rounded-[1.55rem] border bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[var(--serene-shadow-lift)]",
+        active ? "border-[color-mix(in_oklab,var(--serene-accent)_62%,transparent)]" : "border-[var(--serene-border)]",
+      ].join(" ")}
+    >
+      <ShelfCoverPreview books={shelf.books} />
+      <div className="mt-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
+          Estante
+        </p>
+        <h3 className="literary mt-1 line-clamp-2 text-xl leading-snug">{shelf.name}</h3>
+        {shelf.description && (
+          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[var(--serene-muted)]">
+            {shelf.description}
+          </p>
+        )}
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2 text-xs text-[var(--serene-muted)]">
+        <span className="rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_78%,transparent)] px-2.5 py-1">
+          {shelf.bookCount === 1 ? "1 livro" : `${shelf.bookCount} livros`}
+        </span>
+        <span className="rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_78%,transparent)] px-2.5 py-1">
+          {shelf.annotationCount === 1 ? "1 memoria" : `${shelf.annotationCount} memorias`}
+        </span>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => onOpen(shelf)}
+          className="inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-3 py-1.5 text-xs font-semibold text-white shadow-[var(--serene-shadow-soft)]"
+        >
+          <BookOpen className="size-3.5" />
+          Abrir
+        </button>
+        <button
+          type="button"
+          onClick={() => onManageBooks(shelf)}
+          className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_74%,transparent)] px-3 py-1.5 text-xs"
+        >
+          <Plus className="size-3.5" />
+          Livros
+        </button>
+        <button
+          type="button"
+          onClick={() => onEdit(shelf)}
+          className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_74%,transparent)] px-3 py-1.5 text-xs"
+          aria-label={`Editar estante ${shelf.name}`}
+        >
+          <Edit3 className="size-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => onDelete(shelf)}
+          className="ml-auto inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_74%,transparent)] px-3 py-1.5 text-xs text-[var(--serene-muted)]"
+          aria-label={`Remover estante ${shelf.name}`}
+        >
+          <Trash2 className="size-3.5" />
+        </button>
+      </div>
+    </article>
+  );
+}
+
 export function BibliotecaClient() {
   const router = useRouter();
   const { authLoading, envReady, profileState, user } = useAppState();
   const {
     addCategory,
+    addShelf,
     books,
     categories,
     deleteBook,
+    deleteShelf,
+    editShelf,
     error,
     loading,
     refresh,
     removeCategory,
     saveBook,
+    setBookShelves,
+    setShelfBooks,
+    shelves,
   } = useBookLibrary(user?.id ?? null);
 
   const [activeFilter, setActiveFilter] = useState<FilterValue>("todos");
@@ -75,12 +240,38 @@ export function BibliotecaClient() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryColor, setNewCategoryColor] = useState(categoryColors[0]);
+  const [activeShelfId, setActiveShelfId] = useState<string | null>(null);
+  const [shelfForm, setShelfForm] = useState<ShelfFormState | null>(null);
+  const [shelfName, setShelfName] = useState("");
+  const [shelfDescription, setShelfDescription] = useState("");
+  const [managingBook, setManagingBook] = useState<BookWithCategories | null>(null);
+  const [selectedShelfIds, setSelectedShelfIds] = useState<string[]>([]);
+  const [quickShelfName, setQuickShelfName] = useState("");
+  const [managingShelf, setManagingShelf] = useState<ShelfWithBooks | null>(null);
+  const [selectedBookIds, setSelectedBookIds] = useState<string[]>([]);
 
   const visibleBooks = useMemo(() => {
     const filteredBooks =
       activeFilter === "todos" ? books : books.filter((book) => book.status === activeFilter);
     return sortBooks(filteredBooks, orderBy);
   }, [activeFilter, books, orderBy]);
+
+  const activeShelf = useMemo(
+    () => shelves.find((shelf) => shelf.id === activeShelfId) ?? null,
+    [activeShelfId, shelves],
+  );
+
+  const visibleShelfBooks = useMemo(() => {
+    if (!activeShelf) {
+      return [];
+    }
+
+    const filteredBooks =
+      activeFilter === "todos"
+        ? activeShelf.books
+        : activeShelf.books.filter((book) => book.status === activeFilter);
+    return sortBooks(filteredBooks, orderBy);
+  }, [activeFilter, activeShelf, orderBy]);
 
   const historicalReadBooks = useMemo(
     () => visibleBooks.filter((book) => book.status === "lido" && isHistorical(book)),
@@ -174,6 +365,164 @@ export function BibliotecaClient() {
     setFeedback(result.ok ? "Categoria removida do livro." : result.message);
   }
 
+  function openCreateShelfForm() {
+    setShelfForm({ mode: "create", shelf: null });
+    setShelfName("");
+    setShelfDescription("");
+    setFeedback(null);
+  }
+
+  function openEditShelfForm(shelf: ShelfWithBooks) {
+    setShelfForm({ mode: "edit", shelf });
+    setShelfName(shelf.name);
+    setShelfDescription(shelf.description ?? "");
+    setFeedback(null);
+  }
+
+  async function handleSaveShelf() {
+    const name = shelfName.trim();
+    if (!name) {
+      setFeedback("Dê um nome para a estante.");
+      return;
+    }
+
+    if (shelfForm?.mode === "edit") {
+      const result = await editShelf(shelfForm.shelf.id, {
+        name,
+        description: shelfDescription.trim() || null,
+      });
+      if (!result.ok) {
+        setFeedback(result.message);
+        return;
+      }
+
+      setFeedback("Estante atualizada.");
+      setShelfForm(null);
+      setShelfName("");
+      setShelfDescription("");
+      return;
+    }
+
+    const result = await addShelf(name, shelfDescription);
+    if (!result.ok) {
+      setFeedback(result.message);
+      return;
+    }
+
+    setFeedback("Estante criada.");
+    setShelfForm(null);
+    setShelfName("");
+    setShelfDescription("");
+  }
+
+  async function handleDeleteShelf(shelf: ShelfWithBooks) {
+    const confirmed = window.confirm(
+      `Remover a estante "${shelf.name}"? Os livros continuam na Biblioteca.`,
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    const result = await deleteShelf(shelf.id);
+    if (result.ok && activeShelfId === shelf.id) {
+      setActiveShelfId(null);
+    }
+    setFeedback(result.ok ? "Estante removida." : result.message);
+  }
+
+  function openBookShelfManager(book: BookWithCategories) {
+    setManagingBook(book);
+    setSelectedShelfIds(book.shelves.map((shelf) => shelf.id));
+    setQuickShelfName("");
+    setFeedback(null);
+  }
+
+  function openShelfBookManager(shelf: ShelfWithBooks) {
+    setManagingShelf(shelf);
+    setSelectedBookIds(shelf.books.map((book) => book.id));
+    setFeedback(null);
+  }
+
+  function toggleSelectedShelf(shelfId: string) {
+    setSelectedShelfIds((current) =>
+      current.includes(shelfId)
+        ? current.filter((id) => id !== shelfId)
+        : [...current, shelfId],
+    );
+  }
+
+  function toggleSelectedBook(bookId: string) {
+    setSelectedBookIds((current) =>
+      current.includes(bookId) ? current.filter((id) => id !== bookId) : [...current, bookId],
+    );
+  }
+
+  async function handleCreateShelfFromBookManager() {
+    const name = quickShelfName.trim();
+    if (!name) {
+      setFeedback("Dê um nome para a nova estante.");
+      return;
+    }
+
+    const result = await addShelf(name);
+    if (!result.ok || !result.shelf) {
+      setFeedback(result.message);
+      return;
+    }
+
+    setSelectedShelfIds((current) => [...current, result.shelf.id]);
+    setQuickShelfName("");
+    setFeedback("Estante criada.");
+  }
+
+  async function handleSaveBookShelves() {
+    if (!managingBook) {
+      return;
+    }
+
+    const previousIds = managingBook.shelves.map((shelf) => shelf.id);
+    const added = selectedShelfIds.some((id) => !previousIds.includes(id));
+    const removed = previousIds.some((id) => !selectedShelfIds.includes(id));
+    const result = await setBookShelves(managingBook.id, selectedShelfIds);
+    if (!result.ok) {
+      setFeedback(result.message);
+      return;
+    }
+
+    setManagingBook(null);
+    if (added && !removed) {
+      setFeedback("Livro adicionado a estante.");
+    } else if (removed && !added) {
+      setFeedback("Livro removido da estante.");
+    } else {
+      setFeedback("Estantes do livro atualizadas.");
+    }
+  }
+
+  async function handleSaveShelfBooks() {
+    if (!managingShelf) {
+      return;
+    }
+
+    const previousIds = managingShelf.books.map((book) => book.id);
+    const added = selectedBookIds.some((id) => !previousIds.includes(id));
+    const removed = previousIds.some((id) => !selectedBookIds.includes(id));
+    const result = await setShelfBooks(managingShelf.id, selectedBookIds);
+    if (!result.ok) {
+      setFeedback(result.message);
+      return;
+    }
+
+    setManagingShelf(null);
+    if (added && !removed) {
+      setFeedback("Livro adicionado a estante.");
+    } else if (removed && !added) {
+      setFeedback("Livro removido da estante.");
+    } else {
+      setFeedback("Livros da estante atualizados.");
+    }
+  }
+
   function openCreateForm() {
     setEditingBook(null);
     setFormOpen(true);
@@ -199,6 +548,7 @@ export function BibliotecaClient() {
             book={book}
             onStartReading={handleStartReading}
             onEdit={openEditForm}
+            onManageShelves={openBookShelfManager}
             onSoftDelete={handleSoftDelete}
             onRemoveCategory={handleRemoveCategory}
           />
@@ -254,8 +604,8 @@ export function BibliotecaClient() {
           </div>
           <div className="rounded-xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_84%,transparent)] p-4">
             <Tags className="size-5 text-[var(--serene-accent)]" />
-            <p className="literary mt-3 text-2xl">{categories.length}</p>
-            <p className="text-xs text-[var(--serene-muted)]">categorias manuais opcionais</p>
+            <p className="literary mt-3 text-2xl">{shelves.length}</p>
+            <p className="text-xs text-[var(--serene-muted)]">estantes pessoais de leitura</p>
           </div>
         </div>
       </div>
@@ -271,6 +621,105 @@ export function BibliotecaClient() {
           {error}
         </p>
       )}
+
+      <section className="serene-rise rounded-[2rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_92%,var(--serene-surface-soft)_8%),var(--serene-surface))] p-5 shadow-[var(--serene-shadow-soft)] sm:p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
+              Estantes
+            </p>
+            <h2 className="literary mt-2 text-3xl leading-tight">Separacoes que fazem sentido para voce</h2>
+            <p className="mt-3 text-sm leading-relaxed text-[var(--serene-muted)]">
+              Estantes sao agrupamentos manuais da Biblioteca. A Mente continua cuidando das
+              leituras automaticas e interpretativas do SERENE.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={openCreateShelfForm}
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--serene-shadow-soft)]"
+          >
+            <Plus className="size-4" />
+            Nova estante
+          </button>
+        </div>
+
+        {shelfForm && (
+          <div className="mt-5 rounded-[1.5rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)]">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="text-base font-semibold">
+                  {shelfForm.mode === "edit" ? "Renomear estante" : "Criar estante"}
+                </h3>
+                <p className="mt-1 text-sm text-[var(--serene-muted)]">
+                  Use nomes simples: Filosofia, Literatura, Livros para reler, Trabalho.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShelfForm(null)}
+                className="grid size-9 place-items-center rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] text-[var(--serene-muted)]"
+                aria-label="Fechar formulario de estante"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.4fr)_auto] md:items-end">
+              <label className="grid gap-1 text-sm text-[var(--serene-muted)]">
+                Nome
+                <input
+                  className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-[var(--serene-fg)] outline-none"
+                  placeholder="Filosofia"
+                  value={shelfName}
+                  onChange={(event) => setShelfName(event.target.value)}
+                />
+              </label>
+              <label className="grid gap-1 text-sm text-[var(--serene-muted)]">
+                Pequena nota opcional
+                <input
+                  className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-[var(--serene-fg)] outline-none"
+                  placeholder="Livros para voltar com calma."
+                  value={shelfDescription}
+                  onChange={(event) => setShelfDescription(event.target.value)}
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => void handleSaveShelf()}
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--serene-shadow-soft)]"
+              >
+                <Check className="size-4" />
+                Salvar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {shelves.length === 0 ? (
+          <div className="mt-5 rounded-[1.5rem] border border-dashed border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_78%,transparent)] p-5">
+            <LibraryBig className="size-7 text-[var(--serene-accent)]" />
+            <h3 className="literary mt-3 text-2xl">Nenhuma estante ainda</h3>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--serene-muted)]">
+              Seus livros continuam na Biblioteca. Crie uma estante quando quiser separar uma
+              area, uma intencao ou um caminho de leitura.
+            </p>
+          </div>
+        ) : (
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {shelves.map((shelf) => (
+              <ShelfCard
+                key={shelf.id}
+                active={activeShelfId === shelf.id}
+                shelf={shelf}
+                onOpen={(item) => setActiveShelfId(item.id)}
+                onEdit={openEditShelfForm}
+                onManageBooks={openShelfBookManager}
+                onDelete={(item) => void handleDeleteShelf(item)}
+              />
+            ))}
+          </div>
+        )}
+      </section>
 
       {formOpen && (
         <BookForm
@@ -341,6 +790,65 @@ export function BibliotecaClient() {
                 apenas quando ajudar.
               </p>
             </div>
+          ) : activeShelf ? (
+            <section className="rounded-[2rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_88%,var(--serene-surface-soft)_12%),var(--serene-surface))] p-5 shadow-[var(--serene-shadow-soft)]">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div className="max-w-2xl">
+                  <button
+                    type="button"
+                    onClick={() => setActiveShelfId(null)}
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-1.5 text-xs text-[var(--serene-muted)]"
+                  >
+                    <ArrowLeft className="size-3.5" />
+                    Voltar para Biblioteca
+                  </button>
+                  <p className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
+                    Estante aberta
+                  </p>
+                  <h2 className="literary mt-2 text-3xl leading-tight">{activeShelf.name}</h2>
+                  {activeShelf.description && (
+                    <p className="mt-2 text-sm leading-relaxed text-[var(--serene-muted)]">
+                      {activeShelf.description}
+                    </p>
+                  )}
+                  <p className="mt-3 text-sm text-[var(--serene-muted)]">
+                    {activeShelf.bookCount === 1 ? "1 livro" : `${activeShelf.bookCount} livros`}
+                    {" · "}
+                    {activeShelf.annotationCount === 1
+                      ? "1 memoria guardada"
+                      : `${activeShelf.annotationCount} memorias guardadas`}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => openShelfBookManager(activeShelf)}
+                    className="inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--serene-shadow-soft)]"
+                  >
+                    <Plus className="size-4" />
+                    Adicionar livros
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openEditShelfForm(activeShelf)}
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-sm"
+                  >
+                    <Edit3 className="size-4" />
+                    Editar
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-5">
+                {visibleShelfBooks.length > 0 ? (
+                  renderBookGrid(visibleShelfBooks)
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_78%,transparent)] p-5 text-sm text-[var(--serene-muted)]">
+                    Nenhum livro nesta estante para o filtro atual.
+                  </div>
+                )}
+              </div>
+            </section>
           ) : visibleBooks.length === 0 ? (
             <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-6 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)]">
               Nenhum livro encontrado nesse filtro.
@@ -443,6 +951,172 @@ export function BibliotecaClient() {
           </div>
         </aside>
       </div>
+
+      {managingBook && (
+        <div className="fixed inset-0 z-40 grid place-items-center bg-black/30 p-4 backdrop-blur-sm">
+          <section className="serene-soft-in max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-[var(--serene-border)] bg-[var(--serene-paper)] p-5 shadow-[var(--serene-shadow-lift)]">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--serene-muted)]">
+                  Estantes do livro
+                </p>
+                <h2 className="literary mt-2 text-2xl leading-tight">{managingBook.title}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-[var(--serene-muted)]">
+                  Escolha uma ou mais estantes. Isso nao altera status, leitura ou categorias.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setManagingBook(null)}
+                className="grid size-9 place-items-center rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] text-[var(--serene-muted)]"
+                aria-label="Fechar estantes do livro"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="mt-5 grid gap-2">
+              {shelves.length === 0 ? (
+                <p className="rounded-2xl border border-dashed border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 text-sm text-[var(--serene-muted)]">
+                  Crie a primeira estante abaixo para guardar este livro em um caminho de leitura.
+                </p>
+              ) : (
+                shelves.map((shelf) => (
+                  <label
+                    key={shelf.id}
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-3 text-sm shadow-[var(--serene-shadow-soft)]"
+                  >
+                    <span>
+                      <span className="font-semibold text-[var(--serene-text)]">{shelf.name}</span>
+                      <span className="mt-1 block text-xs text-[var(--serene-muted)]">
+                        {shelf.bookCount === 1 ? "1 livro" : `${shelf.bookCount} livros`}
+                      </span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={selectedShelfIds.includes(shelf.id)}
+                      onChange={() => toggleSelectedShelf(shelf.id)}
+                      className="size-4 accent-[var(--serene-accent)]"
+                    />
+                  </label>
+                ))
+              )}
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_76%,transparent)] p-4">
+              <p className="text-sm font-semibold">Criar estante durante a escolha</p>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                <input
+                  className="min-w-0 flex-1 rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-sm outline-none"
+                  placeholder="Livros para reler"
+                  value={quickShelfName}
+                  onChange={(event) => setQuickShelfName(event.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => void handleCreateShelfFromBookManager()}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-sm"
+                >
+                  <Plus className="size-4" />
+                  Criar
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setManagingBook(null)}
+                className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSaveBookShelves()}
+                className="inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--serene-shadow-soft)]"
+              >
+                <Check className="size-4" />
+                Salvar estantes
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {managingShelf && (
+        <div className="fixed inset-0 z-40 grid place-items-center bg-black/30 p-4 backdrop-blur-sm">
+          <section className="serene-soft-in max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-[var(--serene-border)] bg-[var(--serene-paper)] p-5 shadow-[var(--serene-shadow-lift)]">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--serene-muted)]">
+                  Livros da estante
+                </p>
+                <h2 className="literary mt-2 text-2xl leading-tight">{managingShelf.name}</h2>
+                <p className="mt-2 text-sm leading-relaxed text-[var(--serene-muted)]">
+                  Marque os livros que pertencem a esta separacao manual.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setManagingShelf(null)}
+                className="grid size-9 place-items-center rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] text-[var(--serene-muted)]"
+                aria-label="Fechar livros da estante"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+
+            <div className="mt-5 grid gap-2">
+              {books.length === 0 ? (
+                <p className="rounded-2xl border border-dashed border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 text-sm text-[var(--serene-muted)]">
+                  Adicione livros a Biblioteca antes de preencher esta estante.
+                </p>
+              ) : (
+                sortBooks(books, "alfabetica").map((book) => (
+                  <label
+                    key={book.id}
+                    className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-3 text-sm shadow-[var(--serene-shadow-soft)]"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate font-semibold text-[var(--serene-text)]">
+                        {book.title}
+                      </span>
+                      <span className="mt-1 block truncate text-xs text-[var(--serene-muted)]">
+                        {book.author ?? "Autor nao informado"}
+                      </span>
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={selectedBookIds.includes(book.id)}
+                      onChange={() => toggleSelectedBook(book.id)}
+                      className="size-4 accent-[var(--serene-accent)]"
+                    />
+                  </label>
+                ))
+              )}
+            </div>
+
+            <div className="mt-5 flex flex-wrap justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setManagingShelf(null)}
+                className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-sm"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSaveShelfBooks()}
+                className="inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--serene-shadow-soft)]"
+              >
+                <Check className="size-4" />
+                Salvar livros
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
     </section>
   );
 }

@@ -211,6 +211,70 @@ where existing.user_id = s.user_id
   and existing.source = 'beta_sample'
   and existing.title = b.title;
 
+insert into public.shelves (
+  user_id,
+  name,
+  description,
+  created_at,
+  updated_at
+)
+select
+  s.user_id,
+  sh.name,
+  sh.description,
+  now(),
+  now()
+from seed_beta_user s
+cross join (
+  values
+    ('Filosofia', 'Ideias para reler devagar.'),
+    ('Financas', 'Livros sobre escolhas, dinheiro e risco.'),
+    ('Psicologia', 'Leituras sobre mente, habitos e comportamento.'),
+    ('Literatura', 'Narrativas para respirar melhor.'),
+    ('Livros para reler', 'Obras que merecem uma segunda passagem.'),
+    ('Estudos', 'Livros que pedem caderno aberto.')
+) as sh(name, description)
+where not exists (
+  select 1
+  from public.shelves existing
+  where existing.user_id = s.user_id
+    and existing.deleted_at is null
+    and lower(existing.name) = lower(sh.name)
+);
+
+insert into public.book_shelves (
+  user_id,
+  book_id,
+  shelf_id,
+  created_at
+)
+select
+  s.user_id,
+  b.id,
+  sh.id,
+  now()
+from seed_beta_user s
+join public.books b
+  on b.user_id = s.user_id
+ and b.source = 'beta_sample'
+join public.shelves sh
+  on sh.user_id = s.user_id
+ and sh.deleted_at is null
+join (
+  values
+    ('Um livro para respirar', 'Filosofia'),
+    ('Um livro para respirar', 'Livros para reler'),
+    ('A biblioteca interior', 'Literatura'),
+    ('A biblioteca interior', 'Estudos'),
+    ('Cadernos de marca-texto', 'Estudos'),
+    ('Notas de uma leitura tranquila', 'Psicologia'),
+    ('Memoria de leitura', 'Livros para reler'),
+    ('Memoria de leitura', 'Literatura')
+) as links(book_title, shelf_name)
+  on links.book_title = b.title
+ and links.shelf_name = sh.name
+on conflict (user_id, book_id, shelf_id) do nothing;
+
 insert into public.annotations (
   user_id,
   book_id,

@@ -185,7 +185,29 @@ create table if not exists public.book_manual_categories (
     unique (book_id, category_id)
 );
 
--- 5) automatic_mente_categories
+-- 5) shelves
+create table if not exists public.shelves (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  name text not null,
+  description text,
+  deleted_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- 6) book_shelves
+create table if not exists public.book_shelves (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  book_id uuid not null references public.books(id) on delete cascade,
+  shelf_id uuid not null references public.shelves(id) on delete cascade,
+  created_at timestamptz not null default now(),
+  constraint book_shelves_unique_user_book_shelf
+    unique (user_id, book_id, shelf_id)
+);
+
+-- 7) automatic_mente_categories
 create table if not exists public.automatic_mente_categories (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
@@ -199,7 +221,7 @@ create table if not exists public.automatic_mente_categories (
     check (confidence is null or (confidence >= 0 and confidence <= 1))
 );
 
--- 6) book_automatic_mente_categories
+-- 8) book_automatic_mente_categories
 create table if not exists public.book_automatic_mente_categories (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
@@ -214,7 +236,7 @@ create table if not exists public.book_automatic_mente_categories (
     check (confidence is null or (confidence >= 0 and confidence <= 1))
 );
 
--- 7) reading_sessions
+-- 9) reading_sessions
 create table if not exists public.reading_sessions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
@@ -430,6 +452,7 @@ create table if not exists public.trash_items (
 
 Recommended trigger checks for cross-table ownership on insert/update:
 - `book_manual_categories.user_id` must match both `books.user_id` and `manual_categories.user_id`.
+- `book_shelves.user_id` must match both `books.user_id` and `shelves.user_id`.
 - `book_automatic_mente_categories.user_id` must match both `books.user_id` and `automatic_mente_categories.user_id`.
 - `reading_sessions.user_id` must match `books.user_id`.
 - `annotations.user_id` must match `book_id` and `session_id` ownership when those fields are not null.
@@ -548,6 +571,7 @@ for each row execute function public.set_updated_at();
 Use `deleted_at` for:
 - `books`
 - `manual_categories`
+- `shelves`
 - `reading_sessions`
 - `annotations`
 
@@ -603,6 +627,20 @@ create index if not exists idx_books_user_status_active
 create index if not exists idx_manual_categories_user_active
   on public.manual_categories (user_id, name)
   where deleted_at is null;
+
+create index if not exists idx_shelves_user_active
+  on public.shelves (user_id, name)
+  where deleted_at is null;
+
+create unique index if not exists idx_shelves_unique_active_name
+  on public.shelves (user_id, lower(name))
+  where deleted_at is null;
+
+create index if not exists idx_book_shelves_book
+  on public.book_shelves (book_id);
+
+create index if not exists idx_book_shelves_shelf
+  on public.book_shelves (shelf_id);
 
 create index if not exists idx_reading_sessions_user_active
   on public.reading_sessions (user_id, started_at desc)

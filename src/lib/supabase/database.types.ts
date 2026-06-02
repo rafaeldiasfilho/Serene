@@ -234,6 +234,54 @@ export type Database = {
         };
         Relationships: [];
       };
+      shelves: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          description: string | null;
+          deleted_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          description?: string | null;
+          deleted_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          name?: string;
+          description?: string | null;
+          deleted_at?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      book_shelves: {
+        Row: {
+          id: string;
+          user_id: string;
+          book_id: string;
+          shelf_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          book_id: string;
+          shelf_id: string;
+          created_at?: string;
+        };
+        Update: {
+          book_id?: string;
+          shelf_id?: string;
+        };
+        Relationships: [];
+      };
       reading_sessions: {
         Row: {
           id: string;

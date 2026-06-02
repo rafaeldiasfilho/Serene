@@ -519,3 +519,27 @@ Validation:
 - [x] `npm run typecheck` passes.
 - [x] `npm run lint` passes.
 - [x] `npm run build` passes.
+
+## Phase 15D - Biblioteca shelves
+
+- [x] Add manual Biblioteca shelves as a separate concept from automatic Mente categories.
+- [x] Add safe `public.shelves` and `public.book_shelves` tables through `supabase/fixes/011_biblioteca_shelves.sql`.
+- [x] Allow one book to belong to multiple shelves.
+- [x] Let users create and rename shelves.
+- [x] Let users remove shelves without removing books.
+- [x] Let users add/remove books from shelves through calm selection panels.
+- [x] Add an internal opened-shelf view with back action, book count, annotation count, and current Biblioteca filters.
+- [x] Add shelf cards with small cover previews and a quiet personal-library visual.
+- [x] Keep current book status filters, ordering, categories, reading, annotations, Mural, Mente, export, and beta logic unchanged.
+- [x] Update demo and beta sample seeds with shelves and books in more than one shelf.
+- [x] Document future Mente suggestion: automatic categories may later suggest optional shelves, never force them.
+
+Validation:
+- [ ] Manual Biblioteca shelves flow: create, rename, remove shelf, add/remove book, multi-shelf book, open shelf, back, light/dark, responsive.
+- [x] `git diff --check` passes.
+- [x] `npm run typecheck` passes.
+- [x] `npm run lint` passes.
+- [x] `npm run build` passes.
+
+Future optional bridge:
+- [ ] Mente may suggest creating a Biblioteca shelf from a strong automatic category, but the user must always choose whether to create it.

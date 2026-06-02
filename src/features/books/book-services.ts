@@ -7,6 +7,10 @@ export type BookUpdate = Database["public"]["Tables"]["books"]["Update"];
 export type ManualCategoryRow = Database["public"]["Tables"]["manual_categories"]["Row"];
 export type BookManualCategoryRow =
   Database["public"]["Tables"]["book_manual_categories"]["Row"];
+export type ShelfRow = Database["public"]["Tables"]["shelves"]["Row"];
+export type ShelfInsert = Database["public"]["Tables"]["shelves"]["Insert"];
+export type ShelfUpdate = Database["public"]["Tables"]["shelves"]["Update"];
+export type BookShelfRow = Database["public"]["Tables"]["book_shelves"]["Row"];
 
 export async function listBooks(userId: string) {
   const supabase = getSupabaseBrowserClient();
@@ -67,6 +71,103 @@ export async function listBookManualCategories(userId: string) {
   return supabase.from("book_manual_categories").select("*").eq("user_id", userId);
 }
 
+export async function listShelves(userId: string) {
+  const supabase = getSupabaseBrowserClient();
+  return supabase
+    .from("shelves")
+    .select("*")
+    .eq("user_id", userId)
+    .is("deleted_at", null)
+    .order("name", { ascending: true });
+}
+
+export async function createShelf(payload: ShelfInsert) {
+  const supabase = getSupabaseBrowserClient();
+  return supabase.from("shelves").insert(payload).select("*").single();
+}
+
+export async function updateShelf(shelfId: string, userId: string, payload: ShelfUpdate) {
+  const supabase = getSupabaseBrowserClient();
+  return supabase
+    .from("shelves")
+    .update({ ...payload, updated_at: new Date().toISOString() })
+    .eq("id", shelfId)
+    .eq("user_id", userId)
+    .select("*")
+    .single();
+}
+
+export async function softDeleteShelf(shelfId: string, userId: string) {
+  const supabase = getSupabaseBrowserClient();
+
+  const relationResult = await supabase
+    .from("book_shelves")
+    .delete()
+    .eq("user_id", userId)
+    .eq("shelf_id", shelfId);
+
+  if (relationResult.error) {
+    return relationResult;
+  }
+
+  return supabase
+    .from("shelves")
+    .update({ deleted_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq("id", shelfId)
+    .eq("user_id", userId);
+}
+
+export async function listBookShelves(userId: string) {
+  const supabase = getSupabaseBrowserClient();
+  return supabase.from("book_shelves").select("*").eq("user_id", userId);
+}
+
+export async function assignShelvesToBook(userId: string, bookId: string, shelfIds: string[]) {
+  const supabase = getSupabaseBrowserClient();
+  const uniqueShelfIds = Array.from(new Set(shelfIds));
+
+  const deleteResult = await supabase
+    .from("book_shelves")
+    .delete()
+    .eq("user_id", userId)
+    .eq("book_id", bookId);
+
+  if (deleteResult.error || uniqueShelfIds.length === 0) {
+    return deleteResult;
+  }
+
+  return supabase.from("book_shelves").insert(
+    uniqueShelfIds.map((shelfId) => ({
+      user_id: userId,
+      book_id: bookId,
+      shelf_id: shelfId,
+    })),
+  );
+}
+
+export async function assignBooksToShelf(userId: string, shelfId: string, bookIds: string[]) {
+  const supabase = getSupabaseBrowserClient();
+  const uniqueBookIds = Array.from(new Set(bookIds));
+
+  const deleteResult = await supabase
+    .from("book_shelves")
+    .delete()
+    .eq("user_id", userId)
+    .eq("shelf_id", shelfId);
+
+  if (deleteResult.error || uniqueBookIds.length === 0) {
+    return deleteResult;
+  }
+
+  return supabase.from("book_shelves").insert(
+    uniqueBookIds.map((bookId) => ({
+      user_id: userId,
+      book_id: bookId,
+      shelf_id: shelfId,
+    })),
+  );
+}
+
 export async function assignCategoriesToBook(
   userId: string,
   bookId: string,
@@ -102,4 +203,24 @@ export async function removeCategoryFromBook(userId: string, bookId: string, cat
     .eq("user_id", userId)
     .eq("book_id", bookId)
     .eq("category_id", categoryId);
+}
+
+export async function removeBookFromShelf(userId: string, bookId: string, shelfId: string) {
+  const supabase = getSupabaseBrowserClient();
+  return supabase
+    .from("book_shelves")
+    .delete()
+    .eq("user_id", userId)
+    .eq("book_id", bookId)
+    .eq("shelf_id", shelfId);
+}
+
+export async function listAnnotationBookLinks(userId: string) {
+  const supabase = getSupabaseBrowserClient();
+  return supabase
+    .from("annotations")
+    .select("book_id")
+    .eq("user_id", userId)
+    .is("deleted_at", null)
+    .not("book_id", "is", null);
 }
