@@ -449,6 +449,10 @@ Pending manual checks:
 - [x] Limit visible annotation text in cards and allow local expand/retract.
 - [x] Keep edit, favorite, privacy, review status, and Trash actions unchanged.
 - [x] Move the Trash action visually toward the lower-right action area in annotation cards.
+- [x] Add a calm living-session detail to the reading timer area.
+- [x] Add a minimal cup/steam visual that suggests active reading without competing with the book.
+- [x] Add a softer paused state with short microcopy: `Volte com calma.`
+- [x] Keep reading controls and session logic unchanged.
 
 Deferred intentionally:
 - [ ] True grouped post-it piles that open side by side like a mobile folder.
@@ -466,6 +470,7 @@ Deferred intentionally:
 
 Validation:
 - [ ] Basic browser flow: login, Home, Biblioteca, reading, pause/resume, note, Mural timer continuity, finish session, Anotacoes, Mente, themes, feedback.
+- [ ] Manual visual check for the reading presence detail in light and dark themes.
 - [x] `npm run typecheck` passes.
 - [x] `npm run lint` passes.
 - [x] `npm run build` passes.

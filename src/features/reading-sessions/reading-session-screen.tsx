@@ -50,6 +50,8 @@ type SessionAnnotationSummary = {
   annotations: AnnotationRow[];
 };
 
+type ReadingPresenceStatus = "active" | "paused";
+
 function normalizeOrigin(value: string | null): ReadingOpenedFrom {
   if (value === "inicio" || value === "biblioteca" || value === "anotacoes" || value === "mente") {
     return value;
@@ -86,6 +88,33 @@ function fallbackColors(): AnnotationColorOption[] {
     applies_to: null,
     is_default: index === 0,
   }));
+}
+
+function ReadingPresenceIndicator({ status }: { status: ReadingPresenceStatus }) {
+  const isPaused = status === "paused";
+
+  return (
+    <div
+      className={`reading-presence ${isPaused ? "reading-presence--paused" : ""}`}
+      aria-label={isPaused ? "Sessao pausada com calma" : "Sessao de leitura ativa"}
+    >
+      <div className="reading-presence-visual" aria-hidden="true">
+        <span className="reading-presence-steam reading-presence-steam-one" />
+        <span className="reading-presence-steam reading-presence-steam-two" />
+        <span className="reading-presence-steam reading-presence-steam-three" />
+        <span className="reading-presence-cup" />
+        <span className="reading-presence-saucer" />
+      </div>
+      <div className="reading-presence-copy">
+        <span className="reading-presence-title">
+          {isPaused ? "Pausa suave" : "Sessao viva"}
+        </span>
+        {isPaused && (
+          <span className="reading-presence-note">Volte com calma.</span>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export function ReadingSessionScreen() {
@@ -170,6 +199,8 @@ export function ReadingSessionScreen() {
   const canPause = session?.status === "active";
   const canResume = session?.status === "paused";
   const canFinish = Boolean(session && (session.status === "active" || session.status === "paused"));
+  const readingPresenceStatus: ReadingPresenceStatus | null =
+    session?.status === "active" || session?.status === "paused" ? session.status : null;
 
   const captureBooksForDialog = useMemo<CaptureBook[]>(() => {
     if (captureBooks.length > 0) {
@@ -594,13 +625,17 @@ export function ReadingSessionScreen() {
           </div>
 
           <div className="rounded-2xl border border-[var(--serene-border)] bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--serene-accent)_12%,transparent),transparent_42%),var(--serene-surface-soft)] px-5 py-4 text-right shadow-[var(--serene-shadow-soft)]">
-            <div className="flex items-center justify-between gap-3 text-left">
-              <span className="grid size-10 place-items-center rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] text-[var(--serene-muted)]">
-                <Clock3 className="size-4" />
-              </span>
+            <div className="flex flex-wrap items-start justify-between gap-3 text-left">
+              {readingPresenceStatus ? (
+                <ReadingPresenceIndicator status={readingPresenceStatus} />
+              ) : (
+                <span className="grid size-10 place-items-center rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] text-[var(--serene-muted)]">
+                  <Clock3 className="size-4" />
+                </span>
+              )}
               <span className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-1.5 text-xs text-[var(--serene-muted)]">
                 <span className="size-2 rounded-full bg-[var(--serene-accent)]" />
-                tempo real
+                {session?.status === "paused" ? "em pausa" : "tempo real"}
               </span>
             </div>
             <p className="mt-4 text-xs uppercase tracking-[0.16em] text-[var(--serene-muted)]">

@@ -208,6 +208,133 @@ body {
   animation: serene-brain-breathe 2800ms var(--serene-ease-calm) infinite;
 }
 
+.reading-presence {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  max-width: 100%;
+  min-height: 3.1rem;
+  border: 1px solid color-mix(in oklab, var(--serene-border) 76%, transparent);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 18% 18%, color-mix(in oklab, var(--serene-accent) 10%, transparent), transparent 54%),
+    color-mix(in oklab, var(--serene-surface) 82%, transparent);
+  box-shadow: var(--serene-shadow-soft), var(--serene-shadow-inner);
+  color: var(--serene-muted);
+  padding: 0.45rem 0.8rem 0.45rem 0.55rem;
+}
+
+.reading-presence--paused {
+  border-color: color-mix(in oklab, var(--serene-accent) 34%, var(--serene-border) 66%);
+  background:
+    radial-gradient(circle at 22% 18%, color-mix(in oklab, var(--serene-accent) 16%, transparent), transparent 58%),
+    color-mix(in oklab, var(--serene-surface) 88%, var(--serene-accent-soft) 12%);
+}
+
+.reading-presence-visual {
+  position: relative;
+  width: 2.6rem;
+  height: 2.55rem;
+  flex: none;
+}
+
+.reading-presence-cup {
+  position: absolute;
+  left: 0.48rem;
+  bottom: 0.46rem;
+  width: 1.55rem;
+  height: 1.05rem;
+  border: 1.5px solid color-mix(in oklab, var(--serene-accent) 68%, var(--serene-muted) 32%);
+  border-top-color: color-mix(in oklab, var(--serene-accent) 48%, transparent);
+  border-radius: 0.22rem 0.22rem 0.82rem 0.82rem;
+  background:
+    linear-gradient(180deg, color-mix(in oklab, var(--serene-paper) 78%, white 8%), color-mix(in oklab, var(--serene-accent) 9%, var(--serene-paper) 91%));
+  box-shadow: 0 6px 14px rgb(47 42 36 / 9%);
+}
+
+.reading-presence-cup::after {
+  content: "";
+  position: absolute;
+  right: -0.46rem;
+  top: 0.2rem;
+  width: 0.52rem;
+  height: 0.52rem;
+  border: 1.5px solid color-mix(in oklab, var(--serene-accent) 60%, var(--serene-muted) 40%);
+  border-left: 0;
+  border-radius: 0 999px 999px 0;
+}
+
+.reading-presence-saucer {
+  position: absolute;
+  left: 0.28rem;
+  bottom: 0.22rem;
+  width: 2.06rem;
+  height: 0.28rem;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--serene-accent) 20%, var(--serene-surface) 80%);
+  opacity: 0.76;
+}
+
+.reading-presence-steam {
+  position: absolute;
+  bottom: 1.5rem;
+  width: 0.13rem;
+  height: 1.08rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    to top,
+    transparent,
+    color-mix(in oklab, var(--serene-accent) 46%, var(--serene-muted) 22%),
+    transparent
+  );
+  filter: blur(0.2px);
+  opacity: 0;
+  transform-origin: bottom center;
+  animation: serene-reading-steam 5.8s var(--serene-ease-calm) infinite;
+}
+
+.reading-presence--paused .reading-presence-steam {
+  animation-duration: 6.4s;
+}
+
+.reading-presence-steam-one {
+  left: 0.92rem;
+  animation-delay: 0ms;
+}
+
+.reading-presence-steam-two {
+  left: 1.28rem;
+  height: 1.25rem;
+  animation-delay: 900ms;
+}
+
+.reading-presence-steam-three {
+  left: 1.64rem;
+  animation-delay: 1800ms;
+}
+
+.reading-presence-copy {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+  text-align: left;
+}
+
+.reading-presence-title {
+  color: var(--serene-fg);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.reading-presence-note {
+  animation: serene-fade-in 460ms var(--serene-ease-enter) both;
+  color: var(--serene-muted);
+  font-size: 0.72rem;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
 .annotation-tone-post-it,
 .annotation-tone-reflection,
 .annotation-tone-highlight,
@@ -669,6 +796,27 @@ html[data-theme="dark"] .annotation-tone-ocr {
   50% {
     opacity: 0.62;
     transform: scale(1);
+  }
+}
+
+@keyframes serene-reading-steam {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0.38rem, 0) scaleY(0.72);
+  }
+
+  28% {
+    opacity: 0.34;
+  }
+
+  62% {
+    opacity: 0.22;
+    transform: translate3d(0.12rem, -0.22rem, 0) scaleY(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(-0.06rem, -0.62rem, 0) scaleY(1.08);
   }
 }
 
