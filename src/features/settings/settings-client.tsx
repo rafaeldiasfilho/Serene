@@ -9,6 +9,7 @@ import {
   LayoutGrid,
   Lock,
   MessageSquare,
+  Minimize2,
   Moon,
   Monitor,
   RefreshCw,
@@ -17,8 +18,17 @@ import {
   Trash2,
   User,
   Wind,
+  XCircle,
+  type LucideIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ComponentType,
+  type ReactNode,
+} from "react";
 
 import { AuthPanel } from "@/components/auth/auth-panel";
 import { useAppState } from "@/components/providers/app-state-provider";
@@ -54,16 +64,47 @@ type ColorDraft = {
 const themeOptions: Array<{
   value: ThemePreference;
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
+  description: string;
+  icon: ComponentType<{ className?: string }>;
 }> = [
-  { value: "light", label: "Claro", icon: Sun },
-  { value: "dark", label: "Escuro", icon: Moon },
-  { value: "system", label: "Sistema", icon: Monitor },
+  {
+    value: "light",
+    label: "Claro",
+    description: "Uma leitura aberta, com fundo mais luminoso.",
+    icon: Sun,
+  },
+  {
+    value: "dark",
+    label: "Escuro",
+    description: "Menos brilho para sessões longas ou noturnas.",
+    icon: Moon,
+  },
+  {
+    value: "system",
+    label: "Sistema",
+    description: "Segue a preferência do seu dispositivo.",
+    icon: Monitor,
+  },
 ];
 
-const closeBehaviorOptions: Array<{ value: ReadingCloseBehavior; label: string }> = [
-  { value: "minimize", label: "Minimizar leitura ao fechar" },
-  { value: "close", label: "Encerrar leitura ao fechar" },
+const closeBehaviorOptions: Array<{
+  value: ReadingCloseBehavior;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+}> = [
+  {
+    value: "minimize",
+    label: "Minimizar",
+    description: "A leitura fica guardada em um cartão discreto para voltar depois.",
+    icon: Minimize2,
+  },
+  {
+    value: "close",
+    label: "Encerrar sessão",
+    description: "Fechar a leitura conclui a sessão atual.",
+    icon: XCircle,
+  },
 ];
 
 function draftFromColor(color: AnnotationColorRow): ColorDraft {
@@ -85,29 +126,38 @@ function normalizeHex(value: string) {
 
 function SettingsSection({
   children,
+  description,
   eyebrow,
   title,
   icon: Icon,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
+  description?: string;
   eyebrow: string;
   title: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string }>;
 }) {
   return (
-    <section className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5">
-      <div className="flex items-center gap-3">
-        <span className="grid size-9 place-items-center rounded-full bg-[var(--serene-surface-soft)] text-[var(--serene-accent)]">
-          <Icon className="size-4" />
-        </span>
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
-            {eyebrow}
-          </p>
-          <h2 className="text-lg font-semibold">{title}</h2>
+    <section className="rounded-[1.75rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_94%,white_6%),var(--serene-surface))] p-5 shadow-[var(--serene-shadow-soft)] dark:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_92%,black_8%),var(--serene-surface))]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-3">
+          <span className="grid size-11 shrink-0 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-accent)_12%,var(--serene-surface)_88%)] text-[var(--serene-accent)] shadow-[var(--serene-shadow-soft)]">
+            <Icon className="size-5" />
+          </span>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--serene-muted)]">
+              {eyebrow}
+            </p>
+            <h2 className="mt-1 text-lg font-semibold">{title}</h2>
+            {description && (
+              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--serene-muted)]">
+                {description}
+              </p>
+            )}
+          </div>
         </div>
       </div>
-      <div className="mt-4">{children}</div>
+      <div className="mt-5">{children}</div>
     </section>
   );
 }
@@ -126,18 +176,41 @@ function ToggleRow({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <label className="flex items-start justify-between gap-4 border-t border-[var(--serene-border)] py-3 first:border-t-0 first:pt-0 last:pb-0">
+    <label
+      className={[
+        "flex items-start justify-between gap-4 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 shadow-[var(--serene-shadow-inner)] transition",
+        disabled ? "opacity-60" : "cursor-pointer hover:border-[var(--serene-accent)]",
+      ].join(" ")}
+    >
       <span>
-        <span className="block text-sm font-medium">{label}</span>
-        <span className="mt-1 block text-xs text-[var(--serene-muted)]">{description}</span>
+        <span className="block text-sm font-semibold text-[var(--serene-fg)]">{label}</span>
+        <span className="mt-1 block text-xs leading-relaxed text-[var(--serene-muted)]">
+          {description}
+        </span>
       </span>
       <input
         type="checkbox"
         checked={checked}
         disabled={disabled}
         onChange={(event) => onChange(event.target.checked)}
-        className="mt-1"
+        className="sr-only"
       />
+      <span
+        aria-hidden="true"
+        className={[
+          "mt-0.5 flex h-6 w-11 shrink-0 items-center rounded-full border p-0.5 transition",
+          checked
+            ? "border-[var(--serene-accent)] bg-[var(--serene-accent)]"
+            : "border-[var(--serene-border)] bg-[var(--serene-surface)]",
+        ].join(" ")}
+      >
+        <span
+          className={[
+            "size-4 rounded-full bg-white shadow-[var(--serene-shadow-soft)] transition",
+            checked ? "translate-x-5" : "translate-x-0",
+          ].join(" ")}
+        />
+      </span>
     </label>
   );
 }
@@ -190,17 +263,13 @@ export function SettingsClient() {
     setLoading(true);
     setError(null);
 
-    const [
-      muralResult,
-      quickExportResult,
-      colorsResult,
-      privacyCountsResult,
-    ] = await Promise.all([
-      getUserSetting(user.id, "mural_preferences"),
-      getUserSetting(user.id, "quick_export_privacy"),
-      listSettingsAnnotationColors(user.id),
-      getPrivacySafetyCounts(user.id),
-    ]);
+    const [muralResult, quickExportResult, colorsResult, privacyCountsResult] =
+      await Promise.all([
+        getUserSetting(user.id, "mural_preferences"),
+        getUserSetting(user.id, "quick_export_privacy"),
+        listSettingsAnnotationColors(user.id),
+        getPrivacySafetyCounts(user.id),
+      ]);
 
     if (
       muralResult.error ||
@@ -221,9 +290,7 @@ export function SettingsClient() {
 
     const colorRows = colorsResult.data ?? [];
     setMuralPreferences(normalizeMuralPreferences(muralResult.data?.value ?? null));
-    setQuickExportPrivacy(
-      normalizeQuickExportPrivacy(quickExportResult.data?.value ?? null),
-    );
+    setQuickExportPrivacy(normalizeQuickExportPrivacy(quickExportResult.data?.value ?? null));
     setColors(colorRows);
     setColorDrafts(buildColorDrafts(colorRows));
     setPrivacyCounts(privacyCountsResult.data);
@@ -243,7 +310,7 @@ export function SettingsClient() {
       return "Nenhuma cor personalizada salva.";
     }
 
-    return `${colors.length} cores disponiveis para anotacoes.`;
+    return `${colors.length} cores disponíveis para anotações.`;
   }, [colors.length]);
 
   async function persistMuralPreferences(nextPreferences: MuralPreferences) {
@@ -262,7 +329,7 @@ export function SettingsClient() {
       return;
     }
 
-    setFeedback("Preferencias do Mural salvas.");
+    setFeedback("Preferências do Mural salvas.");
   }
 
   async function persistQuickExportPrivacy(nextValue: QuickExportPrivacySetting) {
@@ -281,7 +348,7 @@ export function SettingsClient() {
       return;
     }
 
-    setFeedback("Privacidade das exportacoes rapidas salva.");
+    setFeedback("Privacidade das exportações rápidas salva.");
   }
 
   async function handleThemeChange(value: ThemePreference) {
@@ -295,14 +362,14 @@ export function SettingsClient() {
     setSavingKey("reduced_motion");
     await setReducedMotionEnabled(value);
     setSavingKey(null);
-    setFeedback(value ? "Movimento reduzido ativado." : "Movimento padrao restaurado.");
+    setFeedback(value ? "Movimento reduzido ativado." : "Movimento padrão restaurado.");
   }
 
   async function handlePressureFreeMode(value: boolean) {
     setSavingKey("pressure_free");
     await setPressureFreeModeEnabled(value);
     setSavingKey(null);
-    setFeedback(value ? "Modo sem pressao ativado." : "Modo sem pressao desativado.");
+    setFeedback(value ? "Modo sem pressão ativado." : "Modo sem pressão desativado.");
   }
 
   async function handleReadingCloseBehavior(value: ReadingCloseBehavior) {
@@ -324,7 +391,7 @@ export function SettingsClient() {
 
     const normalizedColor = normalizeHex(draft.color_hex);
     if (!normalizedColor) {
-      setFeedback("Use uma cor hexadecimal valida, como #DDEAFE.");
+      setFeedback("Use uma cor hexadecimal válida, como #DDEAFE.");
       return;
     }
 
@@ -341,7 +408,7 @@ export function SettingsClient() {
       return;
     }
 
-    setFeedback("Cor de anotacao salva.");
+    setFeedback("Cor de anotação salva.");
     await loadSettings();
   }
 
@@ -359,7 +426,7 @@ export function SettingsClient() {
       return;
     }
 
-    setFeedback("Cor padrao atualizada.");
+    setFeedback("Cor padrão atualizada.");
     await loadSettings();
   }
 
@@ -369,7 +436,7 @@ export function SettingsClient() {
     }
 
     const confirmed = window.confirm(
-      "Remover esta cor personalizada? Anotacoes existentes continuam com as cores ja salvas.",
+      "Remover esta cor personalizada? Anotações existentes continuam com as cores já salvas.",
     );
     if (!confirmed) {
       return;
@@ -395,7 +462,7 @@ export function SettingsClient() {
 
     const normalizedColor = normalizeHex(newColorHex);
     if (!normalizedColor) {
-      setFeedback("Use uma cor hexadecimal valida, como #DDEAFE.");
+      setFeedback("Use uma cor hexadecimal válida, como #DDEAFE.");
       return;
     }
 
@@ -437,14 +504,14 @@ export function SettingsClient() {
     }
 
     setQuickExportPrivacy({ include_private_content: false });
-    setFeedback("Livros privados protegidos dos atalhos publicos e exportacoes rapidas.");
+    setFeedback("Livros privados protegidos dos atalhos públicos e exportações rápidas.");
     await loadSettings();
   }
 
   if (!envReady) {
     return (
-      <section className="rounded-lg border border-amber-300 bg-amber-50 p-5 text-amber-800">
-        Configure as variaveis Supabase para carregar as configuracoes.
+      <section className="serene-soft-in rounded-[2rem] border border-amber-300/80 bg-amber-50 p-5 text-sm text-amber-900 shadow-[var(--serene-shadow-soft)] dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100">
+        Configure as variáveis Supabase para carregar as configurações.
       </section>
     );
   }
@@ -452,9 +519,9 @@ export function SettingsClient() {
   if (authLoading || (user && profileState === "loading")) {
     return (
       <section className="grid min-h-[45vh] place-items-center">
-        <div className="flex flex-col items-center gap-3 text-center">
+        <div className="serene-soft-in flex flex-col items-center gap-3 rounded-[2rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] px-8 py-7 text-center shadow-[var(--serene-shadow-soft)]">
           <BrainLoader />
-          <p className="text-sm text-[var(--serene-muted)]">Abrindo suas preferencias...</p>
+          <p className="text-sm text-[var(--serene-muted)]">Abrindo suas preferências...</p>
         </div>
       </section>
     );
@@ -466,150 +533,230 @@ export function SettingsClient() {
 
   if (profileState === "error") {
     return (
-      <section className="rounded-lg border border-rose-300 bg-rose-50 p-5 text-rose-800">
-        <h1 className="text-xl font-semibold">Nao foi possivel carregar o perfil</h1>
+      <section className="serene-soft-in rounded-[2rem] border border-rose-300/80 bg-rose-50 p-5 text-rose-900 shadow-[var(--serene-shadow-soft)] dark:border-rose-700/60 dark:bg-rose-950/30 dark:text-rose-100">
+        <h1 className="text-xl font-semibold">Não foi possível carregar o perfil</h1>
         <p className="mt-2 text-sm">{profileError ?? "Tente novamente em instantes."}</p>
       </section>
     );
   }
 
   return (
-    <section className="space-y-6">
-      <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
-            Configuracoes
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold">Controle com calma</h1>
-          <p className="mt-2 max-w-2xl text-sm text-[var(--serene-muted)]">
-            Preferencias essenciais para conforto, leitura, Mural e privacidade.
-          </p>
+    <section className="serene-soft-in space-y-6">
+      <header className="overflow-hidden rounded-[2rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_94%,white_6%),var(--serene-surface))] p-6 shadow-[var(--serene-shadow-lift)] dark:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_92%,black_8%),var(--serene-surface))]">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
+              Configurações
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold">Controle com calma</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--serene-muted)]">
+              Ajustes essenciais para conforto visual, leitura, Mural e privacidade. Tudo fica aqui
+              sem invadir o momento de ler.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => void loadSettings()}
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-4 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)]"
+          >
+            <RefreshCw className="size-4" />
+            Atualizar
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => void loadSettings()}
-          className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm"
-        >
-          <RefreshCw className="size-4" />
-          Atualizar
-        </button>
       </header>
 
       {feedback && (
-        <p className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-2 text-sm">
+        <p className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-3 text-sm shadow-[var(--serene-shadow-soft)]">
           {feedback}
         </p>
       )}
 
       {error && (
-        <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <p className="rounded-2xl border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-[var(--serene-shadow-soft)] dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100">
           {error}
         </p>
       )}
 
       {loading ? (
-        <section className="grid min-h-56 place-items-center rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)]">
+        <section className="grid min-h-56 place-items-center rounded-[2rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] shadow-[var(--serene-shadow-soft)]">
           <div className="flex flex-col items-center gap-3">
             <BrainLoader />
-            <p className="text-sm text-[var(--serene-muted)]">Organizando preferencias...</p>
+            <p className="text-sm text-[var(--serene-muted)]">Organizando preferências...</p>
           </div>
         </section>
       ) : (
         <div className="grid gap-5">
-          <SettingsSection eyebrow="Aparência" title="Leitura visual" icon={Monitor}>
-            <div className="grid gap-2 sm:grid-cols-3">
+          <SettingsSection
+            eyebrow="Aparência"
+            title="Leitura visual"
+            icon={Monitor}
+            description="Escolha como a interface acompanha o ambiente e o seu cansaço visual."
+          >
+            <div className="grid gap-3 sm:grid-cols-3">
               {themeOptions.map((option) => {
                 const Icon = option.icon;
                 const active = themePreference === option.value;
+
                 return (
                   <button
                     key={option.value}
                     type="button"
                     onClick={() => void handleThemeChange(option.value)}
                     className={[
-                      "inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm",
+                      "flex min-h-[8rem] flex-col items-start justify-between rounded-2xl border p-4 text-left shadow-[var(--serene-shadow-inner)] transition",
                       active
-                        ? "border-[var(--serene-accent)] bg-[var(--serene-accent)] text-white"
-                        : "border-[var(--serene-border)] bg-[var(--serene-surface-soft)] text-[var(--serene-muted)]",
+                        ? "border-[var(--serene-accent)] bg-[color-mix(in_oklab,var(--serene-accent)_13%,var(--serene-surface)_87%)] text-[var(--serene-fg)]"
+                        : "border-[var(--serene-border)] bg-[var(--serene-surface-soft)] text-[var(--serene-muted)] hover:border-[var(--serene-accent)]",
                     ].join(" ")}
                     disabled={savingKey === "theme"}
                   >
-                    <Icon className="size-4" />
-                    {option.label}
+                    <span className="flex w-full items-center justify-between gap-3">
+                      <span className="grid size-10 place-items-center rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] text-[var(--serene-accent)]">
+                        <Icon className="size-4" />
+                      </span>
+                      {active && (
+                        <span className="rounded-full bg-[var(--serene-accent)] px-2 py-1 text-xs font-semibold text-white">
+                          Atual
+                        </span>
+                      )}
+                    </span>
+                    <span>
+                      <span className="block text-sm font-semibold text-[var(--serene-fg)]">
+                        {option.label}
+                      </span>
+                      <span className="mt-1 block text-xs leading-relaxed">
+                        {option.description}
+                      </span>
+                    </span>
                   </button>
                 );
               })}
             </div>
-            <ToggleRow
-              checked={reducedMotionEnabled}
-              label="Reduzir movimento"
-              description="Suaviza animacoes decorativas e transicoes longas."
-              disabled={savingKey === "reduced_motion"}
-              onChange={(value) => void handleReducedMotion(value)}
-            />
-          </SettingsSection>
-
-          <SettingsSection eyebrow="Leitura" title="Ritmo e fechamento" icon={Wind}>
-            <ToggleRow
-              checked={pressureFreeModeEnabled}
-              label="Modo sem pressao"
-              description="Evita mensagens com tom de cobranca, sequencia ou pressao. O SERENE respeita seu ritmo."
-              disabled={savingKey === "pressure_free"}
-              onChange={(value) => void handlePressureFreeMode(value)}
-            />
-            <label className="mt-3 grid gap-1 text-sm">
-              Ao fechar a leitura
-              <select
-                value={readingCloseBehavior}
-                onChange={(event) =>
-                  void handleReadingCloseBehavior(event.target.value as ReadingCloseBehavior)
-                }
-                className="max-w-sm rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none"
-                disabled={savingKey === "reading_close_behavior"}
-              >
-                {closeBehaviorOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </SettingsSection>
-
-          <SettingsSection eyebrow="Mural" title="Espaco de ideias" icon={LayoutGrid}>
-            <ToggleRow
-              checked={muralPreferences.show_suggestions}
-              label="Mostrar sugestoes de baloes"
-              description="Quando desligado, o Mural fica limpo e nao cria novas sugestoes automaticas."
-              disabled={savingKey === "mural_preferences"}
-              onChange={(value) =>
-                void persistMuralPreferences({
-                  ...muralPreferences,
-                  show_suggestions: value,
-                })
-              }
-            />
-            <ToggleRow
-              checked={muralPreferences.calm_grid_enabled}
-              label="Grade visual suave"
-              description="Mantem uma referencia discreta para organizar anotacoes sem pesar a tela."
-              disabled={savingKey === "mural_preferences"}
-              onChange={(value) =>
-                void persistMuralPreferences({
-                  ...muralPreferences,
-                  calm_grid_enabled: value,
-                })
-              }
-            />
-            <div className="mt-3 grid gap-2 rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3 text-xs text-[var(--serene-muted)] md:grid-cols-2">
-              <p>Maximo de sugestoes por sessao: {muralPreferences.max_suggestions_per_session}</p>
-              <p>Posicoes estaveis na sessao: sim</p>
-              <p>Sugestoes sorteadas por sessao: sim</p>
-              <p>Abrir com anotacoes existentes: sim</p>
+            <div className="mt-3">
+              <ToggleRow
+                checked={reducedMotionEnabled}
+                label="Reduzir movimento"
+                description="Suaviza animações decorativas e transições longas."
+                disabled={savingKey === "reduced_motion"}
+                onChange={(value) => void handleReducedMotion(value)}
+              />
             </div>
           </SettingsSection>
 
-          <SettingsSection eyebrow="Anotações" title="Cores" icon={Brush}>
+          <SettingsSection
+            eyebrow="Leitura"
+            title="Ritmo e fechamento"
+            icon={Wind}
+            description="Defina como o SERENE se comporta quando você precisa sair da leitura."
+          >
+            <div className="grid gap-3">
+              <ToggleRow
+                checked={pressureFreeModeEnabled}
+                label="Modo sem pressão"
+                description="Evita mensagens com tom de cobrança, sequência ou pressão. O SERENE respeita seu ritmo."
+                disabled={savingKey === "pressure_free"}
+                onChange={(value) => void handlePressureFreeMode(value)}
+              />
+
+              <div>
+                <p className="text-sm font-semibold">Ao fechar a leitura</p>
+                <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                  {closeBehaviorOptions.map((option) => {
+                    const Icon = option.icon;
+                    const active = readingCloseBehavior === option.value;
+
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => void handleReadingCloseBehavior(option.value)}
+                        disabled={savingKey === "reading_close_behavior"}
+                        className={[
+                          "flex items-start gap-3 rounded-2xl border p-4 text-left shadow-[var(--serene-shadow-inner)] transition",
+                          active
+                            ? "border-[var(--serene-accent)] bg-[color-mix(in_oklab,var(--serene-accent)_13%,var(--serene-surface)_87%)]"
+                            : "border-[var(--serene-border)] bg-[var(--serene-surface-soft)] text-[var(--serene-muted)] hover:border-[var(--serene-accent)]",
+                        ].join(" ")}
+                      >
+                        <span className="grid size-10 shrink-0 place-items-center rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] text-[var(--serene-accent)]">
+                          <Icon className="size-4" />
+                        </span>
+                        <span>
+                          <span className="block text-sm font-semibold text-[var(--serene-fg)]">
+                            {option.label}
+                          </span>
+                          <span className="mt-1 block text-xs leading-relaxed text-[var(--serene-muted)]">
+                            {option.description}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </SettingsSection>
+
+          <SettingsSection
+            eyebrow="Mural"
+            title="Espaço de ideias"
+            icon={LayoutGrid}
+            description="Preferências visuais para manter o Mural aberto, limpo e organizado."
+          >
+            <div className="grid gap-3">
+              <ToggleRow
+                checked={muralPreferences.show_suggestions}
+                label="Mostrar sugestões de balões"
+                description="Quando desligado, o Mural fica limpo e não cria novas sugestões automáticas."
+                disabled={savingKey === "mural_preferences"}
+                onChange={(value) =>
+                  void persistMuralPreferences({
+                    ...muralPreferences,
+                    show_suggestions: value,
+                  })
+                }
+              />
+              <ToggleRow
+                checked={muralPreferences.calm_grid_enabled}
+                label="Grade visual suave"
+                description="Mantém uma referência discreta para organizar anotações sem pesar a tela."
+                disabled={savingKey === "mural_preferences"}
+                onChange={(value) =>
+                  void persistMuralPreferences({
+                    ...muralPreferences,
+                    calm_grid_enabled: value,
+                  })
+                }
+              />
+            </div>
+            <div className="mt-4 grid gap-3 text-xs text-[var(--serene-muted)] md:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3">
+                <p className="font-semibold text-[var(--serene-fg)]">
+                  {muralPreferences.max_suggestions_per_session}
+                </p>
+                <p className="mt-1">Sugestões por sessão</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3">
+                <p className="font-semibold text-[var(--serene-fg)]">Sim</p>
+                <p className="mt-1">Posições estáveis</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3">
+                <p className="font-semibold text-[var(--serene-fg)]">Sim</p>
+                <p className="mt-1">Sorteio por sessão</p>
+              </div>
+              <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3">
+                <p className="font-semibold text-[var(--serene-fg)]">Sim</p>
+                <p className="mt-1">Anotações existentes</p>
+              </div>
+            </div>
+          </SettingsSection>
+
+          <SettingsSection
+            eyebrow="Anotações"
+            title="Cores"
+            icon={Brush}
+            description="Ajustes visuais para diferenciar notas sem transformar a tela em uma paleta pesada."
+          >
             <p className="text-sm text-[var(--serene-muted)]">{colorCountText}</p>
             <div className="mt-4 grid gap-3">
               {colors.map((color) => {
@@ -617,55 +764,64 @@ export function SettingsClient() {
                 return (
                   <div
                     key={color.id}
-                    className="grid gap-3 rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3 md:grid-cols-[auto_1fr_160px_160px_auto]"
+                    className="grid gap-3 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 shadow-[var(--serene-shadow-inner)] lg:grid-cols-[auto_minmax(0,1fr)_160px_160px_auto]"
                   >
                     <span
-                      className="size-9 rounded-full border border-[var(--serene-border)]"
+                      className="size-10 rounded-full border border-[var(--serene-border)] shadow-[var(--serene-shadow-soft)]"
                       style={{ backgroundColor: draft.color_hex }}
                     />
-                    <input
-                      value={draft.name}
-                      onChange={(event) =>
-                        setColorDrafts((current) => ({
-                          ...current,
-                          [color.id]: { ...draft, name: event.target.value },
-                        }))
-                      }
-                      className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-sm outline-none"
-                      placeholder="Nome"
-                    />
-                    <input
-                      value={draft.color_hex}
-                      onChange={(event) =>
-                        setColorDrafts((current) => ({
-                          ...current,
-                          [color.id]: { ...draft, color_hex: event.target.value },
-                        }))
-                      }
-                      className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-sm uppercase outline-none"
-                    />
-                    <select
-                      value={draft.applies_to}
-                      onChange={(event) =>
-                        setColorDrafts((current) => ({
-                          ...current,
-                          [color.id]: { ...draft, applies_to: event.target.value },
-                        }))
-                      }
-                      className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-sm outline-none"
-                    >
-                      <option value="">Todas</option>
-                      <option value="highlight">Marca-texto</option>
-                      <option value="note">Notas</option>
-                      <option value="reflection">Reflexoes</option>
-                      <option value="post_it">Post-it</option>
-                    </select>
-                    <div className="flex gap-2">
+                    <label className="grid gap-1 text-xs text-[var(--serene-muted)]">
+                      Nome
+                      <input
+                        value={draft.name}
+                        onChange={(event) =>
+                          setColorDrafts((current) => ({
+                            ...current,
+                            [color.id]: { ...draft, name: event.target.value },
+                          }))
+                        }
+                        className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-sm text-[var(--serene-fg)] outline-none"
+                        placeholder="Nome"
+                      />
+                    </label>
+                    <label className="grid gap-1 text-xs text-[var(--serene-muted)]">
+                      Hex
+                      <input
+                        value={draft.color_hex}
+                        onChange={(event) =>
+                          setColorDrafts((current) => ({
+                            ...current,
+                            [color.id]: { ...draft, color_hex: event.target.value },
+                          }))
+                        }
+                        className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-sm uppercase text-[var(--serene-fg)] outline-none"
+                      />
+                    </label>
+                    <label className="grid gap-1 text-xs text-[var(--serene-muted)]">
+                      Uso
+                      <select
+                        value={draft.applies_to}
+                        onChange={(event) =>
+                          setColorDrafts((current) => ({
+                            ...current,
+                            [color.id]: { ...draft, applies_to: event.target.value },
+                          }))
+                        }
+                        className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-sm text-[var(--serene-fg)] outline-none"
+                      >
+                        <option value="">Todas</option>
+                        <option value="highlight">Marca-texto</option>
+                        <option value="note">Notas</option>
+                        <option value="reflection">Reflexões</option>
+                        <option value="post_it">Post-it</option>
+                      </select>
+                    </label>
+                    <div className="flex flex-wrap items-end gap-2">
                       <button
                         type="button"
                         onClick={() => void handleSaveColor(color)}
                         disabled={savingKey === `color-${color.id}`}
-                        className="grid size-9 place-items-center rounded-full border border-[var(--serene-border)]"
+                        className="grid size-10 place-items-center rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)]"
                         aria-label="Salvar cor"
                         title="Salvar cor"
                       >
@@ -676,19 +832,19 @@ export function SettingsClient() {
                         onClick={() => void handleSetDefaultColor(color)}
                         disabled={color.is_default || savingKey === `default-${color.id}`}
                         className={[
-                          "rounded-full border px-3 py-2 text-xs",
+                          "rounded-full border px-3 py-2 text-xs shadow-[var(--serene-shadow-soft)] transition",
                           color.is_default
                             ? "border-[var(--serene-accent)] bg-[var(--serene-accent)] text-white"
-                            : "border-[var(--serene-border)] text-[var(--serene-muted)]",
+                            : "border-[var(--serene-border)] bg-[var(--serene-surface)] text-[var(--serene-muted)] hover:text-[var(--serene-fg)]",
                         ].join(" ")}
                       >
-                        Padrao
+                        Padrão
                       </button>
                       <button
                         type="button"
                         onClick={() => void handleDeleteColor(color)}
                         disabled={color.is_default || savingKey === `delete-${color.id}`}
-                        className="grid size-9 place-items-center rounded-full border border-[var(--serene-border)] text-[var(--serene-muted)] disabled:opacity-40"
+                        className="grid size-10 place-items-center rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)] disabled:opacity-40"
                         aria-label="Remover cor personalizada"
                         title="Remover cor personalizada"
                       >
@@ -700,49 +856,63 @@ export function SettingsClient() {
               })}
             </div>
 
-            <div className="mt-4 grid gap-3 rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3 md:grid-cols-[1fr_160px_160px_auto]">
-              <input
-                value={newColorName}
-                onChange={(event) => setNewColorName(event.target.value)}
-                className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-sm outline-none"
-                placeholder="Nova cor"
-              />
-              <input
-                value={newColorHex}
-                onChange={(event) => setNewColorHex(event.target.value)}
-                className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-sm uppercase outline-none"
-              />
-              <select
-                value={newColorAppliesTo}
-                onChange={(event) => setNewColorAppliesTo(event.target.value)}
-                className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-sm outline-none"
-              >
-                <option value="">Todas</option>
-                <option value="highlight">Marca-texto</option>
-                <option value="note">Notas</option>
-                <option value="reflection">Reflexoes</option>
-                <option value="post_it">Post-it</option>
-              </select>
+            <div className="mt-4 grid gap-3 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 shadow-[var(--serene-shadow-inner)] lg:grid-cols-[minmax(0,1fr)_160px_160px_auto]">
+              <label className="grid gap-1 text-xs text-[var(--serene-muted)]">
+                Nova cor
+                <input
+                  value={newColorName}
+                  onChange={(event) => setNewColorName(event.target.value)}
+                  className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-sm text-[var(--serene-fg)] outline-none"
+                  placeholder="Nova cor"
+                />
+              </label>
+              <label className="grid gap-1 text-xs text-[var(--serene-muted)]">
+                Hex
+                <input
+                  value={newColorHex}
+                  onChange={(event) => setNewColorHex(event.target.value)}
+                  className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-sm uppercase text-[var(--serene-fg)] outline-none"
+                />
+              </label>
+              <label className="grid gap-1 text-xs text-[var(--serene-muted)]">
+                Uso
+                <select
+                  value={newColorAppliesTo}
+                  onChange={(event) => setNewColorAppliesTo(event.target.value)}
+                  className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 text-sm text-[var(--serene-fg)] outline-none"
+                >
+                  <option value="">Todas</option>
+                  <option value="highlight">Marca-texto</option>
+                  <option value="note">Notas</option>
+                  <option value="reflection">Reflexões</option>
+                  <option value="post_it">Post-it</option>
+                </select>
+              </label>
               <button
                 type="button"
                 onClick={() => void handleAddColor()}
                 disabled={savingKey === "new_color"}
-                className="rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+                className="self-end rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--serene-shadow-soft)] disabled:opacity-60"
               >
                 Adicionar
               </button>
             </div>
           </SettingsSection>
 
-          <SettingsSection eyebrow="Privacidade" title="Conteudo reservado" icon={Lock}>
+          <SettingsSection
+            eyebrow="Privacidade"
+            title="Conteúdo reservado"
+            icon={Lock}
+            description="Controles para manter livros e anotações privadas fora de caminhos rápidos quando necessário."
+          >
             <div className="grid gap-3 md:grid-cols-3">
-              <div>
+              <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 shadow-[var(--serene-shadow-inner)]">
                 <p className="text-xs uppercase tracking-[0.14em] text-[var(--serene-muted)]">
                   Livros privados
                 </p>
                 <p className="mt-1 text-2xl font-semibold">{privacyCounts?.privateBooks ?? 0}</p>
               </div>
-              <div>
+              <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 shadow-[var(--serene-shadow-inner)]">
                 <p className="text-xs uppercase tracking-[0.14em] text-[var(--serene-muted)]">
                   Anotações privadas
                 </p>
@@ -750,30 +920,32 @@ export function SettingsClient() {
                   {privacyCounts?.privateAnnotations ?? 0}
                 </p>
               </div>
-              <div>
+              <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 shadow-[var(--serene-shadow-inner)]">
                 <p className="text-xs uppercase tracking-[0.14em] text-[var(--serene-muted)]">
-                  Exportacao rapida
+                  Exportação rápida
                 </p>
-                <p className="mt-1 text-sm font-semibold">
+                <p className="mt-2 text-sm font-semibold">
                   {quickExportPrivateExcluded ? "Privados ficam fora" : "Privados podem entrar"}
                 </p>
               </div>
             </div>
 
-            <ToggleRow
-              checked={quickExportPrivacy.include_private_content}
-              label="Incluir privados em exportacoes rapidas"
-              description="Desligado por padrao para manter livros e anotacoes privadas fora dos atalhos de exportacao."
-              disabled={savingKey === "quick_export_privacy"}
-              onChange={(value) =>
-                void persistQuickExportPrivacy({ include_private_content: value })
-              }
-            />
+            <div className="mt-3">
+              <ToggleRow
+                checked={quickExportPrivacy.include_private_content}
+                label="Incluir privados em exportações rápidas"
+                description="Desligado por padrão para manter livros e anotações privadas fora dos atalhos de exportação."
+                disabled={savingKey === "quick_export_privacy"}
+                onChange={(value) =>
+                  void persistQuickExportPrivacy({ include_private_content: value })
+                }
+              />
+            </div>
 
             {(privacyCounts?.privateBooksInQuickExports ?? 0) > 0 && (
-              <p className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+              <p className="mt-3 rounded-2xl border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100">
                 {privacyCounts?.privateBooksInQuickExports} livro(s) privado(s) ainda marcado(s)
-                para exportacoes rapidas.
+                para exportações rápidas.
               </p>
             )}
 
@@ -781,18 +953,23 @@ export function SettingsClient() {
               type="button"
               onClick={() => void handleApplyPrivateDefaults()}
               disabled={savingKey === "privacy_defaults"}
-              className="mt-3 inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm"
+              className="mt-3 inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-4 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)]"
             >
               <ShieldCheck className="size-4" />
-              Aplicar padrao seguro aos privados
+              Aplicar padrão seguro aos privados
             </button>
-            <p className="mt-3 text-xs text-[var(--serene-muted)]">
-              Manter este conteudo mais reservado tambem pode ocultar dos resumos e sugestoes,
+            <p className="mt-3 text-xs leading-relaxed text-[var(--serene-muted)]">
+              Manter este conteúdo mais reservado também pode ocultar dos resumos e sugestões,
               dependendo das flags do livro.
             </p>
           </SettingsSection>
 
-          <SettingsSection eyebrow="Notificações" title="Lembretes tranquilos" icon={Bell}>
+          <SettingsSection
+            eyebrow="Notificações"
+            title="Lembretes tranquilos"
+            icon={Bell}
+            description="Preparado para um futuro em que lembretes respeitem o ritmo da leitura."
+          >
             <ToggleRow
               checked={false}
               label="Lembretes de leitura"
@@ -800,20 +977,25 @@ export function SettingsClient() {
               disabled
               onChange={() => undefined}
             />
-            <p className="mt-3 text-xs text-[var(--serene-muted)]">
-              Livros marcados para nao aparecer em notificacoes e resumos serao respeitados quando
+            <p className="mt-3 text-xs leading-relaxed text-[var(--serene-muted)]">
+              Livros marcados para não aparecer em notificações e resumos serão respeitados quando
               lembretes reais forem ativados.
             </p>
           </SettingsSection>
 
-          <SettingsSection eyebrow="Atalhos" title="Comandos" icon={Keyboard}>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-[var(--serene-muted)]">
-                A lista de atalhos fica em uma tela separada para nao pesar estas preferencias.
+          <SettingsSection
+            eyebrow="Atalhos"
+            title="Comandos"
+            icon={Keyboard}
+            description="A lista completa fica separada para esta tela continuar leve."
+          >
+            <div className="flex flex-col gap-3 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm leading-relaxed text-[var(--serene-muted)]">
+                Use atalhos quando eles reduzirem atrito. Não precisa decorar todos.
               </p>
               <Link
                 href="/atalhos"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)]"
               >
                 <Keyboard className="size-4" />
                 Ver atalhos
@@ -821,15 +1003,20 @@ export function SettingsClient() {
             </div>
           </SettingsSection>
 
-          <SettingsSection eyebrow="Beta" title="Feedback" icon={MessageSquare}>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-[var(--serene-muted)]">
-                Compartilhe algo que travou, confundiu ou ficou bom. Uma frase ja ajuda.
+          <SettingsSection
+            eyebrow="Beta"
+            title="Feedback"
+            icon={MessageSquare}
+            description="Um canal discreto para registrar o que travou, confundiu ou ficou bom."
+          >
+            <div className="flex flex-col gap-3 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm leading-relaxed text-[var(--serene-muted)]">
+                Uma frase já ajuda a deixar o SERENE mais confortável.
               </p>
               <button
                 type="button"
                 onClick={() => window.dispatchEvent(new CustomEvent(OPEN_FEEDBACK_EVENT))}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)]"
               >
                 <MessageSquare className="size-4" />
                 Enviar feedback
@@ -837,14 +1024,19 @@ export function SettingsClient() {
             </div>
           </SettingsSection>
 
-          <SettingsSection eyebrow="Conta" title="Perfil e acesso" icon={User}>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-[var(--serene-muted)]">
-                Dados de perfil continuam em uma area propria, separados das preferencias de leitura.
+          <SettingsSection
+            eyebrow="Conta"
+            title="Perfil e acesso"
+            icon={User}
+            description="Dados pessoais continuam separados das preferências de leitura."
+          >
+            <div className="flex flex-col gap-3 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm leading-relaxed text-[var(--serene-muted)]">
+                O perfil guarda a identidade da conta; esta tela guarda o conforto de uso.
               </p>
               <Link
                 href="/perfil"
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)]"
               >
                 <User className="size-4" />
                 Abrir perfil
