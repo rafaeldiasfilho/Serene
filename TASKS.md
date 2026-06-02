@@ -474,3 +474,25 @@ Validation:
 - [x] `npm run typecheck` passes.
 - [x] `npm run lint` passes.
 - [x] `npm run build` passes.
+
+## Phase 15B - Home reading presence refinement
+
+- [x] Make the current reading book larger and more editorial on Inicio.
+- [x] Show a status/progress chip for the current book.
+- [x] Use `Iniciar leitura` or `Retomar leitura` based on current page progress.
+- [x] Keep all reading books visible in the same section, with smaller secondary cards.
+- [x] Keep the reading section collapsible with the existing up/down arrow control.
+- [x] Add a visible calm quick-note action in the Home header.
+- [x] Keep the floating `+` action for quick annotations.
+- [x] Rename the Home camera entry to `Foto` while preserving the existing capture placeholder dialog.
+- [x] Make the literary curiosity more tied to the user's actual book progress when available.
+- [x] Make Home metrics read less like a productivity dashboard.
+- [x] Update optional beta sample seed with multiple active readings, covers, progress, and a current book.
+- [x] Preserve authentication, beta isolation, services, RLS, and reading/session logic.
+
+Validation:
+- [ ] Manual Home check: current book, all reading books, collapse/expand, quick note, photo dialog, light/dark, responsive.
+- [x] `git diff --check` passes.
+- [x] `npm run typecheck` passes.
+- [x] `npm run lint` passes.
+- [x] `npm run build` passes.

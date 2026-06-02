@@ -140,7 +140,9 @@ Phase 15 keeps the existing data model and services intact while making the curr
 - Home now treats active reading books as the center of the first screen.
 - The current book remains the main focus, while other books in reading stay visible with covers and progress.
 - The Home reading section can be calmly collapsed and reopened.
+- Phase 15B further refines Home with a larger editorial current-book area, `Iniciar leitura`/`Retomar leitura` wording, visible quick-note and photo actions, and softer reading metrics.
 - Home curiosity text now references a real book from the user's library instead of a generic literary note.
+- The optional beta sample seed now includes multiple active reading books with covers and progress for Home testing.
 - Missing global visual token aliases are defined for light, dark, and system dark themes.
 - Annotation post-its are more physical: nearly square, lightly rotated, shadowed, and presented as a small paper stack.
 - Long annotation content in cards is shortened with `...` and can expand/retract locally.

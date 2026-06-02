@@ -67,12 +67,14 @@ insert into public.books (
   user_id,
   title,
   author,
+  cover_url,
   description,
   total_pages,
   current_page,
   status,
   source,
   reading_origin,
+  is_current,
   show_in_home,
   show_in_mente,
   created_at,
@@ -82,12 +84,14 @@ select
   s.user_id,
   b.title,
   b.author,
+  b.cover_url,
   b.description,
   b.total_pages,
   b.current_page,
   b.status,
   'beta_sample',
   'serene',
+  b.is_current,
   true,
   true,
   now(),
@@ -95,10 +99,57 @@ select
 from seed_beta_user s
 cross join (
   values
-    ('Um livro para respirar', 'SERENE', 'Starter calmo para testar biblioteca e leitura.', 180, 24, 'lendo'),
-    ('Notas de uma leitura tranquila', 'SERENE', 'Exemplo pequeno para testar anotações.', 96, 0, 'quero_ler'),
-    ('Memória de leitura', 'SERENE', 'Livro já lido para observar a Mente sem pressa.', 144, 144, 'lido')
-) as b(title, author, description, total_pages, current_page, status)
+    (
+      'Um livro para respirar',
+      'SERENE',
+      'https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=420&q=80',
+      'Starter calmo para testar biblioteca e leitura.',
+      180,
+      64,
+      'lendo',
+      true
+    ),
+    (
+      'A biblioteca interior',
+      'SERENE',
+      'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=420&q=80',
+      'Segundo livro em leitura para testar a mesa do Inicio.',
+      220,
+      83,
+      'lendo',
+      false
+    ),
+    (
+      'Cadernos de marca-texto',
+      'SERENE',
+      'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=420&q=80',
+      'Leitura paralela para ver progresso, capa e acoes rapidas.',
+      156,
+      41,
+      'lendo',
+      false
+    ),
+    (
+      'Notas de uma leitura tranquila',
+      'SERENE',
+      'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=420&q=80',
+      'Exemplo pequeno para testar anotacoes.',
+      96,
+      0,
+      'quero_ler',
+      false
+    ),
+    (
+      'Memoria de leitura',
+      'SERENE',
+      'https://images.unsplash.com/photo-1491841550275-ad7854e35ca6?w=420&q=80',
+      'Livro ja lido para observar a Mente sem pressa.',
+      144,
+      144,
+      'lido',
+      false
+    )
+) as b(title, author, cover_url, description, total_pages, current_page, status, is_current)
 where not exists (
   select 1
   from public.books existing
@@ -106,6 +157,59 @@ where not exists (
     and existing.source = 'beta_sample'
     and existing.title = b.title
 );
+
+update public.books existing
+set
+  cover_url = b.cover_url,
+  current_page = b.current_page,
+  status = b.status,
+  is_current = b.is_current,
+  show_in_home = true,
+  show_in_mente = true,
+  updated_at = now()
+from seed_beta_user s
+join (
+  values
+    (
+      'Um livro para respirar',
+      'https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=420&q=80',
+      64,
+      'lendo',
+      true
+    ),
+    (
+      'A biblioteca interior',
+      'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=420&q=80',
+      83,
+      'lendo',
+      false
+    ),
+    (
+      'Cadernos de marca-texto',
+      'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=420&q=80',
+      41,
+      'lendo',
+      false
+    ),
+    (
+      'Notas de uma leitura tranquila',
+      'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=420&q=80',
+      0,
+      'quero_ler',
+      false
+    ),
+    (
+      'Memoria de leitura',
+      'https://images.unsplash.com/photo-1491841550275-ad7854e35ca6?w=420&q=80',
+      144,
+      'lido',
+      false
+    )
+) as b(title, cover_url, current_page, status, is_current)
+  on true
+where existing.user_id = s.user_id
+  and existing.source = 'beta_sample'
+  and existing.title = b.title;
 
 insert into public.annotations (
   user_id,
