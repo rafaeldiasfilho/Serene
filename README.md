@@ -84,7 +84,7 @@ where email = 'admin@example.com';
 
 ## Project status
 
-SERENE is implemented through Phase 15D - Biblioteca Shelves.
+SERENE is implemented through Phase 15E - Mural Refinement.
 
 Current quality gates:
 
@@ -160,7 +160,14 @@ Phase 15D adds manual Biblioteca shelves with a safe many-to-many relation:
 - Removing a shelf does not remove its books.
 - Shelves are manual Biblioteca organization; Mente remains automatic interpretation.
 
-No authentication, reading/session logic, annotation logic, Mente logic, beta access rules, or destructive deletion behavior changed in Phase 15D.
+Phase 15E refines the Mural without changing database structure or reading behavior:
+
+- Mural remains a separate reading-session screen.
+- Opening, closing, or using Mural does not pause reading time.
+- Suggested idea balloons remain capped at 5 per session and keep stable saved positions.
+- The Mural now presents itself more clearly as a calm mental map, with preserved positions and softer suggestion copy.
+
+No authentication, reading/session logic, annotation logic, Mente logic, beta access rules, or destructive deletion behavior changed in Phase 15D or Phase 15E.
 
 ## Phase 13 notes
 

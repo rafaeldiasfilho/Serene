@@ -457,6 +457,7 @@ Pending manual checks:
 - [x] Add a minimal cup/steam visual that suggests active reading without competing with the book.
 - [x] Add a softer paused state with short microcopy: `Volte com calma.`
 - [x] Keep reading controls and session logic unchanged.
+- [x] Refine Mural as a calmer mental map without changing reading/session logic.
 
 Deferred intentionally:
 - [ ] Full OCR extraction for photographed pages.
@@ -543,3 +544,28 @@ Validation:
 
 Future optional bridge:
 - [ ] Mente may suggest creating a Biblioteca shelf from a strong automatic category, but the user must always choose whether to create it.
+
+## Phase 15E - Mural refinement
+
+- [x] Keep Mural as a separate reading-session screen.
+- [x] Keep opening and closing Mural from changing pause/resume state.
+- [x] Preserve current route and return-to-reading behavior.
+- [x] Preserve the existing annotation, suggestion, position, and session services.
+- [x] Keep suggested balloons capped at 5 per session.
+- [x] Make suggestion copy shorter, calmer, and more reading-focused.
+- [x] Add a calm session status strip for memories, saved positions, and suggestion limit.
+- [x] Make the Mural feel more like a mental map/whiteboard without adding visual noise.
+- [x] Improve fallback placement so generated annotation/suggestion positions keep looking organized when the canvas is busier.
+- [x] Keep manual `+` annotation creation starting at the visible center.
+- [x] Keep suggested balloons movable and removable only through explicit actions.
+- [x] Preserve visual identity for post-it, reflection, highlight, flag, idea, doubt, thought, action, and quick notes.
+- [x] Reuse existing demo seed coverage for Mural suggestions, positions, post-it, reflection, highlight, and active-session examples.
+- [x] Preserve authentication, beta isolation, Supabase schema, RLS, migrations, services, Biblioteca, Mente, annotations, export, and Trash logic.
+
+Validation:
+- [ ] Manual Mural flow: open from reading, timer continuity, move annotation, move suggestion, convert suggestion, hide/delete suggestion, `+` center creation, close back to reading, light/dark, responsive.
+- [ ] Browser QA after applying pending database fixes in the target Supabase project.
+- [x] `git diff --check` passes.
+- [x] `npm run typecheck` passes.
+- [x] `npm run lint` passes.
+- [x] `npm run build` passes.

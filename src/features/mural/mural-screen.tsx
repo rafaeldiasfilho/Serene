@@ -119,29 +119,30 @@ const MIN_CARD_WIDTH = 230;
 const MIN_CARD_HEIGHT = 130;
 const AUTO_SUGGEST_AFTER_SECONDS = 90;
 const SUGGESTION_LIMIT = 5;
+const SUGGESTION_ENTRY_DELAY_MS = 110;
 
 const suggestionTypes: AnnotationType[] = ["idea", "reflection", "doubt", "action", "thought"];
 
 const suggestionCopy: Record<string, { title: string; body: string }> = {
   idea: {
-    title: "Ideia possivel",
-    body: "Que conexao esta leitura esta abrindo agora?",
+    title: "Ideia importante?",
+    body: "Algo aqui merece virar conexao?",
   },
   reflection: {
-    title: "Reflexao",
-    body: "O que neste trecho conversa com a sua vida?",
+    title: "Algo para lembrar?",
+    body: "O que ficou depois desta pagina?",
   },
   doubt: {
-    title: "Duvida",
-    body: "Que pergunta vale guardar para voltar depois?",
+    title: "Duvida que surgiu?",
+    body: "Que pergunta pede retorno?",
   },
   action: {
-    title: "Acao",
-    body: "Existe um gesto pequeno que nasce desta pagina?",
+    title: "Um gesto possivel?",
+    body: "Existe algo pequeno a fazer depois?",
   },
   thought: {
-    title: "Pensamento",
-    body: "Qual frase interna apareceu enquanto voce lia?",
+    title: "Frase na mente?",
+    body: "Alguma frase ficou rondando?",
   },
 };
 
@@ -301,8 +302,8 @@ function findFreeRect(
   fallbackIndex: number,
 ) {
   const random = seededRandom(seed);
-  const maxX = CANVAS_WIDTH - width - 48;
-  const maxY = CANVAS_HEIGHT - height - 48;
+  const maxX = Math.max(0, CANVAS_WIDTH - width - 48);
+  const maxY = Math.max(0, CANVAS_HEIGHT - height - 48);
 
   for (let attempt = 0; attempt < 42; attempt += 1) {
     const candidate = {
@@ -317,12 +318,30 @@ function findFreeRect(
     }
   }
 
-  return {
+  const columns = Math.max(1, Math.floor((CANVAS_WIDTH - 96) / (width + 36)));
+  const rows = Math.max(1, Math.floor((CANVAS_HEIGHT - 140) / (height + 42)));
+  const totalSlots = columns * rows;
+
+  for (let step = 0; step < totalSlots; step += 1) {
+    const gridIndex = (fallbackIndex + step) % totalSlots;
+    const candidate = clampRect({
+      x: 48 + (gridIndex % columns) * (width + 36),
+      y: 96 + Math.floor(gridIndex / columns) * (height + 42),
+      width,
+      height,
+    });
+
+    if (!blockedRects.some((rect) => overlaps(candidate, rect))) {
+      return candidate;
+    }
+  }
+
+  return clampRect({
     x: 72 + (fallbackIndex % 4) * (width + 34),
     y: 110 + Math.floor(fallbackIndex / 4) * (height + 48),
     width,
     height,
-  };
+  });
 }
 
 function getPositionRect(position: MuralPositionRow): Rect {
@@ -439,6 +458,28 @@ function normalizeSuggestionType(type: AnnotationType | null): AnnotationType {
     return type;
   }
   return "idea";
+}
+
+function getSuggestionProgressLabel(
+  showSuggestions: boolean,
+  createdCount: number,
+  visibleCount: number,
+) {
+  if (!showSuggestions) {
+    return "Convites suaves desligados";
+  }
+
+  if (createdCount >= SUGGESTION_LIMIT && visibleCount === 0) {
+    return "5 convites registrados - continue pelo +";
+  }
+
+  if (visibleCount === 0) {
+    return `${createdCount}/${SUGGESTION_LIMIT} convites da sessao`;
+  }
+
+  return `${visibleCount} ${
+    visibleCount === 1 ? "convite visivel" : "convites visiveis"
+  } - ${createdCount}/${SUGGESTION_LIMIT}`;
 }
 
 function renderAnnotationContent(annotation: AnnotationRow) {
@@ -919,6 +960,23 @@ export function MuralScreen() {
     return suggestions.filter((suggestion) => suggestion.status === "available");
   }, [muralPreferences.show_suggestions, suggestions]);
 
+  const suggestionProgressLabel = useMemo(
+    () =>
+      getSuggestionProgressLabel(
+        muralPreferences.show_suggestions,
+        suggestions.length,
+        visibleSuggestions.length,
+      ),
+    [muralPreferences.show_suggestions, suggestions.length, visibleSuggestions.length],
+  );
+
+  const annotationCountLabel = `${annotations.length} ${
+    annotations.length === 1 ? "memoria" : "memorias"
+  }`;
+  const positionCountLabel = `${positions.length} ${
+    positions.length === 1 ? "posicao guardada" : "posicoes guardadas"
+  }`;
+
   function startInteraction(
     event: React.PointerEvent,
     target: InteractionTarget,
@@ -1212,6 +1270,9 @@ export function MuralScreen() {
               <MapIcon className="size-4" />
               Mural aberto sem pausar
             </span>
+            <span className="rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface-soft)_76%,transparent)] px-3 py-2 text-xs font-semibold uppercase tracking-[0.12em] shadow-[var(--serene-shadow-soft)]">
+              {suggestionProgressLabel}
+            </span>
             <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 font-semibold tabular-nums text-[var(--serene-fg)] shadow-[var(--serene-shadow-soft)]">
               {formatReadingDuration(activeSeconds)}
             </span>
@@ -1233,6 +1294,27 @@ export function MuralScreen() {
           </p>
         </div>
       </header>
+
+      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-stretch">
+        <div className="rounded-[1.5rem] border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_88%,transparent)] px-4 py-3 shadow-[var(--serene-shadow-soft)] backdrop-blur">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--serene-muted)]">
+            Mapa mental da sessao
+          </p>
+          <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[var(--serene-muted)]">
+            Uma mesa aberta para aproximar trechos, ideias e perguntas deste livro, com posicoes
+            preservadas enquanto a leitura continua.
+          </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 rounded-[1.5rem] border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_88%,transparent)] px-4 py-3 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] backdrop-blur">
+          <span className="rounded-full bg-[var(--serene-surface-soft)] px-3 py-1.5">
+            {annotationCountLabel}
+          </span>
+          <span className="rounded-full bg-[var(--serene-surface-soft)] px-3 py-1.5">
+            {positionCountLabel}
+          </span>
+        </div>
+      </div>
 
       {error && (
         <p className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
@@ -1365,7 +1447,7 @@ export function MuralScreen() {
             return (
               <article
                 key={suggestion.id}
-                className="mural-suggestion-enter absolute rounded-[30px] border border-dashed border-[#78a7a0]/80 bg-[#f4fbf8]/95 p-4 text-[#243f3b] shadow-[0_14px_30px_rgb(0_0_0_/_7%)] touch-none backdrop-blur-[1px] dark:border-[#7fb3a9]/70 dark:bg-[#21322f]/95 dark:text-[#e5f7f2]"
+                className="mural-suggestion-enter absolute rounded-[30px] border border-dashed border-[#78a7a0]/70 bg-[#f4fbf8]/95 p-4 text-[#243f3b] shadow-[0_14px_30px_rgb(0_0_0_/_7%)] touch-none backdrop-blur-[1px] dark:border-[#7fb3a9]/70 dark:bg-[#21322f]/95 dark:text-[#e5f7f2]"
                 style={{
                   left: rect.x,
                   top: rect.y,
@@ -1373,7 +1455,9 @@ export function MuralScreen() {
                   minHeight: rect.height,
                   zIndex: rect.zIndex,
                   transform: `rotate(${rect.rotation ?? 0}deg)`,
-                  animationDelay: `${Math.max(0, suggestion.suggested_slot - 1) * 85}ms`,
+                  animationDelay: `${
+                    Math.max(0, suggestion.suggested_slot - 1) * SUGGESTION_ENTRY_DELAY_MS
+                  }ms`,
                 }}
                 onClick={() => setFeedback("Balao mantido no Mural. Use um comando explicito para remove-lo.")}
               >
@@ -1383,11 +1467,14 @@ export function MuralScreen() {
                     startInteraction(event, "suggestion", "move", suggestion.id, rect)
                   }
                 >
-                  <div>
+                  <div className="flex items-start gap-2">
+                    <span className="mt-1.5 size-2 rounded-full bg-[#78a7a0] shadow-[0_0_0_4px_rgb(120_167_160_/_12%)]" />
+                    <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.14em] opacity-70">
                       Sugestao {suggestion.suggested_slot}/5
                     </p>
                     <h2 className="mt-1 text-sm font-semibold">{copy.title}</h2>
+                    </div>
                   </div>
                   <GripHorizontal className="size-4 shrink-0 opacity-60" />
                 </div>
