@@ -1,6 +1,17 @@
 "use client";
 
-import { BookOpen, Plus, RefreshCw } from "lucide-react";
+import {
+  BookOpen,
+  CheckCircle2,
+  Heart,
+  Lock,
+  MessageSquareText,
+  Plus,
+  RefreshCw,
+  Search,
+  Sparkles,
+  type LucideIcon,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { AuthPanel } from "@/components/auth/auth-panel";
@@ -17,6 +28,35 @@ import type { AnnotationReviewStatus, AnnotationType } from "@/lib/supabase/data
 type TypeFilter = "all" | AnnotationType;
 type ScopeFilter = "all" | "favorites" | "to_review";
 type BookFilter = "all" | "without_book" | string;
+
+function MetricTile({
+  helper,
+  icon: Icon,
+  label,
+  value,
+}: {
+  helper: string;
+  icon: LucideIcon;
+  label: string;
+  value: number;
+}) {
+  return (
+    <article className="serene-soft-in rounded-[1.35rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)] transition duration-500 hover:-translate-y-0.5 hover:shadow-[var(--serene-shadow-lift)]">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
+            {label}
+          </p>
+          <p className="mt-2 text-2xl font-semibold text-[var(--serene-text)]">{value}</p>
+        </div>
+        <span className="grid size-10 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-accent-soft)] text-[var(--serene-accent)]">
+          <Icon className="size-4" />
+        </span>
+      </div>
+      <p className="mt-3 text-xs leading-relaxed text-[var(--serene-muted)]">{helper}</p>
+    </article>
+  );
+}
 
 export function AnotacoesClient() {
   const { authLoading, envReady, profileState, user } = useAppState();
@@ -120,8 +160,11 @@ export function AnotacoesClient() {
 
   if (!envReady) {
     return (
-      <section className="rounded-lg border border-amber-300 bg-amber-50 p-5 text-amber-800">
-        Configure as variaveis Supabase para carregar as anotacoes.
+      <section className="serene-soft-in rounded-[1.75rem] border border-amber-300/70 bg-amber-50/90 p-6 text-amber-900 shadow-[var(--serene-shadow-soft)] dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-100">
+        <p className="text-sm font-semibold">As memórias ainda não podem ser abertas.</p>
+        <p className="mt-2 text-sm opacity-80">
+          Configure as variáveis Supabase para carregar as anotações.
+        </p>
       </section>
     );
   }
@@ -129,9 +172,9 @@ export function AnotacoesClient() {
   if (authLoading || (user && profileState === "loading")) {
     return (
       <section className="grid min-h-[45vh] place-items-center">
-        <div className="flex flex-col items-center gap-3 text-center">
+        <div className="serene-soft-in flex flex-col items-center gap-3 rounded-[2rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] px-8 py-7 text-center shadow-[var(--serene-shadow-soft)]">
           <BrainLoader />
-          <p className="text-sm text-[var(--serene-muted)]">Preparando suas anotacoes...</p>
+          <p className="text-sm text-[var(--serene-muted)]">Preparando suas anotações...</p>
         </div>
       </section>
     );
@@ -160,26 +203,26 @@ export function AnotacoesClient() {
     if (editingAnnotation) {
       const result = await editAnnotationEntry(editingAnnotation.id, payload);
       if (result.ok) {
-        setFeedback("Anotacao atualizada.");
+        setFeedback("Anotação atualizada.");
       }
       return result;
     }
 
     const result = await createAnnotationEntry(payload);
     if (result.ok) {
-      setFeedback("Anotacao salva.");
+      setFeedback("Anotação salva.");
     }
     return result;
   }
 
   async function handleDelete(annotation: AnnotationRow) {
-    const confirmed = window.confirm("Enviar esta anotacao para a Lixeira?");
+    const confirmed = window.confirm("Enviar esta anotação para a Lixeira?");
     if (!confirmed) {
       return;
     }
 
     const result = await deleteAnnotationEntry(annotation.id);
-    setFeedback(result.ok ? "Anotacao enviada para a Lixeira." : result.message);
+    setFeedback(result.ok ? "Anotação enviada para a Lixeira." : result.message);
   }
 
   async function handleToggleFavorite(annotation: AnnotationRow, nextValue: boolean) {
@@ -188,7 +231,7 @@ export function AnotacoesClient() {
       setFeedback(result.message);
       return;
     }
-    setFeedback(nextValue ? "Anotacao favoritada." : "Anotacao removida dos favoritos.");
+    setFeedback(nextValue ? "Anotação favoritada." : "Anotação removida dos favoritos.");
   }
 
   async function handleTogglePrivacy(annotation: AnnotationRow, nextValue: boolean) {
@@ -197,7 +240,7 @@ export function AnotacoesClient() {
       setFeedback(result.message);
       return;
     }
-    setFeedback(nextValue ? "Anotacao marcada como privada." : "Anotacao marcada como publica.");
+    setFeedback(nextValue ? "Anotação marcada como privada." : "Anotação marcada como pública.");
   }
 
   async function handleSetReviewStatus(annotation: AnnotationRow, nextStatus: AnnotationReviewStatus) {
@@ -206,7 +249,7 @@ export function AnotacoesClient() {
       setFeedback(result.message);
       return;
     }
-    setFeedback("Status de revisao atualizado.");
+    setFeedback("Status de revisão atualizado.");
   }
 
   function openCreateModal() {
@@ -225,98 +268,125 @@ export function AnotacoesClient() {
   }
 
   return (
-    <section className="space-y-6">
-      <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
-            Anotacoes
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold">Seu mapa de ideias em texto</h1>
-          <p className="mt-2 max-w-2xl text-sm text-[var(--serene-muted)]">
-            Crie, edite, favorite e revise sem perder leveza. Tudo com soft delete para sua
-            seguranca.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => void refresh()}
-            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm"
-          >
-            <RefreshCw className="size-4" />
-            Atualizar
-          </button>
-          <button
-            type="button"
-            onClick={openCreateModal}
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white"
-          >
-            <Plus className="size-4" />
-            Nova anotacao
-          </button>
+    <section className="space-y-7">
+      <header className="serene-rise overflow-hidden rounded-[2rem] border border-[var(--serene-border)] bg-[linear-gradient(135deg,var(--serene-surface),var(--serene-paper),var(--serene-accent-soft))] p-5 shadow-[var(--serene-shadow-lift)] sm:p-6">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)]">
+              <Sparkles className="size-3.5 text-[var(--serene-accent)]" />
+              Anotações
+            </div>
+            <h1 className="mt-4 text-3xl font-semibold leading-tight text-[var(--serene-text)] sm:text-4xl">
+              Memórias organizadas em palavras
+            </h1>
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-[var(--serene-muted)]">
+              Guarde trechos, pensamentos e retornos de leitura em um espaço calmo, com tudo pronto
+              para ser revisitado quando a ideia pedir silêncio.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void refresh()}
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-sm font-semibold text-[var(--serene-text)] shadow-[var(--serene-shadow-soft)] transition duration-300 hover:-translate-y-0.5 hover:border-[var(--serene-accent)]"
+            >
+              <RefreshCw className="size-4" />
+              Atualizar
+            </button>
+            <button
+              type="button"
+              onClick={openCreateModal}
+              className="inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--serene-shadow-lift)] transition duration-300 hover:-translate-y-0.5 hover:brightness-105"
+            >
+              <Plus className="size-4" />
+              Nova anotação
+            </button>
+          </div>
         </div>
       </header>
 
       {feedback && (
-        <p className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-2 text-sm">
+        <p className="serene-soft-in rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-3 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)]">
           {feedback}
         </p>
       )}
 
       {error && (
-        <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <p className="serene-soft-in rounded-2xl border border-amber-300/70 bg-amber-50/90 px-4 py-3 text-sm text-amber-900 shadow-[var(--serene-shadow-soft)] dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-100">
           {error}
         </p>
       )}
 
       <section className="grid gap-3 md:grid-cols-4">
-        <div className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-3">
-          <p className="text-xs uppercase tracking-[0.14em] text-[var(--serene-muted)]">Total</p>
-          <p className="mt-1 text-2xl font-semibold">{annotations.length}</p>
-        </div>
-        <div className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-3">
-          <p className="text-xs uppercase tracking-[0.14em] text-[var(--serene-muted)]">Favoritas</p>
-          <p className="mt-1 text-2xl font-semibold">{favoriteCount}</p>
-        </div>
-        <div className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-3">
-          <p className="text-xs uppercase tracking-[0.14em] text-[var(--serene-muted)]">Para revisar</p>
-          <p className="mt-1 text-2xl font-semibold">{toReviewAnnotations.length}</p>
-        </div>
-        <div className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-3">
-          <p className="text-xs uppercase tracking-[0.14em] text-[var(--serene-muted)]">Privadas</p>
-          <p className="mt-1 text-2xl font-semibold">{privateCount}</p>
-        </div>
+        <MetricTile
+          helper="Fragmentos guardados no seu acervo."
+          icon={MessageSquareText}
+          label="Total"
+          value={annotations.length}
+        />
+        <MetricTile
+          helper="Ideias que merecem voltar ao centro."
+          icon={Heart}
+          label="Favoritas"
+          value={favoriteCount}
+        />
+        <MetricTile
+          helper="Notas separadas para uma releitura calma."
+          icon={CheckCircle2}
+          label="Para revisar"
+          value={toReviewAnnotations.length}
+        />
+        <MetricTile
+          helper="Memórias mantidas em espaço reservado."
+          icon={Lock}
+          label="Privadas"
+          value={privateCount}
+        />
       </section>
 
-      <section className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4">
+      <section className="serene-soft-in rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)] sm:p-5">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--serene-text)]">
+              <Search className="size-4 text-[var(--serene-accent)]" />
+              Encontrar uma memória
+            </div>
+            <p className="mt-1 text-xs leading-relaxed text-[var(--serene-muted)]">
+              Filtre sem perder o ritmo: por trecho, livro, tipo ou intenção de retorno.
+            </p>
+          </div>
+          <p className="text-xs text-[var(--serene-muted)]">
+            {filteredAnnotations.length} de {annotations.length} exibidas
+          </p>
+        </div>
         <div className="grid gap-3 md:grid-cols-4">
-          <label className="grid gap-1 text-sm">
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
             Buscar
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="trecho, ideia, livro..."
-              className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none"
+              className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2.5 font-normal text-[var(--serene-text)] outline-none transition duration-300 placeholder:text-[var(--serene-muted)] focus:border-[var(--serene-accent)] focus:ring-2 focus:ring-[var(--serene-accent-soft)]"
             />
           </label>
-          <label className="grid gap-1 text-sm">
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
             Escopo
             <select
               value={scopeFilter}
               onChange={(event) => setScopeFilter(event.target.value as ScopeFilter)}
-              className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none"
+              className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2.5 font-normal text-[var(--serene-text)] outline-none transition duration-300 focus:border-[var(--serene-accent)] focus:ring-2 focus:ring-[var(--serene-accent-soft)]"
             >
               <option value="all">Todas</option>
               <option value="favorites">Favoritas</option>
               <option value="to_review">Para revisar</option>
             </select>
           </label>
-          <label className="grid gap-1 text-sm">
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
             Livro
             <select
               value={bookFilter}
               onChange={(event) => setBookFilter(event.target.value as BookFilter)}
-              className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none"
+              className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2.5 font-normal text-[var(--serene-text)] outline-none transition duration-300 focus:border-[var(--serene-accent)] focus:ring-2 focus:ring-[var(--serene-accent-soft)]"
             >
               <option value="all">Todos</option>
               <option value="without_book">Sem livro</option>
@@ -327,12 +397,12 @@ export function AnotacoesClient() {
               ))}
             </select>
           </label>
-          <label className="grid gap-1 text-sm">
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
             Tipo
             <select
               value={typeFilter}
               onChange={(event) => setTypeFilter(event.target.value as TypeFilter)}
-              className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2 outline-none"
+              className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2.5 font-normal text-[var(--serene-text)] outline-none transition duration-300 focus:border-[var(--serene-accent)] focus:ring-2 focus:ring-[var(--serene-accent-soft)]"
             >
               <option value="all">Todos</option>
               {annotationTypeOptions.map((option) => (
@@ -346,11 +416,18 @@ export function AnotacoesClient() {
       </section>
 
       {toReviewAnnotations.length > 0 && (
-        <section className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4">
-          <h2 className="text-base font-semibold">Para revisar</h2>
-          <p className="mt-1 text-sm text-[var(--serene-muted)]">
-            Anotacoes destacadas para retorno com calma.
-          </p>
+        <section className="serene-soft-in rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-paper)] p-4 shadow-[var(--serene-shadow-soft)] sm:p-5">
+          <div className="flex items-start gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-accent-soft)] text-[var(--serene-accent)]">
+              <CheckCircle2 className="size-4" />
+            </span>
+            <div>
+              <h2 className="text-base font-semibold text-[var(--serene-text)]">Para revisar</h2>
+              <p className="mt-1 text-sm leading-relaxed text-[var(--serene-muted)]">
+                Retornos guardados para quando você quiser reencontrar uma ideia com mais calma.
+              </p>
+            </div>
+          </div>
           <div className="mt-3 grid gap-3 md:grid-cols-2">
             {toReviewAnnotations.slice(0, 4).map((annotation) => (
               <AnnotationCard
@@ -369,30 +446,35 @@ export function AnotacoesClient() {
       )}
 
       {loading ? (
-        <section className="grid min-h-56 place-items-center rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)]">
-          <div className="flex flex-col items-center gap-3">
+        <section className="serene-soft-in grid min-h-56 place-items-center rounded-[2rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] shadow-[var(--serene-shadow-soft)]">
+          <div className="flex flex-col items-center gap-3 text-center">
             <BrainLoader />
-            <p className="text-sm text-[var(--serene-muted)]">Carregando anotacoes...</p>
+            <p className="text-sm text-[var(--serene-muted)]">Reunindo suas memórias de leitura...</p>
           </div>
         </section>
       ) : filteredAnnotations.length === 0 ? (
-        <section className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-6">
-          <BookOpen className="size-8 text-[var(--serene-accent)]" />
-          <h2 className="mt-3 text-xl font-semibold">Nenhuma anotacao neste filtro</h2>
-          <p className="mt-2 max-w-xl text-sm text-[var(--serene-muted)]">
-            Ajuste os filtros ou crie uma anotacao com o botao +.
+        <section className="serene-rise rounded-[2rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-7 shadow-[var(--serene-shadow-soft)]">
+          <span className="grid size-12 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-accent-soft)] text-[var(--serene-accent)]">
+            <BookOpen className="size-5" />
+          </span>
+          <h2 className="mt-4 text-xl font-semibold text-[var(--serene-text)]">
+            Nenhuma memória neste filtro
+          </h2>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--serene-muted)]">
+            Ajuste os filtros ou crie uma anotação para guardar o trecho, pensamento ou pergunta que
+            ficou depois da leitura.
           </p>
           <button
             type="button"
             onClick={openCreateModal}
-            className="mt-4 inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white"
+            className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--serene-shadow-soft)] transition duration-300 hover:-translate-y-0.5 hover:brightness-105"
           >
             <Plus className="size-4" />
-            Criar anotacao
+            Criar anotação
           </button>
         </section>
       ) : (
-        <section className="grid gap-3 md:grid-cols-2">
+        <section className="grid gap-4 md:grid-cols-2">
           {filteredAnnotations.map((annotation) => (
             <AnnotationCard
               key={annotation.id}
@@ -411,8 +493,8 @@ export function AnotacoesClient() {
       <button
         type="button"
         onClick={openCreateModal}
-        className="fixed bottom-4 right-4 z-20 inline-flex size-12 items-center justify-center rounded-full bg-[var(--serene-accent)] text-white shadow-lg sm:bottom-6 sm:right-6"
-        aria-label="Criar anotacao"
+        className="fixed bottom-20 right-4 z-20 inline-flex size-12 items-center justify-center rounded-full bg-[var(--serene-accent)] text-white shadow-[var(--serene-shadow-lift)] transition duration-300 hover:-translate-y-0.5 hover:brightness-105 sm:bottom-6 sm:right-6"
+        aria-label="Criar anotação"
       >
         <Plus className="size-5" />
       </button>
@@ -429,8 +511,8 @@ export function AnotacoesClient() {
       )}
 
       {saving && (
-        <div className="fixed bottom-4 left-4 z-20 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-xs text-[var(--serene-muted)] sm:bottom-6 sm:left-6">
-          Salvando alteracoes...
+        <div className="serene-soft-in fixed bottom-4 left-4 z-20 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-xs text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] sm:bottom-6 sm:left-6">
+          Salvando alterações...
         </div>
       )}
     </section>
