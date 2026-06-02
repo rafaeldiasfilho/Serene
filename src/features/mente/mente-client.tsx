@@ -36,15 +36,15 @@ import {
 } from "@/features/mente/mente-services";
 
 const annotationTypeLabels: Record<MenteAnnotationPreview["type"], string> = {
-  quick_note: "Anotacao rapida",
-  reflection: "Reflexao",
+  quick_note: "Anotação rápida",
+  reflection: "Reflexão",
   highlight: "Marca-texto",
   post_it: "Post-it",
   flag: "Flag",
-  doubt: "Duvida",
+  doubt: "Dúvida",
   thought: "Pensamento",
   idea: "Ideia",
-  action: "Acao",
+  action: "Ação",
   ocr_page: "OCR",
 };
 
@@ -83,7 +83,7 @@ function formatCount(value: number) {
 
 function sourceLabel(category: MenteCategory) {
   if (category.source === "saved") {
-    return "area automatica";
+    return "área automática";
   }
 
   return "inferida por leitura";
@@ -101,15 +101,17 @@ function MetricCard({
   value: string;
 }) {
   return (
-    <article className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4">
+    <article className="rounded-[1.35rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_94%,white_6%),var(--serene-surface))] p-4 shadow-[var(--serene-shadow-soft)] dark:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_92%,black_8%),var(--serene-surface))]">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-[var(--serene-muted)]">{label}</p>
-        <span className="grid size-8 place-items-center rounded-full bg-[var(--serene-surface-soft)] text-[var(--serene-accent)]">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
+          {label}
+        </p>
+        <span className="grid size-9 place-items-center rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] text-[var(--serene-accent)]">
           <Icon className="size-4" />
         </span>
       </div>
       <p className="mt-3 text-2xl font-semibold">{value}</p>
-      <p className="mt-1 text-xs text-[var(--serene-muted)]">{helper}</p>
+      <p className="mt-1 text-xs leading-relaxed text-[var(--serene-muted)]">{helper}</p>
     </article>
   );
 }
@@ -126,15 +128,15 @@ function TimeBlock({
   value: string;
 }) {
   return (
-    <article className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5">
+    <article className="rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5 shadow-[var(--serene-shadow-soft)]">
       <div className="flex items-center gap-3">
-        <span className="grid size-9 place-items-center rounded-full bg-[var(--serene-surface-soft)] text-[var(--serene-accent)]">
+        <span className="grid size-10 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-accent)_12%,var(--serene-surface)_88%)] text-[var(--serene-accent)] shadow-[var(--serene-shadow-inner)]">
           <Icon className="size-4" />
         </span>
-        <p className="text-sm font-medium">{label}</p>
+        <p className="text-sm font-semibold">{label}</p>
       </div>
-      <p className="mt-4 text-3xl font-semibold">{value}</p>
-      <p className="mt-2 text-xs text-[var(--serene-muted)]">{helper}</p>
+      <p className="mt-4 text-3xl font-semibold tracking-normal">{value}</p>
+      <p className="mt-2 text-xs leading-relaxed text-[var(--serene-muted)]">{helper}</p>
     </article>
   );
 }
@@ -149,21 +151,23 @@ function EmptyBlock({
   title: string;
 }) {
   return (
-    <div className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5">
-      <Icon className="size-7 text-[var(--serene-accent)]" />
-      <h3 className="mt-3 text-lg font-semibold">{title}</h3>
-      <p className="mt-2 text-sm text-[var(--serene-muted)]">{text}</p>
+    <div className="serene-soft-in rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-6 shadow-[var(--serene-shadow-soft)]">
+      <span className="grid size-12 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] text-[var(--serene-accent)]">
+        <Icon className="size-5" />
+      </span>
+      <h3 className="mt-4 text-lg font-semibold">{title}</h3>
+      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--serene-muted)]">{text}</p>
     </div>
   );
 }
 
 function AnnotationPreview({ item }: { item: MenteAnnotationPreview }) {
   return (
-    <article className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3">
-      <p className="text-xs text-[var(--serene-muted)]">
+    <article className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 shadow-[var(--serene-shadow-inner)]">
+      <p className="text-xs font-semibold uppercase tracking-[0.13em] text-[var(--serene-muted)]">
         {annotationTypeLabels[item.type]} {item.bookTitle ? `em ${item.bookTitle}` : "sem livro"}
       </p>
-      <p className="literary mt-2 text-sm leading-6">{item.content}</p>
+      <p className="literary mt-2 text-sm leading-6 text-[var(--serene-fg)]">{item.content}</p>
     </article>
   );
 }
@@ -178,38 +182,47 @@ function CategoryCard({
   onConvert: (category: MenteCategory) => void;
 }) {
   return (
-    <article className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4">
+    <article className="relative overflow-hidden rounded-[1.75rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_94%,white_6%),var(--serene-surface))] p-5 shadow-[var(--serene-shadow-soft)] dark:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_92%,black_8%),var(--serene-surface))]">
+      <span
+        className="absolute inset-x-0 top-0 h-1"
+        style={{ backgroundColor: category.color }}
+        aria-hidden="true"
+      />
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <span
-            className="mt-1 size-4 shrink-0 rounded-full border border-[var(--serene-border)]"
+            className="mt-1 size-5 shrink-0 rounded-full border border-[var(--serene-border)] shadow-[var(--serene-shadow-soft)]"
             style={{ backgroundColor: category.color }}
           />
           <div>
-            <p className="text-xs text-[var(--serene-muted)]">{sourceLabel(category)}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
+              {sourceLabel(category)}
+            </p>
             <h3 className="text-lg font-semibold">{category.name}</h3>
             {category.description && (
-              <p className="mt-1 text-sm text-[var(--serene-muted)]">{category.description}</p>
+              <p className="mt-1 text-sm leading-relaxed text-[var(--serene-muted)]">
+                {category.description}
+              </p>
             )}
           </div>
         </div>
         {category.confidence !== null && category.confidence >= 0.9 && (
-          <span className="rounded-full border border-[var(--serene-border)] px-2 py-1 text-xs text-[var(--serene-muted)]">
+          <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-2 py-1 text-xs text-[var(--serene-muted)] shadow-[var(--serene-shadow-inner)]">
             sinal forte
           </span>
         )}
       </div>
 
       <div className="mt-4 grid grid-cols-3 gap-2 text-sm">
-        <div>
+        <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3">
           <p className="text-lg font-semibold">{category.books.length}</p>
           <p className="text-xs text-[var(--serene-muted)]">livros</p>
         </div>
-        <div>
+        <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3">
           <p className="text-lg font-semibold">{category.annotationCount}</p>
-          <p className="text-xs text-[var(--serene-muted)]">anotacoes</p>
+          <p className="text-xs text-[var(--serene-muted)]">anotações</p>
         </div>
-        <div>
+        <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3">
           <p className="text-lg font-semibold">{formatDuration(category.realSeconds)}</p>
           <p className="text-xs text-[var(--serene-muted)]">tempo real</p>
         </div>
@@ -219,27 +232,27 @@ function CategoryCard({
         {category.books.slice(0, 4).map((book) => (
           <span
             key={book.id}
-            className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-1 text-xs"
+            className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-1 text-xs shadow-[var(--serene-shadow-inner)]"
           >
             {book.title}
           </span>
         ))}
         {category.books.length > 4 && (
-          <span className="rounded-full border border-[var(--serene-border)] px-3 py-1 text-xs text-[var(--serene-muted)]">
+          <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-1 text-xs text-[var(--serene-muted)]">
             +{category.books.length - 4}
           </span>
         )}
       </div>
 
       {category.reason && (
-        <p className="literary mt-4 rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3 text-sm text-[var(--serene-muted)]">
+        <p className="literary mt-4 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3 text-sm leading-6 text-[var(--serene-muted)] shadow-[var(--serene-shadow-inner)]">
           {category.reason}
         </p>
       )}
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
         {category.manualCategoryExists && (
-          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-3 py-2 text-xs text-[var(--serene-muted)]">
+          <span className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 text-xs text-[var(--serene-muted)]">
             <CheckCircle2 className="size-4" />
             Ja existe na Biblioteca
           </span>
@@ -248,7 +261,7 @@ function CategoryCard({
           type="button"
           onClick={() => onConvert(category)}
           disabled={converting}
-          className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-3 py-2 text-xs font-medium"
+          className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 text-xs font-medium text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)] disabled:opacity-60"
         >
           <Tags className="size-4" />
           {converting
@@ -258,7 +271,7 @@ function CategoryCard({
               : "Criar na Biblioteca"}
         </button>
         {category.toReviewCount > 0 && (
-          <span className="rounded-full border border-[var(--serene-border)] px-3 py-2 text-xs text-[var(--serene-muted)]">
+          <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 text-xs text-[var(--serene-muted)]">
             {category.toReviewCount} para revisar
           </span>
         )}
@@ -274,10 +287,10 @@ function EvolutionBars({ points }: { points: MenteEvolutionPoint[] }) {
     <div className="space-y-3">
       {points.map((point) => (
         <div key={point.key} className="grid gap-2 sm:grid-cols-[88px_1fr_96px] sm:items-center">
-          <p className="text-sm text-[var(--serene-muted)]">{point.label}</p>
-          <div className="h-3 overflow-hidden rounded-full bg-[var(--serene-surface-soft)]">
+          <p className="text-sm font-medium text-[var(--serene-muted)]">{point.label}</p>
+          <div className="h-3 overflow-hidden rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] shadow-[var(--serene-shadow-inner)]">
             <div
-              className="h-full rounded-full bg-[var(--serene-accent)]"
+              className="h-full rounded-full bg-[linear-gradient(90deg,color-mix(in_oklab,var(--serene-accent)_72%,white_28%),var(--serene-accent))]"
               style={{ width: `${Math.max((point.seconds / maxSeconds) * 100, 6)}%` }}
             />
           </div>
@@ -301,31 +314,34 @@ function MenteDashboard({
 
   return (
     <div className="space-y-6">
-      <section className="space-y-3">
+      <section className="rounded-[2rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_94%,white_6%),var(--serene-surface))] p-5 shadow-[var(--serene-shadow-lift)] dark:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_92%,black_8%),var(--serene-surface))]">
         <div>
-          <h2 className="text-xl font-semibold">Sua vida em leitura</h2>
-          <p className="mt-1 text-sm text-[var(--serene-muted)]">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
+            Tempo de vida
+          </p>
+          <h2 className="mt-1 text-xl font-semibold">Sua vida em leitura</h2>
+          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--serene-muted)]">
             Horas construindo sua mente leitora, com o tempo real separado das estimativas.
           </p>
         </div>
-        <div className="grid gap-3 md:grid-cols-3">
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
           <TimeBlock
             icon={Clock3}
             label="Tempo registrado no SERENE"
             value={timePhrase(insight.totals.realSeconds, "registradas no SERENE")}
-            helper="Somente tempo ativo de sessoes registradas."
+            helper="Somente tempo ativo de sessões registradas."
           />
           <TimeBlock
             icon={History}
-            label="Tempo estimado do seu historico"
-            value={timePhrase(insight.totals.estimatedHistoricalSeconds, "estimadas do historico")}
+            label="Tempo estimado do seu histórico"
+            value={timePhrase(insight.totals.estimatedHistoricalSeconds, "estimadas do histórico")}
             helper="Estimado e aproximado, vindo de livros lidos antes do SERENE."
           />
           <TimeBlock
             icon={Sparkles}
             label="Total aproximado dedicado aos livros"
             value={timePhrase(insight.totals.approximateTotalSeconds, "aproximadas")}
-            helper="Soma de tempo real registrado e historico estimado."
+            helper="Soma de tempo real registrado e histórico estimado."
           />
         </div>
       </section>
@@ -335,19 +351,19 @@ function MenteDashboard({
           icon={LibraryBig}
           label="Livros"
           value={formatCount(insight.totals.uniqueBooks)}
-          helper="Unicos, mesmo em varias areas."
+          helper="Únicos, mesmo em várias áreas."
         />
         <MetricCard
           icon={Clock3}
-          label="Sessoes"
+          label="Sessões"
           value={formatCount(insight.totals.sessions)}
           helper="Registros de leitura ativos."
         />
         <MetricCard
           icon={MessageSquareText}
-          label="Anotacoes"
+          label="Anotações"
           value={formatCount(insight.totals.annotations)}
-          helper="Privadas ficam fora desta visao."
+          helper="Privadas ficam fora desta visão."
         />
         <MetricCard
           icon={Star}
@@ -366,21 +382,24 @@ function MenteDashboard({
       <section className="space-y-4">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
-            <h2 className="text-xl font-semibold">Areas mais presentes</h2>
-            <p className="mt-1 text-sm text-[var(--serene-muted)]">
-              Categorias automaticas formadas por livros e anotacoes, sem depender da Biblioteca.
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
+              Mapa interno
+            </p>
+            <h2 className="mt-1 text-xl font-semibold">Áreas mais presentes</h2>
+            <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--serene-muted)]">
+              Categorias automáticas formadas por livros e anotações, sem depender da Biblioteca.
             </p>
           </div>
           <p className="text-xs text-[var(--serene-muted)]">
-            Um livro pode aparecer em varias areas; totais usam livros unicos.
+            Um livro pode aparecer em várias áreas; totais usam livros únicos.
           </p>
         </div>
 
         {strongestCategories.length === 0 ? (
           <EmptyBlock
             icon={Brain}
-            title="A Mente esta pronta"
-            text="Adicione livros e anotacoes visiveis para formar as primeiras areas automaticamente."
+            title="A Mente está pronta"
+            text="Adicione livros e anotações visíveis para formar as primeiras áreas automaticamente."
           />
         ) : (
           <div className="grid gap-3 lg:grid-cols-2">
@@ -397,22 +416,22 @@ function MenteDashboard({
       </section>
 
       <section id="evolucao" className="grid gap-4 lg:grid-cols-[1fr_360px]">
-        <article className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5">
+        <article className="rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5 shadow-[var(--serene-shadow-soft)]">
           <div className="flex items-center gap-3">
-            <span className="grid size-9 place-items-center rounded-full bg-[var(--serene-surface-soft)] text-[var(--serene-accent)]">
+            <span className="grid size-10 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] text-[var(--serene-accent)]">
               <CalendarDays className="size-4" />
             </span>
             <div>
-              <h2 className="text-lg font-semibold">Evolucao de leitura</h2>
+              <h2 className="text-lg font-semibold">Evolução de leitura</h2>
               <p className="text-sm text-[var(--serene-muted)]">
-                Um registro tranquilo de presenca, sem metas ou cobranca.
+                Um registro tranquilo de presença, sem metas ou cobrança.
               </p>
             </div>
           </div>
           <div className="mt-5">
             {insight.evolution.length === 0 ? (
               <p className="text-sm text-[var(--serene-muted)]">
-                Suas sessoes recentes aparecerao aqui quando houver tempo registrado.
+                Suas sessões recentes aparecerão aqui quando houver tempo registrado.
               </p>
             ) : (
               <EvolutionBars points={insight.evolution} />
@@ -420,9 +439,9 @@ function MenteDashboard({
           </div>
         </article>
 
-        <article className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5">
+        <article className="rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5 shadow-[var(--serene-shadow-soft)]">
           <div className="flex items-center gap-3">
-            <span className="grid size-9 place-items-center rounded-full bg-[var(--serene-surface-soft)] text-[var(--serene-accent)]">
+            <span className="grid size-10 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] text-[var(--serene-accent)]">
               <GitBranch className="size-4" />
             </span>
             <div>
@@ -439,7 +458,7 @@ function MenteDashboard({
               insight.conversations.map((conversation) => (
                 <div
                   key={conversation.id}
-                  className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3"
+                  className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3 shadow-[var(--serene-shadow-inner)]"
                 >
                   <div className="flex items-center gap-2">
                     <span
@@ -460,7 +479,7 @@ function MenteDashboard({
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <article className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5">
+        <article className="rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5 shadow-[var(--serene-shadow-soft)]">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold">Ideias favoritas</h2>
@@ -471,7 +490,7 @@ function MenteDashboard({
           <div className="mt-4 grid gap-3">
             {insight.favoriteIdeas.length === 0 ? (
               <p className="text-sm text-[var(--serene-muted)]">
-                Favoritos visiveis da Mente aparecerao aqui.
+                Favoritos visíveis da Mente aparecerão aqui.
               </p>
             ) : (
               insight.favoriteIdeas.map((item) => <AnnotationPreview key={item.id} item={item} />)
@@ -479,7 +498,7 @@ function MenteDashboard({
           </div>
         </article>
 
-        <article className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5">
+        <article className="rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5 shadow-[var(--serene-shadow-soft)]">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-lg font-semibold">Para revisar</h2>
@@ -490,7 +509,7 @@ function MenteDashboard({
           <div className="mt-4 grid gap-3">
             {insight.reviewItems.length === 0 ? (
               <p className="text-sm text-[var(--serene-muted)]">
-                Nenhum item visivel marcado para revisar agora.
+                Nenhum item visível marcado para revisar agora.
               </p>
             ) : (
               insight.reviewItems.map((item) => <AnnotationPreview key={item.id} item={item} />)
@@ -501,23 +520,23 @@ function MenteDashboard({
 
       <section
         id="linha-do-tempo"
-        className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5"
+        className="rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5 shadow-[var(--serene-shadow-soft)]"
       >
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-full bg-[var(--serene-surface-soft)] text-[var(--serene-accent)]">
+            <span className="grid size-11 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] text-[var(--serene-accent)]">
               <CalendarDays className="size-5" />
             </span>
             <div>
               <h2 className="text-lg font-semibold">Linha do tempo</h2>
               <p className="text-sm text-[var(--serene-muted)]">
-                Memoria cronologica de livros, sessoes e anotacoes.
+                Memória cronológica de livros, sessões e anotações.
               </p>
             </div>
           </div>
           <Link
             href="/linha-do-tempo"
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-4 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)]"
           >
             Ver linha do tempo
             <ArrowRight className="size-4" />
@@ -549,7 +568,7 @@ export function MenteClient() {
     setLoading(false);
 
     if (result.error || !result.data) {
-      setError(result.error?.message ?? "Nao foi possivel carregar a Mente.");
+      setError(result.error?.message ?? "Não foi possível carregar a Mente.");
       return;
     }
 
@@ -593,8 +612,8 @@ export function MenteClient() {
 
   if (!envReady) {
     return (
-      <section className="rounded-lg border border-amber-300 bg-amber-50 p-5 text-amber-800">
-        Configure as variaveis Supabase para carregar a Mente.
+      <section className="serene-soft-in rounded-[2rem] border border-amber-300/80 bg-amber-50 p-5 text-sm text-amber-900 shadow-[var(--serene-shadow-soft)] dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100">
+        Configure as variáveis Supabase para carregar a Mente.
       </section>
     );
   }
@@ -602,7 +621,7 @@ export function MenteClient() {
   if (authLoading || (user && profileState === "loading")) {
     return (
       <section className="grid min-h-[45vh] place-items-center">
-        <div className="flex flex-col items-center gap-3 text-center">
+        <div className="serene-soft-in flex flex-col items-center gap-3 rounded-[2rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] px-8 py-7 text-center shadow-[var(--serene-shadow-soft)]">
           <BrainLoader />
           <p className="text-sm text-[var(--serene-muted)]">Preparando sua Mente...</p>
         </div>
@@ -616,30 +635,34 @@ export function MenteClient() {
 
   if (profileState === "error") {
     return (
-      <section className="rounded-lg border border-rose-300 bg-rose-50 p-5 text-rose-800">
-        <h1 className="text-xl font-semibold">Nao foi possivel carregar o perfil</h1>
+      <section className="serene-soft-in rounded-[2rem] border border-rose-300/80 bg-rose-50 p-5 text-rose-900 shadow-[var(--serene-shadow-soft)] dark:border-rose-700/60 dark:bg-rose-950/30 dark:text-rose-100">
+        <h1 className="text-xl font-semibold">Não foi possível carregar o perfil</h1>
         <p className="mt-2 text-sm">{profileError ?? "Tente novamente em instantes."}</p>
       </section>
     );
   }
 
   return (
-    <section className="space-y-6">
-      <header className="grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+    <section className="serene-soft-in space-y-6">
+      <header className="overflow-hidden rounded-[2rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_94%,white_6%),var(--serene-surface))] p-6 shadow-[var(--serene-shadow-lift)] dark:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_92%,black_8%),var(--serene-surface))]">
+        <div className="grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
         <div>
-          <p className="text-sm text-[var(--serene-muted)]">Mente</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
+            Mente
+          </p>
           <h1 className="mt-2 text-3xl font-semibold">Sua leitura ganhando forma</h1>
-          <p className="mt-2 max-w-2xl text-sm text-[var(--serene-muted)]">
-            Uma visao calma das areas que aparecem nos livros, nas sessoes e nas anotacoes
-            visiveis.
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--serene-muted)]">
+            Uma visão calma das áreas que aparecem nos livros, nas sessões e nas anotações
+            visíveis.
           </p>
         </div>
-        <div className="flex items-center gap-3 rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4">
+        <div className="flex items-center gap-3 rounded-[1.5rem] border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 shadow-[var(--serene-shadow-soft)]">
           <BrainLoader className="size-16" />
           <div>
             <p className="text-sm font-medium">{profile?.name ?? user.email ?? "Leitor"}</p>
             <p className="text-xs text-[var(--serene-muted)]">Privados ficam resguardados.</p>
           </div>
+        </div>
         </div>
       </header>
 
@@ -647,21 +670,21 @@ export function MenteClient() {
         <button
           type="button"
           onClick={() => void loadMente()}
-          className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm"
+          className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)]"
         >
           <RefreshCw className="size-4" />
           Atualizar
         </button>
         <Link
           href="/linha-do-tempo"
-          className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm"
+          className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)]"
         >
           <CalendarDays className="size-4" />
           Ver linha do tempo
         </Link>
         <Link
           href="/biblioteca"
-          className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm"
+          className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)]"
         >
           <BookOpen className="size-4" />
           Biblioteca
@@ -669,19 +692,19 @@ export function MenteClient() {
       </div>
 
       {feedback && (
-        <p className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-2 text-sm">
+        <p className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-3 text-sm shadow-[var(--serene-shadow-soft)]">
           {feedback}
         </p>
       )}
 
       {error && (
-        <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <p className="rounded-2xl border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-[var(--serene-shadow-soft)] dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100">
           {error}
         </p>
       )}
 
       {loading || !insight ? (
-        <section className="grid min-h-64 place-items-center rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)]">
+        <section className="grid min-h-64 place-items-center rounded-[2rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] shadow-[var(--serene-shadow-soft)]">
           <div className="flex flex-col items-center gap-3">
             <BrainLoader />
             <p className="text-sm text-[var(--serene-muted)]">Lendo seus sinais de leitura...</p>
@@ -691,7 +714,7 @@ export function MenteClient() {
         <EmptyBlock
           icon={Brain}
           title="Mente tranquila por enquanto"
-          text="Nenhum livro visivel para a Mente agora. Livros privados ou ocultos continuam protegidos."
+          text="Nenhum livro visível para a Mente agora. Livros privados ou ocultos continuam protegidos."
         />
       ) : (
         <MenteDashboard

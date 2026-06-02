@@ -49,7 +49,7 @@ const eventTypeMeta: Record<string, EventMeta> = {
   },
   historical_book_added: {
     icon: Archive,
-    label: "Historico de leitura",
+    label: "Histórico de leitura",
     tone: "Estimado",
   },
   book_started: {
@@ -59,33 +59,33 @@ const eventTypeMeta: Record<string, EventMeta> = {
   },
   session_finished: {
     icon: CheckCircle2,
-    label: "Sessao finalizada",
+    label: "Sessão finalizada",
     tone: "Tempo real",
   },
   book_completed: {
     icon: Sparkles,
-    label: "Livro concluido",
+    label: "Livro concluído",
     tone: "Biblioteca",
   },
   annotation_created: {
     icon: MessageSquareText,
-    label: "Anotacao criada",
-    tone: "Memoria",
+    label: "Anotação criada",
+    tone: "Memória",
   },
   annotation_edited: {
     icon: MessageSquareText,
-    label: "Anotacao editada",
-    tone: "Memoria",
+    label: "Anotação editada",
+    tone: "Memória",
   },
   annotation_favorited: {
     icon: Heart,
-    label: "Anotacao favorita",
-    tone: "Memoria",
+    label: "Anotação favorita",
+    tone: "Memória",
   },
   annotation_reviewed: {
     icon: CheckCircle2,
-    label: "Anotacao revisada",
-    tone: "Revisao",
+    label: "Anotação revisada",
+    tone: "Revisão",
   },
   reading_milestone: {
     icon: Clock3,
@@ -104,21 +104,21 @@ const eventTypeMeta: Record<string, EventMeta> = {
   },
   export_created: {
     icon: FileDown,
-    label: "Exportacao criada",
+    label: "Exportação criada",
     tone: "Controle",
   },
 };
 
 const annotationTypeLabels: Record<AnnotationType, string> = {
-  quick_note: "Anotacao rapida",
-  reflection: "Reflexao",
+  quick_note: "Anotação rápida",
+  reflection: "Reflexão",
   highlight: "Marca-texto",
   post_it: "Post-it",
   flag: "Flag",
-  doubt: "Duvida",
+  doubt: "Dúvida",
   thought: "Pensamento",
   idea: "Ideia",
-  action: "Acao",
+  action: "Ação",
   ocr_page: "OCR",
 };
 
@@ -126,7 +126,7 @@ function fallbackEventMeta(eventType: string): EventMeta {
   return {
     icon: CalendarDays,
     label: eventType.replaceAll("_", " "),
-    tone: "Memoria",
+    tone: "Memória",
   };
 }
 
@@ -189,7 +189,7 @@ function formatEventDate(value: string) {
 function formatSessionDate(value: string) {
   const date = parseDate(value);
   if (!date) {
-    return "sessao registrada";
+    return "sessão registrada";
   }
 
   return new Intl.DateTimeFormat("pt-BR", {
@@ -270,7 +270,7 @@ function timeChips({
 
   if (estimatedSeconds !== null && estimatedSeconds > 0) {
     chips.push({
-      label: "Historico estimado",
+      label: "Histórico estimado",
       value: `${formatDuration(estimatedSeconds)} aproximado`,
     });
   }
@@ -295,7 +295,7 @@ function visibleBookTitle(book: TimelineBookRow | null) {
 
 function annotationLabel(annotation: TimelineAnnotationRow | null, book: TimelineBookRow | null) {
   if (!annotation || !canRevealAnnotation(annotation, book)) {
-    return "anotacao";
+    return "anotação";
   }
 
   return annotationTypeLabels[annotation.type].toLowerCase();
@@ -323,40 +323,40 @@ function buildEventCopy({
     return {
       title: title ? `${title} entrou na Biblioteca` : "Um livro entrou na Biblioteca",
       description: title
-        ? `Voce adicionou ${title} a sua Biblioteca.`
-        : "Voce adicionou um livro a sua Biblioteca.",
+        ? `Você adicionou ${title} à sua Biblioteca.`
+        : "Você adicionou um livro à sua Biblioteca.",
     };
   }
 
   if (event.event_type === "historical_book_added") {
     return {
-      title: title ? `${title} entrou no seu historico` : "Um livro entrou no seu historico",
+      title: title ? `${title} entrou no seu histórico` : "Um livro entrou no seu histórico",
       description: title
-        ? `${title} foi guardado como leitura historica estimada.`
-        : "Um livro foi guardado como leitura historica estimada.",
+        ? `${title} foi guardado como leitura histórica estimada.`
+        : "Um livro foi guardado como leitura histórica estimada.",
     };
   }
 
   if (event.event_type === "book_started") {
     return {
-      title: title ? `Voce comecou ${title}` : "Voce iniciou uma leitura",
-      description: "Uma sessao comecou sem pressa, com tempo real separado das estimativas.",
+      title: title ? `Você começou ${title}` : "Você iniciou uma leitura",
+      description: "Uma sessão começou sem pressa, com tempo real separado das estimativas.",
     };
   }
 
   if (event.event_type === "session_finished") {
     return {
-      title: "Voce finalizou uma sessao de leitura",
+      title: "Você finalizou uma sessão de leitura",
       description:
         endPage !== null
-          ? `A sessao foi concluida e a pagina ${endPage} ficou registrada.`
-          : "A sessao foi concluida e o tempo real ficou registrado.",
+          ? `A sessão foi concluída e a página ${endPage} ficou registrada.`
+          : "A sessão foi concluída e o tempo real ficou registrado.",
     };
   }
 
   if (event.event_type === "book_completed") {
     return {
-      title: title ? `Voce concluiu ${title}` : "Voce concluiu um livro",
+      title: title ? `Você concluiu ${title}` : "Você concluiu um livro",
       description: "Esse momento ficou guardado como parte da sua vida de leitura.",
     };
   }
@@ -365,17 +365,17 @@ function buildEventCopy({
     return {
       title:
         annotation?.type === "reflection"
-          ? "Uma reflexao importante foi guardada"
+          ? "Uma reflexão importante foi guardada"
           : `Uma ${annotationText} foi guardada`,
       description: title
-        ? `A anotacao ficou ligada a ${title}.`
-        : "A anotacao ficou salva para quando voce quiser voltar a ela.",
+        ? `A anotação ficou ligada a ${title}.`
+        : "A anotação ficou salva para quando você quiser voltar a ela.",
     };
   }
 
   if (event.event_type === "annotation_favorited") {
     return {
-      title: "Voce marcou uma ideia como favorita",
+      title: "Você marcou uma ideia como favorita",
       description: "Um pensamento ganhou destaque para permanecer mais perto.",
     };
   }
@@ -383,28 +383,28 @@ function buildEventCopy({
   if (event.event_type === "reading_time_milestone") {
     return {
       title: "Mais tempo dedicado aos livros foi registrado",
-      description: "Esse marco preserva tempo de leitura sem transformar isso em cobranca.",
+      description: "Esse marco preserva tempo de leitura sem transformar isso em cobrança.",
     };
   }
 
   if (event.event_type === "mural_used") {
     return {
-      title: "Voce abriu o Mural durante uma leitura",
-      description: "O espaco de ideias foi usado sem interromper o contador da sessao.",
+      title: "Você abriu o Mural durante uma leitura",
+      description: "O espaço de ideias foi usado sem interromper o contador da sessão.",
     };
   }
 
   if (event.event_type === "export_created") {
     return {
-      title: "Uma exportacao foi concluida",
-      description: "Um registro de leitura foi preparado com controle do usuario.",
+      title: "Uma exportação foi concluída",
+      description: "Um registro de leitura foi preparado com controle do usuário.",
     };
   }
 
   return {
-    title: sensitive ? "Memoria de leitura preservada" : event.title?.trim() || "Memoria de leitura",
+    title: sensitive ? "Memória de leitura preservada" : event.title?.trim() || "Memória de leitura",
     description: sensitive
-      ? "Um momento foi preservado sem expor conteudo reservado."
+      ? "Um momento foi preservado sem expor conteúdo reservado."
       : event.description?.trim() || "Um momento de leitura ficou preservado.",
   };
 }
@@ -429,25 +429,27 @@ function ContextPills({
   return (
     <div className="mt-4 flex flex-wrap gap-2">
       {book && (
-        <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-1 text-xs">
+        <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-1 text-xs shadow-[var(--serene-shadow-inner)]">
           Livro: {bookTitle ?? "reservado"}
         </span>
       )}
       {session && (
-        <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-1 text-xs">
-          Sessao de {formatSessionDate(session.started_at)}
-          {session.end_page !== null ? ` ate pag. ${session.end_page}` : ""}
+        <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-1 text-xs shadow-[var(--serene-shadow-inner)]">
+          Sessão de {formatSessionDate(session.started_at)}
+          {session.end_page !== null ? ` até pág. ${session.end_page}` : ""}
         </span>
       )}
       {annotation && (
-        <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-1 text-xs">
-          {annotationVisible ? annotationTypeLabels[annotation.type] : "Anotacao reservada"}
-          {annotationVisible && annotation.page_number !== null ? ` na pag. ${annotation.page_number}` : ""}
+        <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-1 text-xs shadow-[var(--serene-shadow-inner)]">
+          {annotationVisible ? annotationTypeLabels[annotation.type] : "Anotação reservada"}
+          {annotationVisible && annotation.page_number !== null
+            ? ` na pág. ${annotation.page_number}`
+            : ""}
         </span>
       )}
       {(missingBook || missingSession || missingAnnotation) && (
-        <span className="rounded-full border border-[var(--serene-border)] px-3 py-1 text-xs text-[var(--serene-muted)]">
-          Um vinculo antigo foi preservado sem abrir conteudo indisponivel.
+        <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-1 text-xs text-[var(--serene-muted)]">
+          Um vínculo antigo foi preservado sem abrir conteúdo indisponível.
         </span>
       )}
     </div>
@@ -476,7 +478,7 @@ function ActionLinks({
   if (annotation && (canRevealAnnotation(annotation, book) || annotation.deleted_at)) {
     links.push({
       href: annotation.deleted_at ? "/lixeira" : "/anotacoes",
-      label: annotation.deleted_at ? "Anotacao na Lixeira" : "Ver Anotacoes",
+      label: annotation.deleted_at ? "Anotação na Lixeira" : "Ver Anotações",
       icon: annotation.deleted_at ? Archive : MessageSquareText,
     });
   }
@@ -484,7 +486,7 @@ function ActionLinks({
   if (session && !session.deleted_at) {
     links.push({
       href: "/mente#evolucao",
-      label: "Contexto da sessao",
+      label: "Contexto da sessão",
       icon: Clock3,
     });
   }
@@ -501,7 +503,7 @@ function ActionLinks({
           <Link
             key={`${link.href}-${link.label}`}
             href={link.href}
-            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-3 py-1.5 text-xs font-medium"
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-1.5 text-xs font-medium text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)]"
           >
             <Icon className="size-3.5" />
             {link.label}
@@ -536,11 +538,11 @@ function TimelineEventCard({
   return (
     <article
       id={`evento-${event.id}`}
-      className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5"
+      className="serene-card-enter rounded-[1.75rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_94%,white_6%),var(--serene-surface))] p-5 shadow-[var(--serene-shadow-soft)] dark:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_92%,black_8%),var(--serene-surface))]"
     >
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div className="flex gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--serene-surface-soft)] text-[var(--serene-accent)]">
+          <span className="grid size-11 shrink-0 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-accent)_12%,var(--serene-surface)_88%)] text-[var(--serene-accent)] shadow-[var(--serene-shadow-inner)]">
             <Icon className="size-5" />
           </span>
           <div>
@@ -548,17 +550,17 @@ function TimelineEventCard({
               <span className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
                 {eventMeta.label}
               </span>
-              <span className="rounded-full border border-[var(--serene-border)] px-2 py-0.5 text-[11px] text-[var(--serene-muted)]">
+              <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-2 py-0.5 text-[11px] text-[var(--serene-muted)]">
                 {eventMeta.tone}
               </span>
               {sensitiveEvent && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-[var(--serene-border)] px-2 py-0.5 text-[11px] text-[var(--serene-muted)]">
+                <span className="inline-flex items-center gap-1 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-2 py-0.5 text-[11px] text-[var(--serene-muted)]">
                   <Lock className="size-3" />
                   Reservado
                 </span>
               )}
               {deletedContext && (
-                <span className="rounded-full border border-[var(--serene-border)] px-2 py-0.5 text-[11px] text-[var(--serene-muted)]">
+                <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-2 py-0.5 text-[11px] text-[var(--serene-muted)]">
                   Na Lixeira
                 </span>
               )}
@@ -566,7 +568,10 @@ function TimelineEventCard({
             <h3 className="mt-2 text-lg font-semibold">{eventCopy.title}</h3>
           </div>
         </div>
-        <time className="text-sm text-[var(--serene-muted)]" dateTime={event.created_at}>
+        <time
+          className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-1 text-xs text-[var(--serene-muted)]"
+          dateTime={event.created_at}
+        >
           {formatEventDate(event.created_at)}
         </time>
       </div>
@@ -576,7 +581,7 @@ function TimelineEventCard({
       </p>
 
       {annotationPreview && (
-        <p className="mt-3 max-w-3xl rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 text-sm text-[var(--serene-muted)]">
+        <p className="literary mt-3 max-w-3xl rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-4 py-3 text-sm leading-6 text-[var(--serene-muted)] shadow-[var(--serene-shadow-inner)]">
           {annotationPreview}
           {annotationPreview.length >= 140 ? "..." : ""}
         </p>
@@ -589,7 +594,7 @@ function TimelineEventCard({
           {chips.map((chip) => (
             <div
               key={`${chip.label}-${chip.value}`}
-              className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2"
+              className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 shadow-[var(--serene-shadow-inner)]"
             >
               <p className="text-xs text-[var(--serene-muted)]">{chip.label}</p>
               <p className="mt-1 text-sm font-semibold">{chip.value}</p>
@@ -605,11 +610,13 @@ function TimelineEventCard({
 
 function TimelineEmptyState() {
   return (
-    <section className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-6">
-      <CalendarDays className="size-8 text-[var(--serene-accent)]" />
+    <section className="serene-soft-in rounded-[2rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-6 shadow-[var(--serene-shadow-soft)]">
+      <span className="grid size-12 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] text-[var(--serene-accent)]">
+        <CalendarDays className="size-5" />
+      </span>
       <h2 className="mt-3 text-xl font-semibold">Linha do tempo tranquila por enquanto</h2>
-      <p className="mt-2 max-w-xl text-sm text-[var(--serene-muted)]">
-        Sua linha do tempo comecara a aparecer conforme voce le, anota e guarda momentos
+      <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--serene-muted)]">
+        Sua linha do tempo começará a aparecer conforme você lê, anota e guarda momentos
         importantes.
       </p>
     </section>
@@ -635,7 +642,7 @@ export function TimelineClient() {
     setLoading(false);
 
     if (result.error || !result.data) {
-      setError(result.error?.message ?? "Nao foi possivel carregar a linha do tempo.");
+      setError(result.error?.message ?? "Não foi possível carregar a linha do tempo.");
       return;
     }
 
@@ -678,8 +685,8 @@ export function TimelineClient() {
 
   if (!envReady) {
     return (
-      <section className="rounded-lg border border-amber-300 bg-amber-50 p-5 text-amber-800">
-        Configure as variaveis Supabase para carregar a Linha do tempo.
+      <section className="serene-soft-in rounded-[2rem] border border-amber-300/80 bg-amber-50 p-5 text-sm text-amber-900 shadow-[var(--serene-shadow-soft)] dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100">
+        Configure as variáveis Supabase para carregar a Linha do tempo.
       </section>
     );
   }
@@ -687,9 +694,9 @@ export function TimelineClient() {
   if (authLoading || (user && profileState === "loading")) {
     return (
       <section className="grid min-h-[45vh] place-items-center">
-        <div className="flex flex-col items-center gap-3 text-center">
+        <div className="serene-soft-in flex flex-col items-center gap-3 rounded-[2rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] px-8 py-7 text-center shadow-[var(--serene-shadow-soft)]">
           <BrainLoader />
-          <p className="text-sm text-[var(--serene-muted)]">Abrindo sua memoria de leitura...</p>
+          <p className="text-sm text-[var(--serene-muted)]">Abrindo sua memória de leitura...</p>
         </div>
       </section>
     );
@@ -700,48 +707,50 @@ export function TimelineClient() {
   }
 
   return (
-    <section className="space-y-6">
-      <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
-            Linha do tempo
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold">Sua vida de leitura no tempo</h1>
-          <p className="mt-2 max-w-2xl text-sm text-[var(--serene-muted)]">
-            Uma memoria cronologica, sem metas e sem cobranca. Tempo real registrado e historico
-            estimado aparecem separados.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => void loadTimeline()}
-            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm"
-          >
-            <RefreshCw className="size-4" />
-            Atualizar
-          </button>
-          <Link
-            href="/mente"
-            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] px-4 py-2 text-sm"
-          >
-            <Sparkles className="size-4" />
-            Voltar para Mente
-          </Link>
+    <section className="serene-soft-in space-y-6">
+      <header className="overflow-hidden rounded-[2rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_94%,white_6%),var(--serene-surface))] p-6 shadow-[var(--serene-shadow-lift)] dark:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_92%,black_8%),var(--serene-surface))]">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
+              Linha do tempo
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold">Sua vida de leitura no tempo</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--serene-muted)]">
+              Uma memória cronológica, sem metas e sem cobrança. Tempo real registrado e histórico
+              estimado aparecem separados.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => void loadTimeline()}
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-4 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)]"
+            >
+              <RefreshCw className="size-4" />
+              Atualizar
+            </button>
+            <Link
+              href="/mente"
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-4 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)]"
+            >
+              <Sparkles className="size-4" />
+              Voltar para Mente
+            </Link>
+          </div>
         </div>
       </header>
 
       {error && (
-        <p className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+        <p className="rounded-2xl border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm text-amber-900 shadow-[var(--serene-shadow-soft)] dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-100">
           {error}
         </p>
       )}
 
       {loading || !sourceData ? (
-        <section className="grid min-h-64 place-items-center rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)]">
+        <section className="grid min-h-64 place-items-center rounded-[2rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] shadow-[var(--serene-shadow-soft)]">
           <div className="flex flex-col items-center gap-3">
             <BrainLoader />
-            <p className="text-sm text-[var(--serene-muted)]">Organizando memorias por mes...</p>
+            <p className="text-sm text-[var(--serene-muted)]">Organizando memórias por mês...</p>
           </div>
         </section>
       ) : sourceData.events.length === 0 ? (
@@ -749,21 +758,21 @@ export function TimelineClient() {
       ) : (
         <>
           <section className="grid gap-3 md:grid-cols-3">
-            <article className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4">
+            <article className="rounded-[1.35rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)]">
               <p className="text-xs uppercase tracking-[0.14em] text-[var(--serene-muted)]">
-                Memorias
+                Memórias
               </p>
               <p className="mt-2 text-2xl font-semibold">{sourceData.events.length}</p>
               <p className="mt-1 text-xs text-[var(--serene-muted)]">Eventos preservados.</p>
             </article>
-            <article className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4">
+            <article className="rounded-[1.35rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)]">
               <p className="text-xs uppercase tracking-[0.14em] text-[var(--serene-muted)]">
                 Meses
               </p>
               <p className="mt-2 text-2xl font-semibold">{monthGroups.length}</p>
               <p className="mt-1 text-xs text-[var(--serene-muted)]">Agrupados para leitura calma.</p>
             </article>
-            <article className="rounded-lg border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4">
+            <article className="rounded-[1.35rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)]">
               <p className="text-xs uppercase tracking-[0.14em] text-[var(--serene-muted)]">
                 Privacidade
               </p>
@@ -779,12 +788,12 @@ export function TimelineClient() {
               <section key={group.key} className="space-y-3">
                 <div className="flex flex-col gap-1 border-b border-[var(--serene-border)] pb-3 md:flex-row md:items-end md:justify-between">
                   <h2 className="text-xl font-semibold">{group.label}</h2>
-                  <p className="text-sm text-[var(--serene-muted)]">
+                  <p className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-1 text-sm text-[var(--serene-muted)]">
                     {group.events.length} registro(s) de leitura
                   </p>
                 </div>
 
-                <div className="grid gap-3">
+                <div className="relative grid gap-3 md:pl-5 before:hidden before:absolute before:bottom-6 before:left-2 before:top-2 before:w-px before:bg-[var(--serene-border)] md:before:block">
                   {group.events.map((event) => {
                     const session = event.session_id
                       ? sessionById.get(event.session_id) ?? null
