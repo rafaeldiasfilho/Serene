@@ -20,6 +20,11 @@ export const annotationTypeOptions: AnnotationTypeOption[] = [
   { value: "action", label: "Acao" },
 ];
 
+export const primaryAnnotationTypeOptions: AnnotationTypeOption[] =
+  annotationTypeOptions.filter((option) =>
+    ["quick_note", "reflection", "highlight", "post_it"].includes(option.value),
+  );
+
 export const annotationTypeLabel: Record<AnnotationType, string> = {
   quick_note: "Anotacao Rapida",
   reflection: "Reflexao",

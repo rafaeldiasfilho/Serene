@@ -1,5 +1,5 @@
-import { TimelineClient } from "@/features/timeline/timeline-client";
+import { redirect } from "next/navigation";
 
 export default function LinhaDoTempoPage() {
-  return <TimelineClient />;
+  redirect("/mente");
 }

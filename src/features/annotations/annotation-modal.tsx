@@ -18,8 +18,9 @@ import { useMemo, useState, type KeyboardEvent } from "react";
 import { isEditableShortcutTarget } from "@/lib/shortcuts";
 import {
   annotationReviewOptions,
-  annotationTypeOptions,
+  annotationTypeLabel,
   computeTextColor,
+  primaryAnnotationTypeOptions,
 } from "@/features/annotations/annotation-definitions";
 import type { AnnotationColorOption } from "@/features/annotations/use-annotations";
 import type { AnnotationRow, AnnotationBookRow } from "@/features/annotations/annotation-services";
@@ -74,10 +75,7 @@ type FormState = {
 };
 
 const typeShortcutMap: Partial<Record<string, AnnotationType>> = {
-  a: "action",
-  d: "doubt",
-  f: "flag",
-  i: "idea",
+  q: "quick_note",
   m: "highlight",
   p: "post_it",
   r: "reflection",
@@ -111,13 +109,13 @@ const annotationTypeHints: Record<AnnotationType, string> = {
 
 function getPreviewClass(type: AnnotationType) {
   if (type === "post_it") {
-    return "border-black/10";
+    return "annotation-post-it-preview border-black/10";
   }
   if (type === "reflection" || type === "thought") {
-    return "rounded-[28px] border-[color-mix(in_oklab,var(--serene-border)_72%,transparent)] bg-[color-mix(in_oklab,var(--serene-surface)_82%,var(--serene-surface-soft)_18%)]";
+    return "annotation-reflection-bubble border-[color-mix(in_oklab,var(--serene-border)_72%,transparent)] bg-[color-mix(in_oklab,var(--serene-surface)_82%,var(--serene-surface-soft)_18%)]";
   }
   if (type === "highlight") {
-    return "border-dashed border-[color-mix(in_oklab,var(--serene-accent)_48%,var(--serene-border)_52%)] bg-[color-mix(in_oklab,var(--serene-surface)_88%,transparent)]";
+    return "annotation-highlight-frame border-dashed border-[color-mix(in_oklab,var(--serene-accent)_48%,var(--serene-border)_52%)] bg-[color-mix(in_oklab,var(--serene-surface)_88%,transparent)]";
   }
   if (type === "flag") {
     return "border-l-4 border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_86%,var(--serene-surface-soft)_14%)]";
@@ -294,18 +292,30 @@ export function AnnotationModal({
   }, [forcedOrigin, form, lockedSessionId, mode, selectedBook]);
 
   const visibleTypeOptions = useMemo(() => {
-    const options = [...annotationTypeOptions];
+    const options = [...primaryAnnotationTypeOptions];
+    const currentType = initialAnnotation?.type ?? defaultType ?? form.type;
+    const shouldShowPreservedType =
+      mode === "edit" &&
+      currentType &&
+      !options.some((option) => option.value === currentType);
     const shouldShowOcrType =
       defaultType === "ocr_page" ||
       initialAnnotation?.type === "ocr_page" ||
       form.type === "ocr_page";
+
+    if (currentType && shouldShowPreservedType) {
+      options.push({
+        value: currentType,
+        label: `Preservado: ${annotationTypeLabel[currentType]}`,
+      });
+    }
 
     if (shouldShowOcrType && !options.some((option) => option.value === "ocr_page")) {
       options.push({ value: "ocr_page", label: "Pagina OCR" });
     }
 
     return options;
-  }, [defaultType, form.type, initialAnnotation?.type]);
+  }, [defaultType, form.type, initialAnnotation?.type, mode]);
 
   const selectableColors = useMemo(() => {
     if (form.type === "highlight") {
@@ -511,11 +521,11 @@ export function AnnotationModal({
                 className={[
                   "relative min-h-32 w-full resize-none border-0 bg-transparent p-0 text-sm leading-relaxed outline-none placeholder:text-[var(--serene-muted)]",
                   form.type === "reflection" || form.type === "thought" ? "literary text-base italic" : "",
-                  form.type === "highlight" ? "rounded-lg px-1 py-0.5 text-[#2B2B2B]" : "",
+                  form.type === "highlight" ? "annotation-highlight-mark rounded-lg px-1 py-0.5 text-[#2B2B2B]" : "",
                 ].join(" ")}
                 style={
                   form.type === "highlight"
-                    ? { backgroundImage: `linear-gradient(transparent 58%, ${currentColor} 58%)` }
+                    ? { backgroundImage: `linear-gradient(transparent 48%, ${currentColor} 48%, ${currentColor} 88%, transparent 88%)` }
                     : undefined
                 }
                 disabled={saving}

@@ -20,13 +20,13 @@ import { BrainLoader } from "@/components/ui/brain-loader";
 import { OPEN_ANNOTATION_SHORTCUT_EVENT } from "@/lib/shortcuts";
 import { AnnotationCard } from "@/features/annotations/annotation-card";
 import { AnnotationModal, type AnnotationModalSubmitValue } from "@/features/annotations/annotation-modal";
-import { annotationTypeOptions } from "@/features/annotations/annotation-definitions";
+import { primaryAnnotationTypeOptions } from "@/features/annotations/annotation-definitions";
 import { PostItStack } from "@/features/annotations/post-it-stack";
 import { useAnnotations } from "@/features/annotations/use-annotations";
 import type { AnnotationRow } from "@/features/annotations/annotation-services";
 import type { AnnotationReviewStatus, AnnotationType } from "@/lib/supabase/database.types";
 
-type TypeFilter = "all" | AnnotationType;
+type TypeFilter = "all" | AnnotationType | "other";
 type ScopeFilter = "all" | "favorites" | "to_review";
 type BookFilter = "all" | "without_book" | string;
 type AnnotationViewItem =
@@ -43,6 +43,10 @@ type AnnotationViewItem =
 function getPostItGroupKey(annotation: AnnotationRow) {
   return annotation.book_id ?? "without-book";
 }
+
+const primaryAnnotationTypeValues = new Set(
+  primaryAnnotationTypeOptions.map((option) => option.value),
+);
 
 function MetricTile({
   helper,
@@ -128,7 +132,10 @@ export function AnotacoesClient() {
       if (bookFilter !== "all" && bookFilter !== "without_book" && annotation.book_id !== bookFilter) {
         return false;
       }
-      if (typeFilter !== "all" && annotation.type !== typeFilter) {
+      if (typeFilter === "other" && primaryAnnotationTypeValues.has(annotation.type)) {
+        return false;
+      }
+      if (typeFilter !== "all" && typeFilter !== "other" && annotation.type !== typeFilter) {
         return false;
       }
       if (!normalizedQuery) {
@@ -474,11 +481,12 @@ export function AnotacoesClient() {
               className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2.5 font-normal text-[var(--serene-text)] outline-none transition duration-300 focus:border-[var(--serene-accent)] focus:ring-2 focus:ring-[var(--serene-accent-soft)]"
             >
               <option value="all">Todos</option>
-              {annotationTypeOptions.map((option) => (
+              {primaryAnnotationTypeOptions.map((option) => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
               ))}
+              <option value="other">Outros registros</option>
             </select>
           </label>
         </div>

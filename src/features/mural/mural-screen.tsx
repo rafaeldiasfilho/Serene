@@ -128,9 +128,19 @@ const SUGGESTION_ENTRY_DELAY_MS = 110;
 const BOARD_PADDING = 18;
 const MAX_BOARD_ANNOTATIONS = 8;
 
-const suggestionTypes: AnnotationType[] = ["idea", "reflection", "doubt", "action", "thought"];
+const suggestionTypes: AnnotationType[] = [
+  "quick_note",
+  "reflection",
+  "quick_note",
+  "reflection",
+  "quick_note",
+];
 
 const suggestionCopy: Record<string, { title: string; body: string }> = {
+  quick_note: {
+    title: "Ideia importante?",
+    body: "Algo aqui merece ser guardado?",
+  },
   idea: {
     title: "Ideia importante?",
     body: "Algo aqui merece virar conexao?",
@@ -461,10 +471,15 @@ function buildMissingSuggestionPayloads(
 }
 
 function normalizeSuggestionType(type: AnnotationType | null): AnnotationType {
-  if (type && type !== "ocr_page") {
+  if (
+    type === "quick_note" ||
+    type === "reflection" ||
+    type === "highlight" ||
+    type === "post_it"
+  ) {
     return type;
   }
-  return "idea";
+  return "quick_note";
 }
 
 function getSuggestionProgressLabel(
@@ -628,10 +643,13 @@ function renderAnnotationContent(annotation: AnnotationRow) {
 
   if (annotation.type === "highlight") {
     return (
-      <p className="text-sm leading-relaxed">
+      <p className="annotation-highlight-frame text-sm leading-relaxed">
         <mark
-          className="rounded px-1 py-0.5 shadow-[0_1px_0_rgb(0_0_0_/_4%)]"
-          style={{ backgroundColor: annotation.highlight_color ?? "#F7E78A", color: "#2B2B2B" }}
+          className="annotation-highlight-mark rounded px-1 py-0.5"
+          style={{
+            backgroundImage: `linear-gradient(transparent 48%, ${annotation.highlight_color ?? "#F7E78A"} 48%, ${annotation.highlight_color ?? "#F7E78A"} 88%, transparent 88%)`,
+            color: "#2B2B2B",
+          }}
         >
           {content}
         </mark>
@@ -641,7 +659,7 @@ function renderAnnotationContent(annotation: AnnotationRow) {
 
   if (annotation.type === "reflection" || annotation.type === "thought") {
     return (
-      <div className="annotation-detail rounded-[24px] border px-3 py-2 shadow-[inset_0_1px_0_rgb(255_255_255_/_22%)]">
+      <div className="annotation-reflection-bubble annotation-detail border px-3 py-2 shadow-[inset_0_1px_0_rgb(255_255_255_/_22%)]">
         <p className="literary text-[15px] leading-relaxed">{content}</p>
       </div>
     );

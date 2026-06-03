@@ -136,11 +136,11 @@ function renderContent(annotation: AnnotationRow, content: string, expanded: boo
     const highlightColor = annotation.highlight_color ?? "#F7E78A";
 
     return (
-      <p className="rounded-lg border border-[color-mix(in_oklab,var(--annotation-border)_58%,transparent)] bg-[color-mix(in_oklab,var(--serene-surface)_58%,transparent)] px-3 py-2 text-sm leading-7">
+      <p className="annotation-highlight-frame text-sm leading-7">
         <mark
-          className="rounded-sm bg-transparent px-1 py-0.5"
+          className="annotation-highlight-mark rounded-sm bg-transparent px-1 py-0.5"
           style={{
-            backgroundImage: `linear-gradient(transparent 54%, ${highlightColor} 54%)`,
+            backgroundImage: `linear-gradient(transparent 48%, ${highlightColor} 48%, ${highlightColor} 88%, transparent 88%)`,
             boxDecorationBreak: "clone",
             color: "#2B2B2B",
             WebkitBoxDecorationBreak: "clone",
@@ -154,7 +154,7 @@ function renderContent(annotation: AnnotationRow, content: string, expanded: boo
 
   if (annotation.type === "reflection") {
     return (
-      <div className="annotation-detail relative rounded-[28px] border px-5 py-4">
+      <div className="annotation-reflection-bubble annotation-detail relative border px-5 py-4">
         <span className="literary absolute left-4 top-2 text-3xl leading-none opacity-20">
           &ldquo;
         </span>

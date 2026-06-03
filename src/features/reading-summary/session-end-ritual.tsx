@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 
 import {
   annotationTypeLabel,
-  annotationTypeOptions,
+  primaryAnnotationTypeOptions,
 } from "@/features/annotations/annotation-definitions";
 import type { AnnotationRow } from "@/features/annotations/annotation-services";
 import { formatReadingDuration } from "@/features/reading-sessions/use-reading-session";
@@ -60,17 +60,34 @@ function pluralize(value: number, singular: string, plural: string) {
 
 function buildTypeCounts(annotations: AnnotationRow[]) {
   const counts = new Map<AnnotationType, number>();
+  const primaryTypes = new Set(primaryAnnotationTypeOptions.map((option) => option.value));
 
   annotations.forEach((annotation) => {
     counts.set(annotation.type, (counts.get(annotation.type) ?? 0) + 1);
   });
 
-  return annotationTypeOptions
+  const primaryCounts: Array<{ type: string; label: string; count: number }> =
+    primaryAnnotationTypeOptions
     .map((option) => ({
       type: option.value,
       label: annotationTypeLabel[option.value],
       count: counts.get(option.value) ?? 0,
     }));
+
+  const otherCount = annotations.reduce(
+    (total, annotation) => total + (primaryTypes.has(annotation.type) ? 0 : 1),
+    0,
+  );
+
+  if (otherCount > 0) {
+    primaryCounts.push({
+      type: "other",
+      label: "Outros registros",
+      count: otherCount,
+    });
+  }
+
+  return primaryCounts;
 }
 
 function formatPageValue(value: number | null) {

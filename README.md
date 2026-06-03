@@ -84,7 +84,7 @@ where email = 'admin@example.com';
 
 ## Project status
 
-SERENE is implemented through Phase 15F - Mente Strengthening.
+SERENE is implemented through Phase 16 - Simplicity audit and lost-idea rescue.
 
 Current quality gates:
 
@@ -98,7 +98,7 @@ Use `npm.cmd` on Windows if PowerShell blocks `npm.ps1`.
 
 - `src/app` - Next.js App Router screens and global styles.
 - `src/components` - app shell, auth, providers, and shared UI.
-- `src/features` - SERENE product areas: books, annotations, reading sessions, Mural, Mente, Timeline, Trash, Export, Settings, OCR/capture placeholder.
+- `src/features` - SERENE product areas: books, annotations, reading sessions, Mural, Mente, Trash, Export, Settings, OCR/capture placeholder, and parked Timeline support.
 - `src/lib` - Supabase client, generated types, utilities, and shortcuts.
 - `supabase/schema.sql` - database schema.
 - `supabase/seed.sql` - demo data seed.
@@ -183,7 +183,16 @@ Phase 15G is a final experience polish before merging visual work back to master
 - Mural copy emphasizes fixed visible memory placement instead of technical canvas wording.
 - Theme options use Portuguese reader-facing labels.
 
-No authentication, reading/session logic, annotation CRUD logic, beta access rules, RLS, or destructive deletion behavior changed in Phase 15D, Phase 15E, Phase 15F, or Phase 15G.
+Phase 16 audits the app for calm hierarchy and rescues essential annotation identity:
+
+- Primary navigation is centered on Inicio, Biblioteca, Anotacoes, and Mente.
+- Timeline/Linha do tempo is parked outside the current product flow; `/timeline` and `/linha-do-tempo` redirect to Mente while the supporting code and data are preserved.
+- Annotation creation now emphasizes four main formats: Anotacao Rapida, Reflexao, Marca-texto, and Post-it.
+- Reflexao appears as a thought bubble, Marca-texto as text-level highlighting, and Post-it as physical paper/stack.
+- Secondary annotation types remain preserved as existing/internal records, but no longer compete as primary creation choices.
+- Premium must not block the SERENE essence: reading, unlimited annotations, organized export, Mente, history, shelves/categories, and essential personalization remain core.
+
+No authentication, reading/session logic, annotation CRUD logic, beta access rules, RLS, or destructive deletion behavior changed in Phase 15D, Phase 15E, Phase 15F, Phase 15G, or Phase 16.
 
 ## Phase 13 notes
 

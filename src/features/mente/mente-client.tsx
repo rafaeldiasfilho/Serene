@@ -891,31 +891,6 @@ function MenteDashboard({
         </article>
       </section>
 
-      <section
-        id="linha-do-tempo"
-        className="rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5 shadow-[var(--serene-shadow-soft)]"
-      >
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
-            <span className="grid size-11 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] text-[var(--serene-accent)]">
-              <CalendarDays className="size-5" />
-            </span>
-            <div>
-              <h2 className="text-lg font-semibold">Linha do tempo</h2>
-              <p className="text-sm text-[var(--serene-muted)]">
-                Memória cronológica de livros, sessões e anotações.
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/linha-do-tempo"
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-4 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)]"
-          >
-            Ver linha do tempo
-            <ArrowRight className="size-4" />
-          </Link>
-        </div>
-      </section>
     </div>
   );
 }
@@ -1048,13 +1023,6 @@ export function MenteClient() {
           <RefreshCw className="size-4" />
           Atualizar
         </button>
-        <Link
-          href="/linha-do-tempo"
-          className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)]"
-        >
-          <CalendarDays className="size-4" />
-          Ver linha do tempo
-        </Link>
         <Link
           href="/biblioteca"
           className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)]"

@@ -502,6 +502,57 @@ html[data-theme="dark"] .post-it-paper-layer {
   color: var(--annotation-fg);
 }
 
+.annotation-reflection-bubble {
+  position: relative;
+  overflow: visible;
+  border-radius: 1.75rem 1.75rem 1.75rem 1.05rem;
+}
+
+.annotation-reflection-bubble::before,
+.annotation-reflection-bubble::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  border: 1px solid color-mix(in oklab, var(--annotation-border, var(--serene-border)) 58%, transparent);
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--annotation-bg, var(--serene-surface)) 86%, var(--serene-surface) 14%);
+  box-shadow: var(--serene-shadow-inner);
+}
+
+.annotation-reflection-bubble::before {
+  left: 1rem;
+  bottom: -0.42rem;
+  width: 0.78rem;
+  height: 0.78rem;
+}
+
+.annotation-reflection-bubble::after {
+  left: 0.38rem;
+  bottom: -0.92rem;
+  width: 0.42rem;
+  height: 0.42rem;
+}
+
+.annotation-highlight-frame {
+  border-color: color-mix(in oklab, var(--annotation-border, var(--serene-border)) 44%, transparent);
+  background: transparent;
+  color: var(--annotation-fg, var(--serene-fg));
+}
+
+.annotation-highlight-mark {
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  line-height: 1.85;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 42%);
+}
+
+.annotation-post-it-preview {
+  aspect-ratio: 1 / 1;
+  border-radius: 1.05rem;
+  margin-inline: auto;
+  width: min(100%, 20rem);
+}
+
 .annotation-label {
   color: color-mix(in oklab, var(--annotation-fg) 78%, var(--serene-accent) 22%);
 }
@@ -765,19 +816,45 @@ html[data-theme="dark"] .annotation-tone-ocr {
 .session-ritual-note-reflection,
 .session-ritual-note-thought {
   border-color: #b7abc6;
-  border-radius: 22px;
+  border-radius: 22px 22px 22px 12px;
   background: #fbf7ff;
   color: #33293d;
 }
 
+.session-ritual-note-reflection::before,
+.session-ritual-note-thought::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  bottom: -7px;
+  width: 12px;
+  height: 12px;
+  border: 1px solid #b7abc6;
+  border-radius: 999px;
+  background: #fbf7ff;
+}
+
+.session-ritual-note-reflection::after,
+.session-ritual-note-thought::after {
+  content: "";
+  position: absolute;
+  left: 6px;
+  bottom: -13px;
+  width: 7px;
+  height: 7px;
+  border: 1px solid #b7abc6;
+  border-radius: 999px;
+  background: #fbf7ff;
+}
+
 .session-ritual-note-highlight {
   border-color: #d7c776;
-  background: #fffdf3;
+  background: color-mix(in oklab, var(--serene-surface) 92%, #fff7b8 8%);
   color: #3b3321;
 }
 
 .session-ritual-note-highlight p {
-  background: #f7e78a;
+  background: linear-gradient(transparent 45%, #f7e78a 45%, #f7e78a 88%, transparent 88%);
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
