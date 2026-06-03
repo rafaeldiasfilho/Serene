@@ -3,14 +3,10 @@
 import {
   BookOpen,
   CheckCircle2,
-  Heart,
-  Lock,
-  MessageSquareText,
   Plus,
   RefreshCw,
   Search,
   Sparkles,
-  type LucideIcon,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -29,6 +25,7 @@ import type { AnnotationReviewStatus, AnnotationType } from "@/lib/supabase/data
 type TypeFilter = "all" | AnnotationType | "other";
 type ScopeFilter = "all" | "favorites" | "to_review";
 type BookFilter = "all" | "without_book" | string;
+type AnnotationFolder = "post_it" | "reflection" | "highlight" | "quick_note";
 type AnnotationViewItem =
   | {
       kind: "single";
@@ -44,35 +41,144 @@ function getPostItGroupKey(annotation: AnnotationRow) {
   return annotation.book_id ?? "without-book";
 }
 
+function getPostItColorLabel(color: string) {
+  const normalized = color.toUpperCase();
+
+  if (normalized === "#F7E78A") {
+    return "Amarelos";
+  }
+  if (normalized === "#DDEAFE") {
+    return "Azuis";
+  }
+  if (normalized === "#DFF5E4") {
+    return "Verdes";
+  }
+  if (normalized === "#F4DDF8") {
+    return "Rosas";
+  }
+  if (color === "sem-cor") {
+    return "Sem cor";
+  }
+
+  return "Outros";
+}
+
 const primaryAnnotationTypeValues = new Set(
   primaryAnnotationTypeOptions.map((option) => option.value),
 );
 
-function MetricTile({
-  helper,
-  icon: Icon,
-  label,
-  value,
-}: {
+const annotationFolders: Array<{
+  type: AnnotationFolder;
+  title: string;
   helper: string;
-  icon: LucideIcon;
-  label: string;
-  value: number;
+  preview: "post_it" | "reflection" | "highlight" | "quick";
+}> = [
+  {
+    type: "post_it",
+    title: "Post-its",
+    helper: "Papeis fisicos, cores e pequenas pilhas.",
+    preview: "post_it",
+  },
+  {
+    type: "reflection",
+    title: "Reflexoes",
+    helper: "Pensamentos literarios em baloes suaves.",
+    preview: "reflection",
+  },
+  {
+    type: "highlight",
+    title: "Marca-textos",
+    helper: "Trechos marcados como no livro fisico.",
+    preview: "highlight",
+  },
+  {
+    type: "quick_note",
+    title: "Anotacoes rapidas",
+    helper: "Notas limpas para escrever sem pensar demais.",
+    preview: "quick",
+  },
+];
+
+function FolderPreview({ preview }: { preview: (typeof annotationFolders)[number]["preview"] }) {
+  if (preview === "post_it") {
+    return (
+      <div className="relative h-24">
+        <span className="absolute left-6 top-3 h-16 w-16 rotate-[-5deg] rounded-sm bg-[#F7E78A] shadow-[0_12px_24px_rgb(47_42_36_/_14%)]" />
+        <span className="absolute left-12 top-5 h-16 w-16 rotate-[4deg] rounded-sm bg-[#DDEAFE] shadow-[0_12px_24px_rgb(47_42_36_/_12%)]" />
+        <span className="absolute left-9 top-8 h-16 w-16 rotate-[-1deg] rounded-sm bg-[#F4DDF8] shadow-[0_12px_24px_rgb(47_42_36_/_16%)]" />
+      </div>
+    );
+  }
+
+  if (preview === "reflection") {
+    return (
+      <div className="relative h-24">
+        <span className="absolute left-4 top-4 h-16 w-32 rounded-[2rem] border border-[color-mix(in_oklab,var(--serene-accent)_36%,var(--serene-border)_64%)] bg-[color-mix(in_oklab,var(--serene-surface-soft)_76%,transparent)] shadow-[var(--serene-shadow-soft)]" />
+        <span className="absolute bottom-5 left-11 size-4 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)]" />
+        <span className="absolute bottom-2 left-6 size-2.5 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)]" />
+      </div>
+    );
+  }
+
+  if (preview === "highlight") {
+    return (
+      <div className="grid h-24 content-center gap-2 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4">
+        <span className="h-3 w-28 rounded-sm bg-[linear-gradient(180deg,transparent_42%,#F7E78A_42%,#F7E78A_88%,transparent_88%)]" />
+        <span className="h-3 w-36 rounded-sm bg-[linear-gradient(180deg,transparent_42%,#DDEAFE_42%,#DDEAFE_88%,transparent_88%)]" />
+        <span className="h-3 w-24 rounded-sm bg-[linear-gradient(180deg,transparent_42%,#DFF5E4_42%,#DFF5E4_88%,transparent_88%)]" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid h-24 content-center gap-2 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4">
+      <span className="h-2 w-28 rounded-full bg-[var(--serene-border)]" />
+      <span className="h-2 w-36 rounded-full bg-[var(--serene-border)]" />
+      <span className="h-2 w-20 rounded-full bg-[var(--serene-border)]" />
+    </div>
+  );
+}
+
+function AnnotationFolderCard({
+  active,
+  count,
+  folder,
+  onOpen,
+}: {
+  active: boolean;
+  count: number;
+  folder: (typeof annotationFolders)[number];
+  onOpen: (folder: AnnotationFolder) => void;
 }) {
   return (
-    <article className="serene-soft-in rounded-[1.35rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)] transition duration-500 hover:-translate-y-0.5 hover:shadow-[var(--serene-shadow-lift)]">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
-            {label}
-          </p>
-          <p className="mt-2 text-2xl font-semibold text-[var(--serene-text)]">{value}</p>
-        </div>
-        <span className="grid size-10 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-accent-soft)] text-[var(--serene-accent)]">
-          <Icon className="size-4" />
-        </span>
+    <article
+      className={[
+        "serene-card-enter rounded-[1.55rem] border bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)] transition hover:-translate-y-0.5 hover:shadow-[var(--serene-shadow-lift)]",
+        active
+          ? "border-[var(--serene-accent)] ring-2 ring-[var(--serene-accent-soft)]"
+          : "border-[var(--serene-border)]",
+      ].join(" ")}
+    >
+      <FolderPreview preview={folder.preview} />
+      <div className="mt-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
+          Pasta
+        </p>
+        <h2 className="literary mt-1 text-xl leading-tight">{folder.title}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-[var(--serene-muted)]">{folder.helper}</p>
       </div>
-      <p className="mt-3 text-xs leading-relaxed text-[var(--serene-muted)]">{helper}</p>
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <span className="rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_78%,transparent)] px-2.5 py-1 text-xs text-[var(--serene-muted)]">
+          {count === 1 ? "1 item" : `${count} itens`}
+        </span>
+        <button
+          type="button"
+          onClick={() => onOpen(folder.type)}
+          className="rounded-full bg-[var(--serene-accent)] px-3 py-1.5 text-xs font-semibold text-white shadow-[var(--serene-shadow-soft)]"
+        >
+          Abrir
+        </button>
+      </div>
     </article>
   );
 }
@@ -100,6 +206,8 @@ export function AnotacoesClient() {
   const [scopeFilter, setScopeFilter] = useState<ScopeFilter>("all");
   const [bookFilter, setBookFilter] = useState<BookFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [activeFolder, setActiveFolder] = useState<AnnotationFolder | null>(null);
+  const [postItColorFilter, setPostItColorFilter] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingAnnotation, setEditingAnnotation] = useState<AnnotationRow | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -108,12 +216,35 @@ export function AnotacoesClient() {
     return annotations.filter((annotation) => annotation.review_status === "to_review");
   }, [annotations]);
 
-  const favoriteCount = useMemo(() => {
-    return annotations.filter((annotation) => annotation.is_favorite).length;
+  const folderCounts = useMemo(() => {
+    return annotationFolders.reduce<Record<AnnotationFolder, number>>(
+      (counts, folder) => {
+        counts[folder.type] = annotations.filter((annotation) => annotation.type === folder.type).length;
+        return counts;
+      },
+      {
+        highlight: 0,
+        post_it: 0,
+        quick_note: 0,
+        reflection: 0,
+      },
+    );
   }, [annotations]);
 
-  const privateCount = useMemo(() => {
-    return annotations.filter((annotation) => annotation.is_private).length;
+  const postItColorOptions = useMemo(() => {
+    const counts = new Map<string, number>();
+    annotations
+      .filter((annotation) => annotation.type === "post_it")
+      .forEach((annotation) => {
+        const key = annotation.color ?? "sem-cor";
+        counts.set(key, (counts.get(key) ?? 0) + 1);
+      });
+
+    return Array.from(counts.entries()).map(([color, count]) => ({
+      color,
+      count,
+      label: getPostItColorLabel(color),
+    }));
   }, [annotations]);
 
   const filteredAnnotations = useMemo(() => {
@@ -132,10 +263,20 @@ export function AnotacoesClient() {
       if (bookFilter !== "all" && bookFilter !== "without_book" && annotation.book_id !== bookFilter) {
         return false;
       }
-      if (typeFilter === "other" && primaryAnnotationTypeValues.has(annotation.type)) {
+      if (activeFolder && annotation.type !== activeFolder) {
         return false;
       }
-      if (typeFilter !== "all" && typeFilter !== "other" && annotation.type !== typeFilter) {
+      if (
+        activeFolder === "post_it" &&
+        postItColorFilter !== "all" &&
+        (annotation.color ?? "sem-cor") !== postItColorFilter
+      ) {
+        return false;
+      }
+      if (!activeFolder && typeFilter === "other" && primaryAnnotationTypeValues.has(annotation.type)) {
+        return false;
+      }
+      if (!activeFolder && typeFilter !== "all" && typeFilter !== "other" && annotation.type !== typeFilter) {
         return false;
       }
       if (!normalizedQuery) {
@@ -146,7 +287,16 @@ export function AnotacoesClient() {
       const searchable = `${annotation.content ?? ""} ${bookTitle}`.toLowerCase();
       return searchable.includes(normalizedQuery);
     });
-  }, [annotations, bookFilter, booksById, query, scopeFilter, typeFilter]);
+  }, [
+    activeFolder,
+    annotations,
+    bookFilter,
+    booksById,
+    postItColorFilter,
+    query,
+    scopeFilter,
+    typeFilter,
+  ]);
 
   const annotationViewItems = useMemo<AnnotationViewItem[]>(() => {
     const postItGroups = new Map<string, AnnotationRow[]>();
@@ -333,6 +483,12 @@ export function AnotacoesClient() {
     setModalOpen(true);
   }
 
+  function openFolder(folder: AnnotationFolder) {
+    setActiveFolder(folder);
+    setTypeFilter(folder);
+    setPostItColorFilter("all");
+  }
+
   function openEditModal(annotation: AnnotationRow) {
     setEditingAnnotation(annotation);
     setModalOpen(true);
@@ -393,49 +549,48 @@ export function AnotacoesClient() {
         </p>
       )}
 
-      <section className="grid gap-3 md:grid-cols-4">
-        <MetricTile
-          helper="Fragmentos guardados no seu acervo."
-          icon={MessageSquareText}
-          label="Total"
-          value={annotations.length}
-        />
-        <MetricTile
-          helper="Ideias que merecem voltar ao centro."
-          icon={Heart}
-          label="Favoritas"
-          value={favoriteCount}
-        />
-        <MetricTile
-          helper="Notas separadas para uma releitura calma."
-          icon={CheckCircle2}
-          label="Para revisar"
-          value={toReviewAnnotations.length}
-        />
-        <MetricTile
-          helper="Memórias mantidas em espaço reservado."
-          icon={Lock}
-          label="Privadas"
-          value={privateCount}
-        />
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {annotationFolders.map((folder) => (
+          <AnnotationFolderCard
+            key={folder.type}
+            active={activeFolder === folder.type}
+            folder={folder}
+            count={folderCounts[folder.type]}
+            onOpen={openFolder}
+          />
+        ))}
       </section>
 
+      {activeFolder && (
       <section className="serene-soft-in rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)] sm:p-5">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <div className="flex items-center gap-2 text-sm font-semibold text-[var(--serene-text)]">
               <Search className="size-4 text-[var(--serene-accent)]" />
-              Encontrar uma memória
+              Encontrar dentro da pasta
             </div>
             <p className="mt-1 text-xs leading-relaxed text-[var(--serene-muted)]">
-              Filtre sem perder o ritmo: por trecho, livro, tipo ou intenção de retorno.
+              Filtre sem perder o ritmo: por trecho, livro ou intencao de retorno.
             </p>
           </div>
-          <p className="text-xs text-[var(--serene-muted)]">
-            {filteredAnnotations.length} de {annotations.length} exibidas
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs text-[var(--serene-muted)]">
+              {filteredAnnotations.length} de {folderCounts[activeFolder]} exibidas
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveFolder(null);
+                setTypeFilter("all");
+                setPostItColorFilter("all");
+              }}
+              className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-1.5 text-xs text-[var(--serene-muted)]"
+            >
+              Voltar para pastas
+            </button>
+          </div>
         </div>
-        <div className="grid gap-3 md:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-3">
           <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
             Buscar
             <input
@@ -473,7 +628,7 @@ export function AnotacoesClient() {
               ))}
             </select>
           </label>
-          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
+          <label className="hidden gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
             Tipo
             <select
               value={typeFilter}
@@ -490,9 +645,49 @@ export function AnotacoesClient() {
             </select>
           </label>
         </div>
-      </section>
 
-      {toReviewAnnotations.length > 0 && (
+        {activeFolder === "post_it" && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setPostItColorFilter("all")}
+              className={[
+                "rounded-full border px-3 py-1.5 text-xs",
+                postItColorFilter === "all"
+                  ? "border-[var(--serene-accent)] bg-[var(--serene-accent)] text-white"
+                  : "border-[var(--serene-border)] bg-[var(--serene-surface-soft)] text-[var(--serene-muted)]",
+              ].join(" ")}
+            >
+              Todos
+            </button>
+            {postItColorOptions.map((option) => (
+              <button
+                key={option.color}
+                type="button"
+                onClick={() => setPostItColorFilter(option.color)}
+                className={[
+                  "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs",
+                  postItColorFilter === option.color
+                    ? "border-[var(--serene-accent)] bg-[var(--serene-surface)] text-[var(--serene-fg)]"
+                    : "border-[var(--serene-border)] bg-[var(--serene-surface-soft)] text-[var(--serene-muted)]",
+                ].join(" ")}
+              >
+                <span
+                  className="size-3 rounded-full border border-black/10"
+                  style={{
+                    backgroundColor:
+                      option.color === "sem-cor" ? "var(--serene-surface)" : option.color,
+                  }}
+                />
+                {option.label} ({option.count})
+              </button>
+            ))}
+          </div>
+        )}
+      </section>
+      )}
+
+      {activeFolder && toReviewAnnotations.some((annotation) => annotation.type === activeFolder) && (
         <section className="serene-soft-in rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-paper)] p-4 shadow-[var(--serene-shadow-soft)] sm:p-5">
           <div className="flex items-start gap-3">
             <span className="grid size-10 shrink-0 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-accent-soft)] text-[var(--serene-accent)]">
@@ -506,7 +701,10 @@ export function AnotacoesClient() {
             </div>
           </div>
           <div className="mt-3 grid gap-3 md:grid-cols-2">
-            {toReviewAnnotations.slice(0, 4).map((annotation) => (
+            {toReviewAnnotations
+              .filter((annotation) => annotation.type === activeFolder)
+              .slice(0, 4)
+              .map((annotation) => (
               <AnnotationCard
                 key={annotation.id}
                 annotation={annotation}
@@ -528,6 +726,19 @@ export function AnotacoesClient() {
             <BrainLoader />
             <p className="text-sm text-[var(--serene-muted)]">Reunindo suas memórias de leitura...</p>
           </div>
+        </section>
+      ) : !activeFolder ? (
+        <section className="serene-rise rounded-[2rem] border border-dashed border-[var(--serene-border)] bg-[var(--serene-surface)] p-7 shadow-[var(--serene-shadow-soft)]">
+          <span className="grid size-12 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-accent-soft)] text-[var(--serene-accent)]">
+            <BookOpen className="size-5" />
+          </span>
+          <h2 className="mt-4 text-xl font-semibold text-[var(--serene-text)]">
+            Abra uma pasta para rever suas anotacoes
+          </h2>
+          <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--serene-muted)]">
+            Post-its, reflexoes, marca-textos e anotacoes rapidas ficam separados para cada forma de
+            pensamento manter sua identidade.
+          </p>
         </section>
       ) : filteredAnnotations.length === 0 ? (
         <section className="serene-rise rounded-[2rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-7 shadow-[var(--serene-shadow-soft)]">

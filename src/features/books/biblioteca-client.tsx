@@ -8,6 +8,7 @@ import {
   LibraryBig,
   Plus,
   RefreshCw,
+  Search,
   Tags,
   Trash2,
   X,
@@ -26,6 +27,7 @@ import {
   type ShelfWithBooks,
 } from "@/features/books/use-book-library";
 import type { BookInsert } from "@/features/books/book-services";
+import { ProgressUpdateDialog } from "@/features/reading-progress/progress-update-dialog";
 import type { BookStatus } from "@/lib/supabase/database.types";
 
 type FilterValue = "todos" | "lendo" | "quero_ler" | "pausado" | "lido";
@@ -47,6 +49,76 @@ const statusOrder: Record<BookStatus, number> = {
 };
 
 const categoryColors = ["#7EA6A1", "#8DAA6A", "#C7A35A", "#8A9CCF", "#C08A9B", "#9D958A"];
+
+const allBooksShelfId = "todos-os-livros";
+
+type AutoShelfRule = {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+  keywords: string[];
+};
+
+type AutoShelf = {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+  books: BookWithCategories[];
+};
+
+const automaticShelfRules: AutoShelfRule[] = [
+  {
+    id: "filosofia",
+    name: "Filosofia",
+    description: "Perguntas, sentido, etica e modo de viver.",
+    color: "#7EA6A1",
+    keywords: ["filosofia", "estoic", "virtude", "sentido", "etica", "aurelio", "platao"],
+  },
+  {
+    id: "financas",
+    name: "Financas",
+    description: "Dinheiro, patrimonio, investimentos e decisoes financeiras.",
+    color: "#C7A35A",
+    keywords: ["financa", "dinheiro", "invest", "patrimonio", "mercado", "ativo", "riqueza"],
+  },
+  {
+    id: "psicologia",
+    name: "Psicologia",
+    description: "Emocoes, mente, comportamento e autoconsciencia.",
+    color: "#B7ABC6",
+    keywords: ["psicologia", "mente", "mental", "emoc", "comport", "trauma", "terapia"],
+  },
+  {
+    id: "literatura",
+    name: "Literatura",
+    description: "Romances, narrativas, simbolos e imaginacao.",
+    color: "#D28F84",
+    keywords: ["literatura", "romance", "conto", "poesia", "narrativa", "ficcao", "classico"],
+  },
+  {
+    id: "matematica",
+    name: "Matematica",
+    description: "Numeros, logica, padroes e raciocinio.",
+    color: "#7C9BB0",
+    keywords: ["matematica", "numero", "calculo", "logica", "estatistica", "probabilidade"],
+  },
+  {
+    id: "desenvolvimento-pessoal",
+    name: "Desenvolvimento pessoal",
+    description: "Habitos, identidade, foco e crescimento sem pressa.",
+    color: "#8A9CCF",
+    keywords: ["habito", "desenvolvimento", "identidade", "disciplina", "foco", "crescimento"],
+  },
+  {
+    id: "estudos",
+    name: "Estudos",
+    description: "Aprendizado, pesquisa, metodo e livros de consulta.",
+    color: "#8DAA6A",
+    keywords: ["estudo", "aprender", "aprendizado", "metodo", "pesquisa", "aula", "curso"],
+  },
+];
 
 type ShelfFormState =
   | {
@@ -73,10 +145,6 @@ function sortBooks(books: BookWithCategories[], order: OrderValue) {
   });
 }
 
-function isHistorical(book: BookWithCategories) {
-  return book.reading_origin === "historico" || book.read_before_serene;
-}
-
 function hashTitle(title: string) {
   let hash = 0;
 
@@ -95,6 +163,63 @@ function getFallbackCover(title: string) {
   return {
     background: `linear-gradient(145deg, hsl(${hue} 28% 58%), hsl(${secondHue} 23% 34%))`,
   };
+}
+
+function normalizeText(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+function getBookSignal(book: BookWithCategories) {
+  return normalizeText(
+    [
+      book.title,
+      book.author,
+      book.description,
+      book.publisher,
+      ...book.categories.map((category) => category.name),
+      ...book.shelves.map((shelf) => shelf.name),
+    ]
+      .filter(Boolean)
+      .join(" "),
+  );
+}
+
+function matchesBookSearch(book: BookWithCategories, query: string) {
+  if (!query) {
+    return true;
+  }
+
+  return getBookSignal(book).includes(query);
+}
+
+function matchesAutomaticShelf(book: BookWithCategories, rule: AutoShelfRule) {
+  const signal = getBookSignal(book);
+  return rule.keywords.some((keyword) => signal.includes(normalizeText(keyword)));
+}
+
+function buildAutomaticShelves(books: BookWithCategories[]): AutoShelf[] {
+  const alphabeticBooks = sortBooks(books, "alfabetica");
+  const shelves = automaticShelfRules.map<AutoShelf>((rule) => ({
+    id: rule.id,
+    name: rule.name,
+    description: rule.description,
+    color: rule.color,
+    books: alphabeticBooks.filter((book) => matchesAutomaticShelf(book, rule)),
+  }));
+
+  return [
+    ...shelves.filter((shelf) => shelf.books.length > 0),
+    {
+      id: allBooksShelfId,
+      name: "Todos os livros",
+      description: "Entrada unica com tudo que esta guardado na Biblioteca.",
+      color: "#9D958A",
+      books: alphabeticBooks,
+    },
+  ];
 }
 
 function ShelfCoverPreview({ books }: { books: BookWithCategories[] }) {
@@ -128,6 +253,57 @@ function ShelfCoverPreview({ books }: { books: BookWithCategories[] }) {
         ))
       )}
     </div>
+  );
+}
+
+function AutoShelfCard({
+  active,
+  shelf,
+  onOpen,
+}: {
+  active: boolean;
+  shelf: AutoShelf;
+  onOpen: (shelf: AutoShelf) => void;
+}) {
+  return (
+    <article
+      className={[
+        "serene-card-enter rounded-[1.55rem] border bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[var(--serene-shadow-lift)]",
+        active
+          ? "border-[color-mix(in_oklab,var(--serene-accent)_62%,transparent)]"
+          : "border-[var(--serene-border)]",
+      ].join(" ")}
+    >
+      <ShelfCoverPreview books={shelf.books} />
+      <div className="mt-4">
+        <p
+          className="text-xs font-semibold uppercase tracking-[0.14em]"
+          style={{ color: shelf.color }}
+        >
+          Estante automatica
+        </p>
+        <h3 className="literary mt-1 line-clamp-2 text-xl leading-snug">{shelf.name}</h3>
+        <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-[var(--serene-muted)]">
+          {shelf.description}
+        </p>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-2 text-xs text-[var(--serene-muted)]">
+        <span className="rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_78%,transparent)] px-2.5 py-1">
+          {shelf.books.length === 1 ? "1 livro" : `${shelf.books.length} livros`}
+        </span>
+        <span className="rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_78%,transparent)] px-2.5 py-1">
+          alfabetica
+        </span>
+      </div>
+      <button
+        type="button"
+        onClick={() => onOpen(shelf)}
+        className="mt-4 inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-3 py-1.5 text-xs font-semibold text-white shadow-[var(--serene-shadow-soft)]"
+      >
+        <BookOpen className="size-3.5" />
+        Abrir
+      </button>
+    </article>
   );
 }
 
@@ -233,13 +409,16 @@ export function BibliotecaClient() {
   } = useBookLibrary(user?.id ?? null);
 
   const [activeFilter, setActiveFilter] = useState<FilterValue>("todos");
-  const [orderBy, setOrderBy] = useState<OrderValue>("recentes");
+  const [orderBy, setOrderBy] = useState<OrderValue>("alfabetica");
+  const [searchQuery, setSearchQuery] = useState("");
   const [editingBook, setEditingBook] = useState<BookWithCategories | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [progressBook, setProgressBook] = useState<BookWithCategories | null>(null);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryColor, setNewCategoryColor] = useState(categoryColors[0]);
+  const [activeAutoShelfId, setActiveAutoShelfId] = useState<string | null>(null);
   const [activeShelfId, setActiveShelfId] = useState<string | null>(null);
   const [shelfForm, setShelfForm] = useState<ShelfFormState | null>(null);
   const [shelfName, setShelfName] = useState("");
@@ -250,11 +429,31 @@ export function BibliotecaClient() {
   const [managingShelf, setManagingShelf] = useState<ShelfWithBooks | null>(null);
   const [selectedBookIds, setSelectedBookIds] = useState<string[]>([]);
 
+  const normalizedSearchQuery = useMemo(() => normalizeText(searchQuery.trim()), [searchQuery]);
+
+  const searchedBooks = useMemo(
+    () => books.filter((book) => matchesBookSearch(book, normalizedSearchQuery)),
+    [books, normalizedSearchQuery],
+  );
+
+  const automaticShelves = useMemo(() => buildAutomaticShelves(searchedBooks), [searchedBooks]);
+
+  const activeAutoShelf = useMemo(
+    () => automaticShelves.find((shelf) => shelf.id === activeAutoShelfId) ?? null,
+    [activeAutoShelfId, automaticShelves],
+  );
+
   const visibleBooks = useMemo(() => {
+    if (!activeAutoShelf) {
+      return [];
+    }
+
     const filteredBooks =
-      activeFilter === "todos" ? books : books.filter((book) => book.status === activeFilter);
-    return sortBooks(filteredBooks, orderBy);
-  }, [activeFilter, books, orderBy]);
+      activeFilter === "todos"
+        ? activeAutoShelf.books
+        : activeAutoShelf.books.filter((book) => book.status === activeFilter);
+    return sortBooks(filteredBooks, activeAutoShelf.id === allBooksShelfId ? orderBy : "alfabetica");
+  }, [activeAutoShelf, activeFilter, orderBy]);
 
   const activeShelf = useMemo(
     () => shelves.find((shelf) => shelf.id === activeShelfId) ?? null,
@@ -268,20 +467,12 @@ export function BibliotecaClient() {
 
     const filteredBooks =
       activeFilter === "todos"
-        ? activeShelf.books
-        : activeShelf.books.filter((book) => book.status === activeFilter);
+        ? activeShelf.books.filter((book) => matchesBookSearch(book, normalizedSearchQuery))
+        : activeShelf.books.filter(
+            (book) => book.status === activeFilter && matchesBookSearch(book, normalizedSearchQuery),
+          );
     return sortBooks(filteredBooks, orderBy);
-  }, [activeFilter, activeShelf, orderBy]);
-
-  const historicalReadBooks = useMemo(
-    () => visibleBooks.filter((book) => book.status === "lido" && isHistorical(book)),
-    [visibleBooks],
-  );
-
-  const sereneReadBooks = useMemo(
-    () => visibleBooks.filter((book) => book.status === "lido" && !isHistorical(book)),
-    [visibleBooks],
-  );
+  }, [activeFilter, activeShelf, normalizedSearchQuery, orderBy]);
 
   const filterCounts = useMemo<Record<FilterValue, number>>(
     () => ({
@@ -547,6 +738,7 @@ export function BibliotecaClient() {
             key={book.id}
             book={book}
             onStartReading={handleStartReading}
+            onUpdateProgress={setProgressBook}
             onEdit={openEditForm}
             onManageShelves={openBookShelfManager}
             onSoftDelete={handleSoftDelete}
@@ -565,10 +757,10 @@ export function BibliotecaClient() {
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
             Biblioteca
           </p>
-          <h1 className="literary mt-2 text-4xl leading-tight">Seus livros, sem pressa</h1>
+          <h1 className="literary mt-2 text-4xl leading-tight">Seus livros, organizados pelo SERENE</h1>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--serene-muted)]">
-            Tudo aparece aqui mesmo sem categorias. Use categorias apenas quando elas deixarem sua
-            leitura mais confortável.
+            A Biblioteca abre por estantes automaticas. Ajustes manuais continuam disponiveis, mas
+            voce nao precisa organizar tudo antes de ler.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -604,8 +796,8 @@ export function BibliotecaClient() {
           </div>
           <div className="rounded-xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_84%,transparent)] p-4">
             <Tags className="size-5 text-[var(--serene-accent)]" />
-            <p className="literary mt-3 text-2xl">{shelves.length}</p>
-            <p className="text-xs text-[var(--serene-muted)]">estantes pessoais de leitura</p>
+            <p className="literary mt-3 text-2xl">{automaticShelves.length}</p>
+            <p className="text-xs text-[var(--serene-muted)]">estantes automaticas visiveis</p>
           </div>
         </div>
       </div>
@@ -626,12 +818,58 @@ export function BibliotecaClient() {
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
-              Estantes
+              Estantes automaticas
             </p>
-            <h2 className="literary mt-2 text-3xl leading-tight">Separacoes que fazem sentido para voce</h2>
+            <h2 className="literary mt-2 text-3xl leading-tight">
+              O SERENE separa os livros para voce
+            </h2>
             <p className="mt-3 text-sm leading-relaxed text-[var(--serene-muted)]">
-              Estantes sao agrupamentos manuais da Biblioteca. A Mente continua cuidando das
-              leituras automaticas e interpretativas do SERENE.
+              Cada livro pode aparecer em mais de uma estante. Abra uma area ou entre em Todos os
+              livros quando quiser ver tudo em ordem.
+            </p>
+          </div>
+          <label className="relative w-full max-w-sm text-sm text-[var(--serene-muted)]">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[var(--serene-muted)]" />
+            <input
+              className="w-full rounded-full border border-[var(--serene-border)] bg-[var(--serene-input)] py-2 pl-9 pr-3 text-[var(--serene-fg)] outline-none"
+              placeholder="Buscar livro na Biblioteca"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+            />
+          </label>
+        </div>
+
+        {searchQuery.trim() && (
+          <p className="mt-4 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-2 text-sm text-[var(--serene-muted)]">
+            Busca aplicada em toda a Biblioteca. Abra uma estante para ver os resultados.
+          </p>
+        )}
+
+        <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {automaticShelves.map((shelf) => (
+            <AutoShelfCard
+              key={shelf.id}
+              active={activeAutoShelfId === shelf.id}
+              shelf={shelf}
+              onOpen={(item) => {
+                setActiveAutoShelfId(item.id);
+                setActiveShelfId(null);
+              }}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="serene-rise rounded-[2rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_92%,var(--serene-surface-soft)_8%),var(--serene-surface))] p-5 shadow-[var(--serene-shadow-soft)] sm:p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
+              Ajustes manuais
+            </p>
+            <h2 className="literary mt-2 text-3xl leading-tight">Estantes pessoais, se voce quiser</h2>
+            <p className="mt-3 text-sm leading-relaxed text-[var(--serene-muted)]">
+              Elas continuam aqui para organizacao manual. A estrutura principal da Biblioteca,
+              agora, fica nas estantes automaticas acima.
             </p>
           </div>
           <button
@@ -711,7 +949,10 @@ export function BibliotecaClient() {
                 key={shelf.id}
                 active={activeShelfId === shelf.id}
                 shelf={shelf}
-                onOpen={(item) => setActiveShelfId(item.id)}
+                onOpen={(item) => {
+                  setActiveShelfId(item.id);
+                  setActiveAutoShelfId(null);
+                }}
                 onEdit={openEditShelfForm}
                 onManageBooks={openShelfBookManager}
                 onDelete={(item) => void handleDeleteShelf(item)}
@@ -737,6 +978,7 @@ export function BibliotecaClient() {
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="space-y-5">
+          {(activeAutoShelf || activeShelf) && (
           <section className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)]">
           <div className="flex flex-wrap gap-2">
             {filters.map((filter) => (
@@ -759,6 +1001,7 @@ export function BibliotecaClient() {
             ))}
           </div>
 
+          {(activeShelf || activeAutoShelf?.id === allBooksShelfId) && (
           <label className="mt-4 grid max-w-xs gap-1 text-sm text-[var(--serene-muted)]">
             Ordenar por
             <select
@@ -772,7 +1015,9 @@ export function BibliotecaClient() {
               <option value="autor">autor</option>
             </select>
           </label>
+          )}
           </section>
+          )}
 
           {loading ? (
             <div className="grid min-h-64 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] shadow-[var(--serene-shadow-soft)]">
@@ -790,6 +1035,42 @@ export function BibliotecaClient() {
                 apenas quando ajudar.
               </p>
             </div>
+          ) : activeAutoShelf ? (
+            <section className="rounded-[2rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_88%,var(--serene-surface-soft)_12%),var(--serene-surface))] p-5 shadow-[var(--serene-shadow-soft)]">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div className="max-w-2xl">
+                  <button
+                    type="button"
+                    onClick={() => setActiveAutoShelfId(null)}
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-1.5 text-xs text-[var(--serene-muted)]"
+                  >
+                    <ArrowLeft className="size-3.5" />
+                    Voltar para estantes automaticas
+                  </button>
+                  <p className="mt-5 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
+                    Estante automatica
+                  </p>
+                  <h2 className="literary mt-2 text-3xl leading-tight">{activeAutoShelf.name}</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--serene-muted)]">
+                    {activeAutoShelf.description}
+                  </p>
+                  <p className="mt-3 text-sm text-[var(--serene-muted)]">
+                    {visibleBooks.length === 1 ? "1 livro" : `${visibleBooks.length} livros`}
+                    {normalizedSearchQuery ? " encontrados na busca" : " em ordem alfabetica"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5">
+                {visibleBooks.length === 0 ? (
+                  <div className="rounded-2xl border border-dashed border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_78%,transparent)] p-5 text-sm text-[var(--serene-muted)]">
+                    Nenhum livro nesta estante para a busca ou filtro atual.
+                  </div>
+                ) : (
+                  renderBookGrid(visibleBooks)
+                )}
+              </div>
+            </section>
           ) : activeShelf ? (
             <section className="rounded-[2rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_88%,var(--serene-surface-soft)_12%),var(--serene-surface))] p-5 shadow-[var(--serene-shadow-soft)]">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -849,39 +1130,11 @@ export function BibliotecaClient() {
                 )}
               </div>
             </section>
-          ) : visibleBooks.length === 0 ? (
-            <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-6 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)]">
-              Nenhum livro encontrado nesse filtro.
-            </div>
-          ) : activeFilter === "lido" ? (
-            <div className="space-y-6">
-              <section className="space-y-3 rounded-2xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_74%,transparent)] p-4 shadow-[var(--serene-shadow-soft)]">
-                <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
-                  Histórico de leitura
-                </h2>
-                {historicalReadBooks.length > 0 ? (
-                  renderBookGrid(historicalReadBooks)
-                ) : (
-                  <p className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 text-sm text-[var(--serene-muted)]">
-                    Nenhum livro histórico neste filtro.
-                  </p>
-                )}
-              </section>
-              <section className="space-y-3 rounded-2xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_74%,transparent)] p-4 shadow-[var(--serene-shadow-soft)]">
-                <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
-                  Lido no SERENE
-                </h2>
-                {sereneReadBooks.length > 0 ? (
-                  renderBookGrid(sereneReadBooks)
-                ) : (
-                  <p className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 text-sm text-[var(--serene-muted)]">
-                    Nenhum livro concluído no SERENE neste filtro.
-                  </p>
-                )}
-              </section>
-            </div>
           ) : (
-            renderBookGrid(visibleBooks)
+            <div className="rounded-2xl border border-dashed border-[var(--serene-border)] bg-[var(--serene-surface)] p-6 text-sm leading-relaxed text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)]">
+              Escolha uma estante automatica acima para ver os livros. A entrada Todos os livros
+              mostra a Biblioteca inteira sem misturar a tela principal.
+            </div>
           )}
         </div>
 
@@ -1116,6 +1369,15 @@ export function BibliotecaClient() {
             </div>
           </section>
         </div>
+      )}
+
+      {progressBook && (
+        <ProgressUpdateDialog
+          userId={user.id}
+          book={progressBook}
+          onClose={() => setProgressBook(null)}
+          onSaved={refresh}
+        />
       )}
     </section>
   );

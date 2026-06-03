@@ -4,6 +4,7 @@ import type { Database } from "@/lib/supabase/database.types";
 export type MenteBookRow = Database["public"]["Tables"]["books"]["Row"];
 export type MenteSessionRow = Database["public"]["Tables"]["reading_sessions"]["Row"];
 export type MenteAnnotationRow = Database["public"]["Tables"]["annotations"]["Row"];
+export type MenteTimelineEventRow = Database["public"]["Tables"]["timeline_events"]["Row"];
 export type MenteAutomaticCategoryRow =
   Database["public"]["Tables"]["automatic_mente_categories"]["Row"];
 export type MenteBookAutomaticCategoryRow =
@@ -17,6 +18,7 @@ export type MenteSourceData = {
   books: MenteBookRow[];
   sessions: MenteSessionRow[];
   annotations: MenteAnnotationRow[];
+  timelineEvents: MenteTimelineEventRow[];
   automaticCategories: MenteAutomaticCategoryRow[];
   automaticRelations: MenteBookAutomaticCategoryRow[];
   manualRelations: MenteBookManualCategoryRow[];
@@ -46,6 +48,7 @@ export async function loadMenteSourceData(userId: string): Promise<ServiceResult
     booksResult,
     sessionsResult,
     annotationsResult,
+    timelineEventsResult,
     automaticCategoriesResult,
     automaticRelationsResult,
     manualRelationsResult,
@@ -73,6 +76,12 @@ export async function loadMenteSourceData(userId: string): Promise<ServiceResult
       .is("deleted_at", null)
       .order("created_at", { ascending: false }),
     supabase
+      .from("timeline_events")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("event_type", "estimated_progress_registered")
+      .order("created_at", { ascending: false }),
+    supabase
       .from("automatic_mente_categories")
       .select("*")
       .eq("user_id", userId)
@@ -91,6 +100,7 @@ export async function loadMenteSourceData(userId: string): Promise<ServiceResult
     booksResult.error ??
     sessionsResult.error ??
     annotationsResult.error ??
+    timelineEventsResult.error ??
     automaticCategoriesResult.error ??
     automaticRelationsResult.error ??
     manualRelationsResult.error ??
@@ -105,6 +115,7 @@ export async function loadMenteSourceData(userId: string): Promise<ServiceResult
       books: booksResult.data ?? [],
       sessions: sessionsResult.data ?? [],
       annotations: annotationsResult.data ?? [],
+      timelineEvents: timelineEventsResult.data ?? [],
       automaticCategories: automaticCategoriesResult.data ?? [],
       automaticRelations: automaticRelationsResult.data ?? [],
       manualRelations: manualRelationsResult.data ?? [],

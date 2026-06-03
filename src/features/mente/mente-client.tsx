@@ -306,12 +306,12 @@ function MenteBrainMap({
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
-            Interpretacao automatica
+            Cerebro SERENE
           </p>
-          <h2 className="mt-1 text-xl font-semibold">Mente em areas vivas</h2>
+          <h2 className="mt-1 text-xl font-semibold">Clique em uma area para explorar</h2>
         </div>
         <p className="max-w-sm text-xs leading-relaxed text-[var(--serene-muted)]">
-          Os pesos sao aproximados e podem se sobrepor, como acontece com leituras reais.
+          As areas se formam automaticamente a partir dos livros e anotacoes visiveis.
         </p>
       </div>
 
@@ -388,9 +388,10 @@ function SelectedAreaPanel({
   if (!category) {
     return (
       <article className="rounded-[2rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5 shadow-[var(--serene-shadow-soft)]">
-        <h2 className="text-lg font-semibold">A Mente esta se formando</h2>
+        <h2 className="text-lg font-semibold">Clique em uma area para explorar sua Mente</h2>
         <p className="mt-2 text-sm leading-relaxed text-[var(--serene-muted)]">
-          As areas aparecem quando livros e anotacoes deixam sinais suficientes.
+          Sua Mente se forma a partir dos livros e pensamentos que voce guarda. Os detalhes ficam
+          guardados ate uma area ser escolhida.
         </p>
       </article>
     );
@@ -427,11 +428,25 @@ function SelectedAreaPanel({
         </div>
         <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3">
           <p className="text-lg font-semibold">{formatDuration(category.realSeconds)}</p>
-          <p className="text-xs text-[var(--serene-muted)]">tempo real</p>
+          <p className="text-xs text-[var(--serene-muted)]">tempo real registrado</p>
+        </div>
+        <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3">
+          <p className="text-lg font-semibold">{formatDuration(category.estimatedOutsideSeconds)}</p>
+          <p className="text-xs text-[var(--serene-muted)]">estimado fora do app</p>
         </div>
         <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3">
           <p className="text-lg font-semibold">{formatDuration(category.estimatedHistoricalSeconds)}</p>
           <p className="text-xs text-[var(--serene-muted)]">historico estimado</p>
+        </div>
+        <div className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3">
+          <p className="text-lg font-semibold">
+            {formatDuration(
+              category.realSeconds +
+                category.estimatedOutsideSeconds +
+                category.estimatedHistoricalSeconds,
+            )}
+          </p>
+          <p className="text-xs text-[var(--serene-muted)]">tempo total dedicado</p>
         </div>
       </div>
 
@@ -651,28 +666,25 @@ function MenteDashboard({
   onConvertCategory: (category: MenteCategory) => void;
 }) {
   const strongestCategories = insight.categories.slice(0, 8);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
-    () => insight.categories[0]?.id ?? null,
-  );
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
   const selectedCategory =
-    insight.categories.find((category) => category.id === selectedCategoryId) ??
-    insight.categories[0] ??
-    null;
+    insight.categories.find((category) => category.id === selectedCategoryId) ?? null;
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[2rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_94%,white_6%),var(--serene-surface))] p-5 shadow-[var(--serene-shadow-lift)] dark:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_92%,black_8%),var(--serene-surface))]">
-        <div>
+      <section className="rounded-[2rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_94%,white_6%),var(--serene-surface))] p-5 shadow-[var(--serene-shadow-soft)] dark:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_92%,black_8%),var(--serene-surface))]">
+        <div className="max-w-3xl">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
-            Tempo de vida dedicado a leitura
+            Mente
           </p>
-          <h2 className="mt-1 text-xl font-semibold">Horas guardadas nos seus livros</h2>
+          <h2 className="literary mt-2 text-3xl leading-tight">Sua biblioteca mental, sem pressa</h2>
           <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--serene-muted)]">
-            Horas construindo sua mente leitora, com o tempo real separado das estimativas.
+            Clique em uma area do cerebro para ver livros, anotacoes e tempo dedicado. A tela
+            inicial fica contemplativa; os detalhes aparecem quando voce escolhe uma area.
           </p>
         </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
+        <div className="hidden">
           <TimeBlock
             icon={Clock3}
             label="Tempo registrado no SERENE"
@@ -694,7 +706,7 @@ function MenteDashboard({
         </div>
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      <section className="hidden">
         <MetricCard
           icon={LibraryBig}
           label="Livros"
@@ -742,7 +754,15 @@ function MenteDashboard({
         </section>
       )}
 
-      <section className="space-y-4">
+      {strongestCategories.length === 0 && (
+        <EmptyBlock
+          icon={Brain}
+          title="A Mente esta pronta"
+          text="Adicione livros e anotacoes visiveis para formar as primeiras areas automaticamente."
+        />
+      )}
+
+      <section className="hidden">
         <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--serene-muted)]">
@@ -780,7 +800,7 @@ function MenteDashboard({
         )}
       </section>
 
-      <section id="evolucao" className="grid gap-4 lg:grid-cols-[1fr_360px]">
+      <section id="evolucao" className="hidden">
         <article className="rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5 shadow-[var(--serene-shadow-soft)]">
           <div className="flex items-center gap-3">
             <span className="grid size-10 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] text-[var(--serene-accent)]">
@@ -851,7 +871,7 @@ function MenteDashboard({
         </article>
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-2">
+      <section className="hidden">
         <article className="rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-5 shadow-[var(--serene-shadow-soft)]">
           <div className="flex items-center justify-between gap-3">
             <div>

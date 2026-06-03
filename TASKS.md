@@ -627,37 +627,48 @@ Validation:
 - [x] `npm run lint` passes.
 - [x] `npm run build` passes.
 
-## Phase 16 - Simplicity audit and lost-idea rescue
+## Phase 16 - Reorganizacao simples da experiencia SERENE
 
 Goal:
-- [x] Reduce complexity without erasing SERENE's soul: a calm personal mental library for books, reading, annotations, and Mente.
-- [x] Keep changes small and preserve authentication, beta, Supabase, RLS, reading sessions, annotations, Biblioteca, Estantes, Mural, Mente, Trash, Export, and Beta behavior.
+- [x] Reorganize the app around Inicio, Biblioteca, Leitura, Anotacoes, and Mente without making the interface heavier.
+- [x] Let SERENE organize more of the experience for the reader: read, update progress, save thoughts, and explore Mente when desired.
+- [x] Preserve authentication, beta, Supabase, RLS, reading sessions, annotations, Biblioteca, Estantes, Mural, Mente, Trash, Export, and Beta behavior.
 
 A. Essential now:
-- [x] Primary navigation remains `Inicio`, `Biblioteca`, `Anotacoes`, and `Mente`.
-- [x] Secondary areas remain discoverable from the menu: `Configuracoes`, `Lixeira`, `Exportar`, `Atalhos`, and `Perfil`.
-- [x] Reading stays accessed from books, Home, and Biblioteca instead of becoming a separate competing primary area.
-- [x] Annotation creation defaults to `Anotacao Rapida`.
-- [x] Main annotation creation choices are only `Anotacao Rapida`, `Reflexao`, `Marca-texto`, and `Post-it`.
-- [x] Reflexao has its own thought-bubble visual identity.
-- [x] Marca-texto has its own marked-text visual identity; the highlight sits on words, not on the whole card.
-- [x] Post-it has its own physical-paper visual identity, including square shape, layers, shadow, and stack behavior.
-- [x] Quick notes remain simple, neutral, and fast.
-- [x] Mural remains optional, inside reading/annotations, and is fixed with no infinite canvas, no free pan, no horizontal scroll, and no zoom.
-- [x] Mural suggestions remain capped at 5 per session, keep stable positions, and are removed only through explicit user actions.
-- [x] Estantes remain manual Biblioteca organization; deleting a shelf must not delete books.
-- [x] Mente remains automatic, independent from Estantes, and separates real SERENE reading time from estimated historical time.
-- [x] Trash remains the safety layer for books and annotations; permanent deletion requires explicit confirmation.
+- [x] User can read with the app open through the existing real reading session flow.
+- [x] User can also register reading done outside the app through `Atualizar pagina`.
+- [x] `Atualizar pagina` is available from Inicio/current book and Biblioteca/book cards.
+- [x] Outside-app progress updates the book page and records estimated time through timeline events, not through `reading_sessions`.
+- [x] Real time, outside-app estimated time, and historical estimated time stay separated in copy and calculations.
+- [x] The estimate uses the user's real seconds-per-page average when sessions have page deltas; otherwise it uses a simple initial estimate.
+- [x] Page input rejects negative pages and asks for confirmation before lowering current progress.
+- [x] Anotacoes opens as calm folders: `Post-its`, `Reflexoes`, `Marca-textos`, and `Anotacoes rapidas`.
+- [x] Post-its can be viewed by color groups inside the Post-its folder: todos, amarelos, azuis, verdes, rosas, and other recognized colors.
+- [x] Reflexao keeps its own thought-bubble visual identity.
+- [x] Marca-texto keeps its own marked-text visual identity; the highlight sits on words, not on the whole card.
+- [x] Post-it keeps its own physical-paper visual identity, including square paper, shadow, slight rotation, and stack behavior.
+- [x] Anotacao Rapida remains simple, neutral, and fast.
+- [x] Biblioteca now prioritizes automatic shelves by reading area/topic, with `Todos os livros` as its own entry.
+- [x] Automatic Biblioteca shelves use book title, author, description, existing manual categories, and shelves as signals.
+- [x] A book can appear in more than one automatic shelf, and shelf contents are alphabetical by default.
+- [x] Biblioteca search remains global while the main screen stays shelf-first.
+- [x] Manual Estantes remain available as optional adjustments, separate from automatic Biblioteca shelves.
+- [x] Mente opens with the brain as the main focus and shows details only after the user clicks an area.
+- [x] Area details in Mente show related books, related annotations, simple counts, real time, outside-app estimated time, historical estimated time, and total dedicated time.
+- [x] Mente remains automatic and interpretive; Biblioteca remains practical organization.
+- [x] Mural remains optional, fixed, without infinite canvas, pan, scroll, or zoom, and does not compete with Anotacoes.
 - [x] Essential SERENE features must not be blocked behind Premium: unlimited annotations, organized export, main Mente, history, categories/shelves, essential personalization, and essential future AI.
 
 B. Simplified or hidden:
-- [x] Timeline/Linha do tempo is removed from the visible product flow for now; `/timeline` and `/linha-do-tempo` redirect calmly to `/mente`.
-- [x] Flag, Ideia, Duvida, Pensamento, and Acao remain preserved as existing/internal annotation types, but are not presented as main creation choices.
-- [x] Annotation filters group non-primary types as `Outros registros` instead of making every old type compete with the four main formats.
-- [x] Mural suggestion conversion now routes future/internal suggestion types into the simplified main creation set.
-- [x] Mente no longer promotes Linha do tempo as a peer area.
-- [x] Curiosities, camera/OCR, export, shortcuts, beta, and profile remain secondary or placeholder-level instead of becoming primary destinations.
-- [x] Reading summary type counts emphasize the four main annotation formats and group preserved secondary records.
+- [x] Anotacoes no longer starts as one mixed list; the mixed view only appears after opening a type folder.
+- [x] Type filters no longer compete with folders; the folder itself defines the main annotation type.
+- [x] Flag, Ideia, Duvida, Pensamento, and Acao remain preserved as existing/internal annotation records, but are not presented as main creation choices.
+- [x] Biblioteca no longer shows automatic shelves and all books as equally primary on the same first surface.
+- [x] Manual shelves and manual categories are available but visually secondary to the automatic organization.
+- [x] Mente hides broad metric blocks, evolution, favorites, review, and conversation panels from the initial view.
+- [x] Timeline/Linha do tempo remains outside the visible product flow for now; `/timeline` and `/linha-do-tempo` redirect calmly to `/mente`.
+- [x] Camera/OCR remains a calm placeholder; no full OCR was implemented.
+- [x] Curiosities, export, shortcuts, beta, and profile remain secondary or placeholder-level instead of becoming primary destinations.
 
 C. Future:
 - [ ] Decide whether Timeline/Linha do tempo has a clear calm role before returning it to navigation.
@@ -672,9 +683,9 @@ C. Future:
 - [ ] Audiobooks, smartwatch, smart pen, Spotify/YouTube, community/social, advanced Premium, and other large integrations stay on the roadmap, not in the current flow.
 
 Validation:
-- [ ] Browser flow: Home, Biblioteca/Estantes, Leitura active/paused/minimized/finished, Anotacoes with four main visuals, Mural fixed area, Mente, Configuracoes, Lixeira, Exportar, Perfil, Beta.
-- [ ] Light/dark/system visual pass for quick notes, reflections, highlights, post-its, Mural, Mente, Home, reading controls, and feedback messages.
-- [ ] Mobile pass for primary navigation, Anotacoes filters, annotation modal, Mural fixed area, and floating `+` buttons.
+- [ ] Browser flow: Home `Atualizar pagina`, Biblioteca automatic shelves/Todos os livros, Anotacoes folders, Leitura active/paused/minimized/finished, Mural fixed area, Mente brain selection, Configuracoes, Lixeira, Exportar, Perfil, Beta.
+- [ ] Light/dark/system visual pass for quick notes, reflections, highlights, post-its, Mural, Mente, Home, Biblioteca shelves, reading controls, and feedback messages.
+- [ ] Mobile pass for primary navigation, Anotacoes folders/filters, Biblioteca automatic shelves, Mente brain area, Mural fixed area, and floating `+` buttons.
 - [x] `git diff --check` passes.
 - [x] `npm run typecheck` passes.
 - [x] `npm run lint` passes.

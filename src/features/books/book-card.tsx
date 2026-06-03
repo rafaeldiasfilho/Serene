@@ -1,6 +1,6 @@
 "use client";
 
-import { BookOpen, Edit3, LibraryBig, PlayCircle, Trash2, X } from "lucide-react";
+import { BookOpen, Clock3, Edit3, LibraryBig, PlayCircle, Trash2, X } from "lucide-react";
 
 import type { BookStatus } from "@/lib/supabase/database.types";
 import type { BookWithCategories } from "@/features/books/use-book-library";
@@ -30,6 +30,7 @@ type BookCardProps = {
   onManageShelves?: (book: BookWithCategories) => void;
   onSoftDelete: (book: BookWithCategories) => void;
   onStartReading?: (book: BookWithCategories) => void;
+  onUpdateProgress?: (book: BookWithCategories) => void;
   onRemoveCategory?: (bookId: string, categoryId: string) => void;
 };
 
@@ -77,6 +78,7 @@ export function BookCard({
   onManageShelves,
   onSoftDelete,
   onStartReading,
+  onUpdateProgress,
   onRemoveCategory,
 }: BookCardProps) {
   const progress =
@@ -207,6 +209,16 @@ export function BookCard({
           >
             <PlayCircle className="size-3.5" />
             {getReadingActionLabel(book)}
+          </button>
+        )}
+        {onUpdateProgress && (
+          <button
+            type="button"
+            onClick={() => onUpdateProgress(book)}
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_74%,transparent)] px-3 py-1.5 text-xs"
+          >
+            <Clock3 className="size-3.5" />
+            Atualizar pagina
           </button>
         )}
         <button

@@ -84,7 +84,7 @@ where email = 'admin@example.com';
 
 ## Project status
 
-SERENE is implemented through Phase 16 - Simplicity audit and lost-idea rescue.
+SERENE is implemented through Phase 16 - Reorganizacao simples da experiencia SERENE.
 
 Current quality gates:
 
@@ -183,9 +183,15 @@ Phase 15G is a final experience polish before merging visual work back to master
 - Mural copy emphasizes fixed visible memory placement instead of technical canvas wording.
 - Theme options use Portuguese reader-facing labels.
 
-Phase 16 audits the app for calm hierarchy and rescues essential annotation identity:
+Phase 16 reorganizes the experience so SERENE feels calmer and more self-organizing:
 
-- Primary navigation is centered on Inicio, Biblioteca, Anotacoes, and Mente.
+- The reader can use a real timed reading session or update progress later with `Atualizar pagina`.
+- Outside-app progress is stored as estimated time and stays separate from real SERENE session time and historical estimates.
+- Anotacoes now opens as folders for Post-its, Reflexoes, Marca-textos, and Anotacoes Rapidas instead of one mixed first view.
+- Biblioteca prioritizes automatic shelves by reading area/topic; `Todos os livros` is its own entry.
+- Manual shelves remain available as optional adjustments, but they are no longer the first organizing burden.
+- Mente opens with the brain as the focus and shows area details only after the user selects an area.
+- Primary navigation remains centered on Inicio, Biblioteca, Anotacoes, and Mente.
 - Timeline/Linha do tempo is parked outside the current product flow; `/timeline` and `/linha-do-tempo` redirect to Mente while the supporting code and data are preserved.
 - Annotation creation now emphasizes four main formats: Anotacao Rapida, Reflexao, Marca-texto, and Post-it.
 - Reflexao appears as a thought bubble, Marca-texto as text-level highlighting, and Post-it as physical paper/stack.

@@ -5,6 +5,7 @@ import type {
   MenteManualCategoryRow,
   MenteSessionRow,
   MenteSourceData,
+  MenteTimelineEventRow,
 } from "@/features/mente/mente-services";
 
 type TopicRule = {
@@ -39,6 +40,7 @@ export type MenteCategory = {
   annotationCount: number;
   sessionCount: number;
   realSeconds: number;
+  estimatedOutsideSeconds: number;
   estimatedHistoricalSeconds: number;
   favoriteCount: number;
   toReviewCount: number;
@@ -86,6 +88,7 @@ export type MenteInsight = {
     favoriteIdeas: number;
     itemsToReview: number;
     realSeconds: number;
+    estimatedOutsideSeconds: number;
     estimatedHistoricalSeconds: number;
     approximateTotalSeconds: number;
   };
@@ -298,6 +301,15 @@ function estimatedHistoricalSecondsForBook(book: MenteBookRow) {
   return book.estimated_reading_seconds ?? 0;
 }
 
+function metadataNumber(metadata: MenteTimelineEventRow["metadata"], key: string) {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return 0;
+  }
+
+  const value = metadata[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
 function labelForDay(value: string) {
   const date = new Date(`${value}T12:00:00`);
   if (Number.isNaN(date.getTime())) {
@@ -414,9 +426,25 @@ export function buildMenteInsight(source: MenteSourceData): MenteInsight {
   const sessions = source.sessions.filter(
     (session) => visibleBookIds.has(session.book_id) && session.status !== "cancelled",
   );
+  const outsideProgressEvents = source.timelineEvents.filter(
+    (event) => event.book_id !== null && visibleBookIds.has(event.book_id),
+  );
   const annotations = source.annotations.filter(
     (annotation) => !annotation.book_id || visibleBookIds.has(annotation.book_id),
   );
+
+  const estimatedOutsideSecondsByBook = new Map<string, number>();
+  for (const event of outsideProgressEvents) {
+    if (!event.book_id) {
+      continue;
+    }
+
+    estimatedOutsideSecondsByBook.set(
+      event.book_id,
+      (estimatedOutsideSecondsByBook.get(event.book_id) ?? 0) +
+        metadataNumber(event.metadata, "estimated_seconds"),
+    );
+  }
 
   const annotationsByBook = new Map<string, MenteAnnotationRow[]>();
   for (const annotation of annotations) {
@@ -538,6 +566,10 @@ export function buildMenteInsight(source: MenteSourceData): MenteInsight {
         (annotation) => annotation.book_id !== null && bookIdSet.has(annotation.book_id),
       );
       const realSeconds = sumSeconds(categorySessions);
+      const estimatedOutsideSeconds = books.reduce(
+        (total, book) => total + (estimatedOutsideSecondsByBook.get(book.id) ?? 0),
+        0,
+      );
       const estimatedHistoricalSeconds = books.reduce(
         (total, book) => total + estimatedHistoricalSecondsForBook(book),
         0,
@@ -577,6 +609,7 @@ export function buildMenteInsight(source: MenteSourceData): MenteInsight {
         annotationCount: categoryAnnotations.length,
         sessionCount: categorySessions.length,
         realSeconds,
+        estimatedOutsideSeconds,
         estimatedHistoricalSeconds,
         favoriteCount,
         toReviewCount,
@@ -601,6 +634,10 @@ export function buildMenteInsight(source: MenteSourceData): MenteInsight {
   }));
 
   const realSeconds = sumSeconds(sessions);
+  const estimatedOutsideSeconds = source.books.reduce(
+    (total, book) => total + (estimatedOutsideSecondsByBook.get(book.id) ?? 0),
+    0,
+  );
   const estimatedHistoricalSeconds = source.books.reduce(
     (total, book) => total + estimatedHistoricalSecondsForBook(book),
     0,
@@ -671,8 +708,9 @@ export function buildMenteInsight(source: MenteSourceData): MenteInsight {
       favoriteIdeas: favoriteIdeaRows.length,
       itemsToReview: reviewRows.length,
       realSeconds,
+      estimatedOutsideSeconds,
       estimatedHistoricalSeconds,
-      approximateTotalSeconds: realSeconds + estimatedHistoricalSeconds,
+      approximateTotalSeconds: realSeconds + estimatedOutsideSeconds + estimatedHistoricalSeconds,
     },
     favoriteIdeas: favoriteIdeaRows
       .map((annotation) => createAnnotationPreview(annotation, bookById))

@@ -31,6 +31,7 @@ import {
   CapturePlaceholderDialog,
   type CaptureReviewValue,
 } from "@/features/camera-placeholder/capture-placeholder-dialog";
+import { ProgressUpdateDialog } from "@/features/reading-progress/progress-update-dialog";
 
 function fallbackColors(): AnnotationColorOption[] {
   return fallbackAnnotationColors.map((color, index) => ({
@@ -184,7 +185,13 @@ function StatCard({
   );
 }
 
-function ReadingBookTile({ book }: { book: BookWithCategories }) {
+function ReadingBookTile({
+  book,
+  onUpdateProgress,
+}: {
+  book: BookWithCategories;
+  onUpdateProgress: (book: BookWithCategories) => void;
+}) {
   return (
     <article className="serene-card-enter flex gap-4 rounded-[1.5rem] border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_88%,transparent)] p-3 shadow-[var(--serene-shadow-soft)]">
       <BookCover book={book} />
@@ -203,13 +210,23 @@ function ReadingBookTile({ book }: { book: BookWithCategories }) {
 
         <ProgressLine book={book} />
 
-        <Link
-          href={`/leitura/${book.id}?origem=inicio`}
-          className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_78%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--serene-accent)] transition hover:-translate-y-0.5 hover:border-[var(--serene-accent)]"
-        >
-          <PlayCircle className="size-3.5" />
-          {getReadingActionLabel(book)}
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            href={`/leitura/${book.id}?origem=inicio`}
+            className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_78%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--serene-accent)] transition hover:-translate-y-0.5 hover:border-[var(--serene-accent)]"
+          >
+            <PlayCircle className="size-3.5" />
+            {getReadingActionLabel(book)}
+          </Link>
+          <button
+            type="button"
+            onClick={() => onUpdateProgress(book)}
+            className="inline-flex w-fit items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_78%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--serene-muted)] transition hover:-translate-y-0.5 hover:border-[var(--serene-accent)] hover:text-[var(--serene-fg)]"
+          >
+            <Clock3 className="size-3.5" />
+            Atualizar pagina
+          </button>
+        </div>
       </div>
     </article>
   );
@@ -217,11 +234,12 @@ function ReadingBookTile({ book }: { book: BookWithCategories }) {
 
 export function HomeClient() {
   const { authLoading, profile, profileState, user } = useAppState();
-  const { books, loading } = useBookLibrary(user?.id ?? null);
+  const { books, loading, refresh } = useBookLibrary(user?.id ?? null);
   const [showCuriosity, setShowCuriosity] = useState(true);
   const [annotationModalOpen, setAnnotationModalOpen] = useState(false);
   const [captureDialogOpen, setCaptureDialogOpen] = useState(false);
   const [captureDraft, setCaptureDraft] = useState<CaptureReviewValue | null>(null);
+  const [progressBook, setProgressBook] = useState<BookWithCategories | null>(null);
   const [annotationColors, setAnnotationColors] = useState<AnnotationColorOption[]>(() =>
     fallbackColors(),
   );
@@ -565,6 +583,14 @@ export function HomeClient() {
                     </Link>
                     <button
                       type="button"
+                      onClick={() => setProgressBook(currentBook)}
+                      className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-sm font-semibold text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:-translate-y-0.5 hover:border-[var(--serene-accent)] hover:text-[var(--serene-fg)]"
+                    >
+                      <Clock3 className="size-4" />
+                      Atualizar pagina
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => {
                         setAnnotationFeedback(null);
                         setCaptureDraft(null);
@@ -586,7 +612,11 @@ export function HomeClient() {
                   </p>
                   <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {otherReadingBooks.map((book) => (
-                      <ReadingBookTile key={book.id} book={book} />
+                      <ReadingBookTile
+                        key={book.id}
+                        book={book}
+                        onUpdateProgress={setProgressBook}
+                      />
                     ))}
                   </div>
                 </div>
@@ -686,6 +716,15 @@ export function HomeClient() {
           currentSessionId={null}
           onClose={() => setCaptureDialogOpen(false)}
           onReview={handleCaptureReview}
+        />
+      )}
+
+      {progressBook && (
+        <ProgressUpdateDialog
+          userId={user.id}
+          book={progressBook}
+          onClose={() => setProgressBook(null)}
+          onSaved={refresh}
         />
       )}
     </section>
