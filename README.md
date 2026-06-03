@@ -175,7 +175,15 @@ Phase 15F strengthens Mente as an automatic interpretation of the user's reading
 - Area details show related books with covers, related annotations, real SERENE reading time, and estimated historical reading time separately.
 - The beta sample seed now includes automatic Mente areas and multi-area books for testing.
 
-No authentication, reading/session logic, annotation CRUD logic, beta access rules, RLS, or destructive deletion behavior changed in Phase 15D, Phase 15E, or Phase 15F.
+Phase 15G is a final experience polish before merging visual work back to master:
+
+- Book cards no longer show placeholder/fake statistics.
+- Reading entry labels stay calmer and distinguish starting from resuming when progress exists.
+- The reading screen uses the same `Foto` language as Home for the camera/OCR placeholder.
+- Mural copy emphasizes fixed visible memory placement instead of technical canvas wording.
+- Theme options use Portuguese reader-facing labels.
+
+No authentication, reading/session logic, annotation CRUD logic, beta access rules, RLS, or destructive deletion behavior changed in Phase 15D, Phase 15E, Phase 15F, or Phase 15G.
 
 ## Phase 13 notes
 

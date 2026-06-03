@@ -520,7 +520,7 @@ export function ReadingSessionScreen() {
 
     setAnnotationFeedback(
       value.origin === "camera"
-        ? "Captura revisada salva como anotacao."
+        ? "Foto revisada salva como anotacao."
         : "Anotacao vinculada a sessao ativa.",
     );
     return { ok: true, message: null };
@@ -602,10 +602,10 @@ export function ReadingSessionScreen() {
               onClick={handleOpenCapture}
               disabled={!isSessionOpen || actionLoading || Boolean(summary)}
               className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)] disabled:opacity-60"
-              title="Preparar captura"
+              title="Preparar foto"
             >
               <Camera className="size-4" />
-              Captura
+              Foto
             </button>
           </div>
         </div>

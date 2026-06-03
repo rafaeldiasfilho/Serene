@@ -601,3 +601,28 @@ Validation:
 - [x] `npm run typecheck` passes.
 - [x] `npm run lint` passes.
 - [x] `npm run build` passes.
+
+## Phase 15G - Final experience polish before master
+
+- [x] Keep the phase small: polish, align copy, remove visual noise, and avoid new large flows.
+- [x] Remove the fake zero-statistics hover panel from book cards so Biblioteca feels literary, not like a cold dashboard.
+- [x] Use `Iniciar leitura` or `Retomar leitura` on book cards based on existing page progress.
+- [x] Align the reading camera placeholder language with Home by using `Foto`.
+- [x] Make Mural feedback and labels talk about memories/places on a fixed table instead of technical positions or balloons.
+- [x] Keep the Mural product decision: no infinite canvas, no free pan, no horizontal scroll, no zoom.
+- [x] Keep Estantes manual and separate from automatic Mente interpretation.
+- [x] Keep Mente automatic and independent from Biblioteca shelves.
+- [x] Keep core features outside Premium blocking: reading, Biblioteca, annotations, Mural, Mente, Trash, and exports remain essential SERENE areas.
+- [x] Keep `/timeline` only as a redirect alias to `/linha-do-tempo`; do not remove routes before a separate navigation decision.
+- [x] Preserve authentication, beta isolation, Supabase schema, RLS, migrations, services, reading/session logic, annotation CRUD, Biblioteca, Estantes, Mural, Mente, Trash, Export, and Beta behavior.
+
+Pending manual QA before master:
+- [ ] Browser flow: Home, Biblioteca/Estantes, Leitura active/paused/minimized/finished, Anotacoes/post-it pile, Mural fixed area, Mente, Configuracoes, Lixeira, Exportar, Perfil, Beta.
+- [ ] Light/dark/system visual pass for post-its, highlights, Mural, Mente, Home, reading controls, and feedback messages.
+- [ ] Mobile pass for Home reading section, Biblioteca shelves, Mural fixed area, bottom navigation, and floating `+` buttons.
+
+Validation:
+- [x] `git diff --check` passes.
+- [x] `npm run typecheck` passes.
+- [x] `npm run lint` passes.
+- [x] `npm run build` passes.

@@ -45,6 +45,10 @@ function getOriginLabel(book: BookWithCategories) {
   return "SERENE";
 }
 
+function getReadingActionLabel(book: BookWithCategories) {
+  return book.current_page > 0 ? "Retomar leitura" : "Iniciar leitura";
+}
+
 function hashTitle(title: string) {
   let hash = 0;
 
@@ -83,7 +87,7 @@ export function BookCard({
   return (
     <article
       className={[
-        "serene-card-enter group relative overflow-hidden rounded-xl border bg-[var(--serene-surface)] shadow-[var(--serene-shadow-soft)] motion-safe:transition motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-[var(--serene-shadow-lift)]",
+        "serene-card-enter relative overflow-hidden rounded-xl border bg-[var(--serene-surface)] shadow-[var(--serene-shadow-soft)] motion-safe:transition motion-safe:hover:-translate-y-0.5 motion-safe:hover:shadow-[var(--serene-shadow-lift)]",
         book.is_current
           ? "border-[color-mix(in_oklab,var(--serene-accent)_58%,transparent)]"
           : "border-[var(--serene-border)]",
@@ -202,7 +206,7 @@ export function BookCard({
             className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_oklab,var(--serene-accent)_46%,transparent)] bg-[color-mix(in_oklab,var(--serene-accent)_10%,var(--serene-surface)_90%)] px-3 py-1.5 text-xs font-medium"
           >
             <PlayCircle className="size-3.5" />
-            Iniciar leitura
+            {getReadingActionLabel(book)}
           </button>
         )}
         <button
@@ -231,32 +235,6 @@ export function BookCard({
           <Trash2 className="size-3.5" />
           Lixeira
         </button>
-      </div>
-
-      <div className="pointer-events-none absolute right-3 top-3 hidden w-44 rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)]/95 p-3 text-xs opacity-0 shadow-[var(--serene-shadow-soft)] backdrop-blur motion-safe:transition motion-safe:delay-300 group-hover:opacity-95 group-focus-within:opacity-95 sm:block">
-        <p className="font-semibold">Estatisticas</p>
-        <dl className="mt-2 grid gap-1 text-[var(--serene-muted)]">
-          <div className="flex justify-between gap-2">
-            <dt>reflexoes</dt>
-            <dd>0</dd>
-          </div>
-          <div className="flex justify-between gap-2">
-            <dt>marca-textos</dt>
-            <dd>0</dd>
-          </div>
-          <div className="flex justify-between gap-2">
-            <dt>post-its</dt>
-            <dd>0</dd>
-          </div>
-          <div className="flex justify-between gap-2">
-            <dt>anotacoes rapidas</dt>
-            <dd>0</dd>
-          </div>
-          <div className="flex justify-between gap-2">
-            <dt>tempo lido</dt>
-            <dd>0 min</dd>
-          </div>
-        </dl>
       </div>
     </article>
   );

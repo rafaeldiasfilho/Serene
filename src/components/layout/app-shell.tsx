@@ -389,9 +389,9 @@ export function AppShell({ children }: AppShellProps) {
                     void setThemePreference(event.target.value as ThemePreference)
                   }
                 >
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                  <option value="system">System</option>
+                  <option value="light">Claro</option>
+                  <option value="dark">Escuro</option>
+                  <option value="system">Sistema</option>
                 </select>
               </label>
               <label className="grid gap-1 text-xs">
@@ -411,7 +411,7 @@ export function AppShell({ children }: AppShellProps) {
                   }
                 >
                   <option value="minimize">Minimizar</option>
-                  <option value="close">Encerrar sessao</option>
+                  <option value="close">Encerrar sessao ativa</option>
                 </select>
               </label>
               <label className="flex items-center gap-2 rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-2 text-xs">

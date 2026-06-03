@@ -386,7 +386,7 @@ export function HomeClient() {
 
     setAnnotationFeedback(
       value.origin === "camera"
-        ? "Captura revisada salva como anotação."
+        ? "Foto revisada salva como anotação."
         : "Anotação salva a partir do Início.",
     );
     return { ok: true, message: null };

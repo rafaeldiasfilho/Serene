@@ -1135,7 +1135,7 @@ export function MuralScreen() {
     annotations.length === 1 ? "memoria" : "memorias"
   }`;
   const positionCountLabel = `${positions.length} ${
-    positions.length === 1 ? "posicao guardada" : "posicoes guardadas"
+    positions.length === 1 ? "memoria na mesa" : "memorias na mesa"
   }`;
   const boardAnnotationLimit = getBoardAnnotationLimit(boardSize);
   const boardAnnotations = annotations.slice(0, boardAnnotationLimit);
@@ -1378,7 +1378,7 @@ export function MuralScreen() {
 
     setFeedback(
       sourceSuggestion
-        ? "Balao convertido em anotacao real."
+        ? "Convite guardado como anotacao."
         : "Anotacao criada no centro visivel do Mural.",
     );
     await loadMural();
@@ -1488,8 +1488,8 @@ export function MuralScreen() {
             Mapa mental da sessao
           </p>
           <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[var(--serene-muted)]">
-            Uma mesa aberta para aproximar trechos, ideias e perguntas deste livro, com posicoes
-            preservadas dentro de uma area fixa, enquanto a leitura continua.
+            Uma mesa aberta para aproximar trechos, ideias e perguntas deste livro, com lugares
+            preservados dentro de uma area fixa, enquanto a leitura continua.
           </p>
         </div>
 
@@ -1637,7 +1637,7 @@ export function MuralScreen() {
                     Math.max(0, suggestion.suggested_slot - 1) * SUGGESTION_ENTRY_DELAY_MS
                   }ms`,
                 }}
-                onClick={() => setFeedback("Balao mantido no Mural. Use um comando explicito para remove-lo.")}
+                onClick={() => setFeedback("Convite mantido no Mural. Use um comando explicito para remove-lo.")}
               >
                 <div
                   className="flex cursor-grab items-start justify-between gap-2 active:cursor-grabbing"
