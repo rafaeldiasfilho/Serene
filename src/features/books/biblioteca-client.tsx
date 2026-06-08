@@ -28,7 +28,13 @@ import {
   type ShelfWithBooks,
 } from "@/features/books/use-book-library";
 import type { BookInsert } from "@/features/books/book-services";
+import { MuralEntryDialog } from "@/features/mural/mural-entry-dialog";
 import { ProgressUpdateDialog } from "@/features/reading-progress/progress-update-dialog";
+import { notifyReadingSessionChanged } from "@/features/reading-sessions/reading-session-events";
+import {
+  getOpenSessionForBook,
+  updateReadingSession,
+} from "@/features/reading-sessions/reading-session-services";
 import type { BookStatus } from "@/lib/supabase/database.types";
 
 type FilterValue = "todos" | "lendo" | "quero_ler" | "pausado" | "lido";
@@ -422,6 +428,7 @@ export function BibliotecaClient() {
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [progressBook, setProgressBook] = useState<BookWithCategories | null>(null);
+  const [muralPromptBook, setMuralPromptBook] = useState<BookWithCategories | null>(null);
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryColor, setNewCategoryColor] = useState(categoryColors[0]);
   const [activeAutoShelfId, setActiveAutoShelfId] = useState<string | null>(null);
@@ -766,6 +773,48 @@ export function BibliotecaClient() {
     router.push(`/leitura/${book.id}?origem=biblioteca`);
   }
 
+  async function handleOpenBookMural(book: BookWithCategories) {
+    if (!user) {
+      return;
+    }
+
+    setFeedback(null);
+    const sessionResult = await getOpenSessionForBook(user.id, book.id);
+
+    if (sessionResult.error) {
+      setFeedback(sessionResult.error.message);
+      return;
+    }
+
+    if (!sessionResult.data) {
+      setMuralPromptBook(book);
+      return;
+    }
+
+    const muralResult = await updateReadingSession(sessionResult.data.id, user.id, {
+      mural_opened: true,
+      is_minimized: false,
+    });
+
+    if (muralResult.error) {
+      setFeedback(muralResult.error.message);
+      return;
+    }
+
+    notifyReadingSessionChanged();
+    router.push(`/leitura/${book.id}/mural?origem=biblioteca`);
+  }
+
+  function handleStartReadingFromMuralPrompt() {
+    if (!muralPromptBook) {
+      return;
+    }
+
+    const bookId = muralPromptBook.id;
+    setMuralPromptBook(null);
+    router.push(`/leitura/${bookId}?origem=biblioteca`);
+  }
+
   function renderBookGrid(bookList: BookWithCategories[]) {
     return (
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -775,6 +824,7 @@ export function BibliotecaClient() {
             book={book}
             onStartReading={handleStartReading}
             onUpdateProgress={setProgressBook}
+            onOpenMural={(item) => void handleOpenBookMural(item)}
             onEdit={openEditForm}
             onManageShelves={openBookShelfManager}
             onSoftDelete={handleSoftDelete}
@@ -1427,6 +1477,14 @@ export function BibliotecaClient() {
           book={progressBook}
           onClose={() => setProgressBook(null)}
           onSaved={refresh}
+        />
+      )}
+
+      {muralPromptBook && (
+        <MuralEntryDialog
+          bookTitle={muralPromptBook.title}
+          onClose={() => setMuralPromptBook(null)}
+          onStartReading={handleStartReadingFromMuralPrompt}
         />
       )}
     </section>

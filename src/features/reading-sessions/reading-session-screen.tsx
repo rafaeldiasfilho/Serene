@@ -716,10 +716,11 @@ export function ReadingSessionScreen() {
               type="button"
               onClick={() => void handleOpenMural()}
               disabled={!isSessionOpen || actionLoading}
+              title="Organize suas ideias visualmente"
               className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)] disabled:opacity-60"
             >
               <MapIcon className="size-4" />
-              Abrir Mural
+              Mural de ideias
             </button>
             <button
               type="button"
@@ -868,6 +869,32 @@ export function ReadingSessionScreen() {
             Finalizar leitura
           </button>
         </div>
+
+        <div className="mt-4 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] text-[var(--serene-accent)]">
+                <MapIcon className="size-4" />
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-[var(--serene-text)]">Mural de ideias</p>
+                <p className="mt-1 max-w-xl text-xs leading-relaxed text-[var(--serene-muted)]">
+                  Organize visualmente o que este livro despertou. Abrir o Mural nao pausa a
+                  leitura nem muda o estado da sessao.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleOpenMural()}
+              disabled={!isSessionOpen || actionLoading}
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-4 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)] disabled:opacity-60"
+            >
+              <MapIcon className="size-4" />
+              Abrir Mural
+            </button>
+          </div>
+        </div>
       </section>
       )}
 
@@ -1007,6 +1034,11 @@ export function ReadingSessionScreen() {
           defaultType={captureDraft?.defaultType}
           defaultContent={captureDraft?.defaultContent}
           defaultPageNumber={captureDraft ? captureDraft.pageNumber : currentPage}
+          onOpenMural={() => {
+            setAnnotationModalOpen(false);
+            setCaptureDraft(null);
+            void handleOpenMural();
+          }}
           onClose={() => {
             setAnnotationModalOpen(false);
             setCaptureDraft(null);

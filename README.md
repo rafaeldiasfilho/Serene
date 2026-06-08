@@ -96,7 +96,7 @@ where email = 'admin@example.com';
 
 ## Project status
 
-SERENE is implemented through Phase 19 - Cadastro Inteligente de Livros.
+SERENE is implemented through Phase 20 - Mural mais visivel e encontravel.
 
 Current quality gates:
 
@@ -246,6 +246,16 @@ Phase 19 makes adding a book start with less work:
 - The user may confirm directly, edit the data in the full form, search again, cancel, or fall back to manual title-only cadastro.
 - `public.books` now stores optional `language`, `isbn`, and `subjects`; existing `publication_year` remains the published-year field.
 - `Adicionar por foto da capa` is visible as a prepared placeholder; OCR/IA identification remains future work.
+
+## Phase 20 notes
+
+Phase 20 makes the Mural easier to find without turning it into a primary app area:
+
+- The reading screen names the tool `Mural de ideias` and explains that it organizes ideas visually without pausing the session.
+- The annotation `+` modal includes a discreet `Abrir Mural` callout during reading; Mural remains an organization view, not an annotation type.
+- Biblioteca book cards expose a secondary `Mural` action. If the book has an active or paused session, it opens the Mural directly; otherwise SERENE shows a calm `Mural deste livro` prompt with `Iniciar leitura`.
+- Anotacoes shows `Organizar no Mural` when a folder is filtered to a specific book, with the same active-session requirement.
+- Mural still lives under the contextual reading route `/leitura/[bookId]/mural` and is not a main navigation item.
 
 ## Phase 13 notes
 

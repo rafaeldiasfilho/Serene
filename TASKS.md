@@ -846,3 +846,48 @@ Validation:
 - [x] `npm run typecheck` passes.
 - [x] `npm run lint` passes.
 - [x] `npm run build` passes.
+
+## Phase 20 - Mural mais visivel e encontravel
+
+Goal:
+- [x] Make the Mural easier to find in the right contexts.
+- [x] Keep Mural contextual to reading and annotations, not a primary menu area.
+- [x] Preserve the calm hierarchy of Inicio, Biblioteca, Anotacoes, and Mente.
+
+A. Reading screen:
+- [x] Rename/reinforce the reading action as `Mural de ideias`.
+- [x] Add calm microcopy: organize ideas visually without pausing the session.
+- [x] Keep Finalizar leitura visually primary.
+- [x] Preserve active/paused session state when opening Mural.
+
+B. Annotation `+` flow:
+- [x] Add a discreet `Abrir Mural` callout inside the annotation modal during reading.
+- [x] Keep Anotacao Rapida as the default.
+- [x] Keep Mural as visual organization, not an annotation type.
+
+C. Book and Biblioteca context:
+- [x] Add secondary `Mural` action to book cards without changing primary reading/progress actions.
+- [x] Open directly when the book has an active or paused session.
+- [x] Show calm `Mural deste livro` prompt and `Iniciar leitura` when no session is open.
+
+D. Anotacoes context:
+- [x] Add `Organizar no Mural` when a folder is filtered by a specific book.
+- [x] Present Mural as a visual way to arrange annotations.
+- [x] Avoid adding Mural as a main folder or annotation type.
+
+Preserved rules:
+- [x] Mural remains contextual under `/leitura/[bookId]/mural`.
+- [x] No main navigation item was added.
+- [x] No infinite canvas, zoom, or pan behavior was added.
+- [x] Existing suggestion cap/position behavior was not changed.
+- [x] Opening Mural does not pause reading.
+
+Validation:
+- [ ] Manual flow: open Mural from reading while active and verify the timer keeps running.
+- [ ] Manual flow: pause reading, open Mural, and verify the session remains paused.
+- [ ] Manual flow: open Mural from a Biblioteca card with and without an active session.
+- [ ] Manual flow: filter Anotacoes by a book and use `Organizar no Mural`.
+- [x] `git diff --check` passes.
+- [x] `npm run typecheck` passes.
+- [x] `npm run lint` passes.
+- [x] `npm run build` passes.

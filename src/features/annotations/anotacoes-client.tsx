@@ -4,11 +4,13 @@ import {
   BookMarked,
   BookOpen,
   CheckCircle2,
+  Map as MapIcon,
   Plus,
   RefreshCw,
   Search,
   Sparkles,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { AuthPanel } from "@/components/auth/auth-panel";
@@ -20,7 +22,13 @@ import { AnnotationModal, type AnnotationModalSubmitValue } from "@/features/ann
 import { primaryAnnotationTypeOptions } from "@/features/annotations/annotation-definitions";
 import { PostItStack } from "@/features/annotations/post-it-stack";
 import { useAnnotations } from "@/features/annotations/use-annotations";
-import type { AnnotationRow } from "@/features/annotations/annotation-services";
+import type { AnnotationBookRow, AnnotationRow } from "@/features/annotations/annotation-services";
+import { MuralEntryDialog } from "@/features/mural/mural-entry-dialog";
+import { notifyReadingSessionChanged } from "@/features/reading-sessions/reading-session-events";
+import {
+  getOpenSessionForBook,
+  updateReadingSession,
+} from "@/features/reading-sessions/reading-session-services";
 import {
   listVocabularyEntries,
   type VocabularyEntryRow,
@@ -204,6 +212,7 @@ function AnnotationFolderCard({
 }
 
 export function AnotacoesClient() {
+  const router = useRouter();
   const { authLoading, envReady, profileState, user } = useAppState();
   const {
     annotations,
@@ -234,6 +243,7 @@ export function AnotacoesClient() {
   const [postItColorFilter, setPostItColorFilter] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingAnnotation, setEditingAnnotation] = useState<AnnotationRow | null>(null);
+  const [muralPromptBook, setMuralPromptBook] = useState<AnnotationBookRow | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const toReviewAnnotations = useMemo(() => {
@@ -350,6 +360,14 @@ export function AnotacoesClient() {
       return searchable.includes(normalizedQuery);
     });
   }, [bookFilter, booksById, query, vocabularyEntries]);
+
+  const selectedMuralBook = useMemo(() => {
+    if (bookFilter === "all" || bookFilter === "without_book") {
+      return null;
+    }
+
+    return books.find((book) => book.id === bookFilter) ?? null;
+  }, [bookFilter, books]);
 
   const annotationViewItems = useMemo<AnnotationViewItem[]>(() => {
     const postItGroups = new Map<string, AnnotationRow[]>();
@@ -594,6 +612,48 @@ export function AnotacoesClient() {
     setTypeFilter("all");
     setPostItColorFilter("all");
     setVocabularyOpen(true);
+  }
+
+  async function handleOpenSelectedBookMural() {
+    if (!user || !selectedMuralBook) {
+      return;
+    }
+
+    setFeedback(null);
+    const sessionResult = await getOpenSessionForBook(user.id, selectedMuralBook.id);
+
+    if (sessionResult.error) {
+      setFeedback(sessionResult.error.message);
+      return;
+    }
+
+    if (!sessionResult.data) {
+      setMuralPromptBook(selectedMuralBook);
+      return;
+    }
+
+    const muralResult = await updateReadingSession(sessionResult.data.id, user.id, {
+      mural_opened: true,
+      is_minimized: false,
+    });
+
+    if (muralResult.error) {
+      setFeedback(muralResult.error.message);
+      return;
+    }
+
+    notifyReadingSessionChanged();
+    router.push(`/leitura/${selectedMuralBook.id}/mural?origem=anotacoes`);
+  }
+
+  function handleStartReadingFromMuralPrompt() {
+    if (!muralPromptBook) {
+      return;
+    }
+
+    const bookId = muralPromptBook.id;
+    setMuralPromptBook(null);
+    router.push(`/leitura/${bookId}?origem=anotacoes`);
   }
 
   function openEditModal(annotation: AnnotationRow) {
@@ -897,6 +957,38 @@ export function AnotacoesClient() {
       </section>
       )}
 
+      {activeFolder && selectedMuralBook && (
+        <section className="serene-soft-in rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)] sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <span className="grid size-10 shrink-0 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-accent-soft)] text-[var(--serene-accent)]">
+                <MapIcon className="size-4" />
+              </span>
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
+                  Mural de ideias
+                </p>
+                <h2 className="mt-1 text-base font-semibold text-[var(--serene-text)]">
+                  Organizar no Mural
+                </h2>
+                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--serene-muted)]">
+                  Veja as anotacoes de {selectedMuralBook.title} em um espaco mais livre. Se ainda
+                  nao houver sessao ativa, a leitura abre primeiro.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => void handleOpenSelectedBookMural()}
+              className="inline-flex shrink-0 items-center justify-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-4 py-2 text-sm font-semibold text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)]"
+            >
+              <MapIcon className="size-4" />
+              Ver no Mural
+            </button>
+          </div>
+        </section>
+      )}
+
       {activeFolder && toReviewAnnotations.some((annotation) => annotation.type === activeFolder) && (
         <section className="serene-soft-in rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-paper)] p-4 shadow-[var(--serene-shadow-soft)] sm:p-5">
           <div className="flex items-start gap-3">
@@ -1091,6 +1183,14 @@ export function AnotacoesClient() {
           initialAnnotation={editingAnnotation}
           onClose={closeModal}
           onSubmit={handleModalSubmit}
+        />
+      )}
+
+      {muralPromptBook && (
+        <MuralEntryDialog
+          bookTitle={muralPromptBook.title}
+          onClose={() => setMuralPromptBook(null)}
+          onStartReading={handleStartReadingFromMuralPrompt}
         />
       )}
 

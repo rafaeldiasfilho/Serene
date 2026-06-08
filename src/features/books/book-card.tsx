@@ -1,6 +1,15 @@
 "use client";
 
-import { BookOpen, Clock3, Edit3, LibraryBig, PlayCircle, Trash2, X } from "lucide-react";
+import {
+  BookOpen,
+  Clock3,
+  Edit3,
+  LibraryBig,
+  Map as MapIcon,
+  PlayCircle,
+  Trash2,
+  X,
+} from "lucide-react";
 
 import type { BookStatus } from "@/lib/supabase/database.types";
 import type { BookWithCategories } from "@/features/books/use-book-library";
@@ -28,6 +37,7 @@ type BookCardProps = {
   compact?: boolean;
   onEdit: (book: BookWithCategories) => void;
   onManageShelves?: (book: BookWithCategories) => void;
+  onOpenMural?: (book: BookWithCategories) => void;
   onSoftDelete: (book: BookWithCategories) => void;
   onStartReading?: (book: BookWithCategories) => void;
   onUpdateProgress?: (book: BookWithCategories) => void;
@@ -91,6 +101,7 @@ export function BookCard({
   compact = false,
   onEdit,
   onManageShelves,
+  onOpenMural,
   onSoftDelete,
   onStartReading,
   onUpdateProgress,
@@ -270,6 +281,16 @@ export function BookCard({
           >
             <Clock3 className="size-3.5" />
             Atualizar pagina
+          </button>
+        )}
+        {onOpenMural && (
+          <button
+            type="button"
+            onClick={() => onOpenMural(book)}
+            className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_74%,transparent)] px-3 py-1.5 text-xs text-[var(--serene-muted)]"
+          >
+            <MapIcon className="size-3.5" />
+            Mural
           </button>
         )}
         <button
