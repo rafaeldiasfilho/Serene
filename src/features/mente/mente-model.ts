@@ -410,6 +410,10 @@ function bookSignal(
       book.title,
       book.author,
       book.description,
+      book.publisher,
+      book.language,
+      book.isbn,
+      ...(book.subjects ?? []),
       ...manualCategoryNames,
       ...annotations.map((annotation) => annotation.content),
     ]

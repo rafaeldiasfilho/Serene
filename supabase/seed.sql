@@ -550,6 +550,31 @@ set
   deleted_at = excluded.deleted_at,
   updated_at = excluded.updated_at;
 
+update public.books book
+set
+  language = coalesce(book.language, meta.language),
+  isbn = coalesce(book.isbn, meta.isbn),
+  subjects = meta.subjects,
+  updated_at = now()
+from seed_demo_user s
+join (
+  values
+    ('20000000-0000-0000-0000-000000000001'::uuid, 'pt', null::text, array['Filosofia', 'Estoicismo', 'Classicos']::text[]),
+    ('20000000-0000-0000-0000-000000000002'::uuid, 'pt', null::text, array['Desenvolvimento pessoal', 'Habitos', 'Psicologia']::text[]),
+    ('20000000-0000-0000-0000-000000000003'::uuid, 'pt', null::text, array['Financas', 'Comportamento', 'Dinheiro']::text[]),
+    ('20000000-0000-0000-0000-000000000004'::uuid, 'pt', null::text, array['Literatura', 'Romance', 'Classicos']::text[]),
+    ('20000000-0000-0000-0000-000000000005'::uuid, 'pt', null::text, array['Estudos', 'Aprendizado', 'Metodo']::text[]),
+    ('20000000-0000-0000-0000-000000000006'::uuid, 'pt', null::text, array['Filosofia', 'Espiritualidade', 'Sentido']::text[]),
+    ('20000000-0000-0000-0000-000000000007'::uuid, 'pt', null::text, array['Literatura', 'Narrativa', 'Poesia']::text[]),
+    ('20000000-0000-0000-0000-000000000008'::uuid, 'pt', null::text, array['Matematica', 'Logica', 'Numeros']::text[]),
+    ('20000000-0000-0000-0000-000000000009'::uuid, 'pt', null::text, array['Psicologia', 'Emocoes', 'Autoconhecimento']::text[]),
+    ('20000000-0000-0000-0000-000000000010'::uuid, 'pt', null::text, array['Psicologia', 'Aprendizado', 'Mentalidade']::text[]),
+    ('20000000-0000-0000-0000-000000000011'::uuid, 'pt', null::text, array['Trabalho', 'Foco', 'Produtividade']::text[])
+) as meta(id, language, isbn, subjects)
+  on true
+where book.user_id = s.user_id
+  and book.id = meta.id;
+
 -- ----------------------------------------------------------------------------
 -- 3) Manual categories
 -- ----------------------------------------------------------------------------

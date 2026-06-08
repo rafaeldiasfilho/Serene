@@ -173,6 +173,9 @@ create table if not exists public.books (
   publisher text,
   edition text,
   publication_year int,
+  language text,
+  isbn text,
+  subjects text[],
   total_pages int,
   current_page int not null default 0,
   status text not null default 'quero_ler',
@@ -209,6 +212,10 @@ create table if not exists public.books (
     check (total_pages is null or current_page <= total_pages),
   constraint books_publication_year_check
     check (publication_year is null or publication_year > 0),
+  constraint books_language_not_blank
+    check (language is null or length(trim(language)) > 0),
+  constraint books_isbn_not_blank
+    check (isbn is null or length(trim(isbn)) > 0),
   constraint books_estimated_reading_seconds_check
     check (estimated_reading_seconds is null or estimated_reading_seconds >= 0),
   constraint books_audiobook_duration_minutes_check
@@ -232,6 +239,12 @@ comment on table public.books is
 'Books in Biblioteca. Uses soft delete via deleted_at.';
 comment on column public.books.estimated_reading_seconds is
 'Estimated historical reading time in seconds (approximate). Keep separate from real tracked session time.';
+comment on column public.books.language is
+'Optional book language from a trusted source or manual correction.';
+comment on column public.books.isbn is
+'Optional ISBN from a trusted source or manual correction. Do not invent.';
+comment on column public.books.subjects is
+'Optional subjects/tags from book discovery sources. Used as calm signals for Biblioteca and Mente.';
 comment on column public.books.audiobook_duration_minutes is
 'Optional full audiobook duration in minutes, used only as an estimated reading-time base when stronger personal pace data is unavailable.';
 comment on column public.books.audiobook_source is
@@ -850,6 +863,11 @@ create index if not exists idx_books_status on public.books(status);
 create index if not exists idx_books_reading_origin on public.books(reading_origin);
 create index if not exists idx_books_deleted_at on public.books(deleted_at);
 create index if not exists idx_books_estimation_source on public.books(estimation_source);
+create index if not exists idx_books_isbn
+  on public.books(user_id, lower(isbn))
+  where isbn is not null;
+create index if not exists idx_books_subjects
+  on public.books using gin(subjects);
 
 create index if not exists idx_shelves_user_id on public.shelves(user_id);
 create index if not exists idx_shelves_deleted_at on public.shelves(deleted_at);

@@ -793,3 +793,56 @@ Validation:
 - [x] `npm run typecheck` passes.
 - [x] `npm run lint` passes.
 - [x] `npm run build` passes.
+
+## Phase 19 - Cadastro Inteligente de Livros
+
+Goal:
+- [x] Let the user start adding a book by typing only the book name.
+- [x] Show possible matches with title and author before saving.
+- [x] Ask for confirmation before creating the book.
+- [x] Keep manual title-only cadastro available when search fails or feels unnecessary.
+
+A. Intake flow:
+- [x] Replace direct new-book form entry with a short `Nome do livro` intake modal.
+- [x] Search suggestions by title through Open Library public search.
+- [x] Show cover, title, author, year, pages, publisher, language, ISBN, subjects, and source when available.
+- [x] Always show title plus author in each result when the source provides author.
+- [x] Show a confirmation panel: `Encontramos este livro`.
+- [x] Add actions: Confirmar livro, Editar dados, Buscar outro resultado, Cancelar.
+- [x] Prevent automatic save without explicit confirmation.
+- [x] Let the user fall back to manual cadastro with only the title.
+
+B. Data and organization:
+- [x] Add optional `books.language`, `books.isbn`, and `books.subjects`.
+- [x] Reuse existing `books.publication_year` for published year instead of creating a duplicate `published_year`.
+- [x] Save discovered title, author, cover, pages, description, publisher, publication year, language, ISBN, subjects, and source when available.
+- [x] Keep missing fields empty instead of blocking cadastro.
+- [x] Feed `subjects`, language, ISBN, publisher, description, title, and author into automatic Biblioteca shelf matching.
+- [x] Feed discovered book metadata into Mente topic detection.
+- [x] Preserve total pages for progress and time-estimation flows.
+- [x] Update demo/beta seeds with subjects and language signals.
+
+C. Photo cover path:
+- [x] Add visible `Adicionar por foto da capa` option.
+- [x] Show calm placeholder explaining OCR/IA cover identification is in preparation.
+- [x] Allow the user to continue by book name instead.
+
+Future:
+- [ ] Google Books integration with project API key and production quota rules.
+- [ ] ISBN-specific lookup and edition comparison.
+- [ ] Open Library edition-detail enrichment for better publisher/page/language selection.
+- [ ] Cover photo OCR/IA to detect title and author.
+- [ ] Let photo/OCR suggestions flow through the same confirmation panel.
+- [ ] Audiobook metadata lookup from reliable sources without inventing duration.
+- [ ] Manual category suggestion from discovered subjects, always optional.
+
+Validation:
+- [ ] Manual flow: search by name, choose a result, confirm, and verify the book appears complete in Biblioteca.
+- [ ] Manual flow: choose a result, edit data, save from the advanced form.
+- [ ] Manual fallback: create a title-only book when search has no result.
+- [ ] Manual photo path: open photo option and return to name-based cadastro.
+- [ ] Apply `supabase/fixes/014_book_discovery_metadata.sql` in the target Supabase project before browser QA.
+- [x] `git diff --check` passes.
+- [x] `npm run typecheck` passes.
+- [x] `npm run lint` passes.
+- [x] `npm run build` passes.

@@ -129,6 +129,9 @@ create table if not exists public.books (
   publisher text,
   edition text,
   publication_year int,
+  language text,
+  isbn text,
+  subjects text[],
   total_pages int,
   current_page int not null default 0,
   status text not null default 'quero_ler',
@@ -165,6 +168,10 @@ create table if not exists public.books (
     check (total_pages is null or current_page <= total_pages),
   constraint books_publication_year_check
     check (publication_year is null or publication_year > 0),
+  constraint books_language_not_blank
+    check (language is null or length(trim(language)) > 0),
+  constraint books_isbn_not_blank
+    check (isbn is null or length(trim(isbn)) > 0),
   constraint books_estimated_reading_seconds_check
     check (estimated_reading_seconds is null or estimated_reading_seconds >= 0),
   constraint books_audiobook_duration_minutes_check
@@ -715,6 +722,13 @@ create index if not exists idx_books_user_status_active
 create index if not exists idx_books_estimation_source
   on public.books (estimation_source);
 
+create index if not exists idx_books_isbn
+  on public.books (user_id, lower(isbn))
+  where isbn is not null;
+
+create index if not exists idx_books_subjects
+  on public.books using gin(subjects);
+
 create index if not exists idx_manual_categories_user_active
   on public.manual_categories (user_id, name)
   where deleted_at is null;
@@ -900,7 +914,27 @@ create unique index if not exists uq_annotation_mural_positions_annotation_sessi
   where session_id is not null;
 ```
 
-## 10) Notes On Real Time Vs Estimated Historical Time
+## 10) Notes On Intelligent Book Intake
+
+Book discovery should fill only sourced fields confirmed by the user:
+- `books.title`
+- `books.author`
+- `books.cover_url`
+- `books.total_pages`
+- `books.description`
+- `books.publisher`
+- `books.publication_year` (canonical field for published year)
+- `books.language`
+- `books.isbn`
+- `books.subjects`
+- `books.source`
+
+Do not duplicate `published_year`; use `publication_year`.
+Do not invent author, page count, cover, ISBN, subjects, or audiobook duration.
+If discovery fails, manual title-only cadastro must still work.
+Subjects are signals for Biblioteca automatic shelves and Mente, not mandatory manual categories.
+
+## 11) Notes On Real Time Vs Estimated Historical Time
 
 Store separately:
 - Real tracked reading time:
@@ -938,7 +972,7 @@ Avoid double counting:
 - for Mente totals, aggregate books and sessions in separate subqueries.
 - when `reading_progress_entries` and legacy `timeline_events` exist together, ignore legacy events that include `metadata.progress_entry_id`.
 
-## 11) Notes On Privacy Fields
+## 12) Notes On Privacy Fields
 
 Privacy controls:
 - `books.is_private`
@@ -949,7 +983,7 @@ Recommendations:
 - In shared exports or non-private contexts, filter out `is_private = true` unless user opts in.
 - Track export privacy decisions with `exports.included_private_content`.
 
-## 12) Notes On Future OCR/Camera Support
+## 13) Notes On Future OCR/Camera Support
 
 Current model already supports future OCR/camera:
 - `annotations.type = 'ocr_page'`
@@ -964,7 +998,7 @@ Future-proofing recommendations:
 - Keep markers optional and lightweight.
 - OCR input must come from user-provided images only.
 
-## 13) Practical Implementation Notes For Codex Tasks
+## 14) Practical Implementation Notes For Codex Tasks
 
 - Implement migrations in small, reversible steps.
 - Apply constraints early for statuses and ownership consistency.

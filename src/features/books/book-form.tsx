@@ -36,6 +36,9 @@ type BookFormState = {
   publisher: string;
   edition: string;
   publication_year: string;
+  language: string;
+  isbn: string;
+  subjects: string;
   total_pages: string;
   current_page: string;
   audiobook_duration_minutes: string;
@@ -56,6 +59,7 @@ type BookFormState = {
 type BookFormProps = {
   book: BookWithCategories | null;
   categories: ManualCategoryRow[];
+  initialDraft?: Omit<BookInsert, "user_id"> | null;
   saving: boolean;
   onCancel: () => void;
   onSubmit: (payload: Omit<BookInsert, "user_id">, categoryIds: string[]) => Promise<void>;
@@ -112,30 +116,38 @@ function ChoiceText({ children, title }: { children: ReactNode; title: string })
   );
 }
 
-function createInitialState(book: BookWithCategories | null): BookFormState {
+function createInitialState(
+  book: BookWithCategories | null,
+  initialDraft: Omit<BookInsert, "user_id"> | null,
+): BookFormState {
+  const source = book ?? initialDraft;
+
   return {
-    title: book?.title ?? "",
-    author: book?.author ?? "",
-    cover_url: book?.cover_url ?? "",
-    description: book?.description ?? "",
-    publisher: book?.publisher ?? "",
-    edition: book?.edition ?? "",
-    publication_year: book?.publication_year?.toString() ?? "",
-    total_pages: book?.total_pages?.toString() ?? "",
-    current_page: book?.current_page?.toString() ?? "0",
+    title: source?.title ?? "",
+    author: source?.author ?? "",
+    cover_url: source?.cover_url ?? "",
+    description: source?.description ?? "",
+    publisher: source?.publisher ?? "",
+    edition: source?.edition ?? "",
+    publication_year: source?.publication_year?.toString() ?? "",
+    language: source?.language ?? "",
+    isbn: source?.isbn ?? "",
+    subjects: (source?.subjects ?? []).join(", "),
+    total_pages: source?.total_pages?.toString() ?? "",
+    current_page: source?.current_page?.toString() ?? "0",
     audiobook_duration_minutes: book?.audiobook_duration_minutes?.toString() ?? "",
     audiobook_source: book?.audiobook_source ?? "",
     audiobook_is_confirmed: book?.audiobook_is_confirmed ?? false,
-    status: book?.status ?? "quero_ler",
-    reading_origin: book?.reading_origin ?? "serene",
-    read_before_serene: book?.read_before_serene ?? false,
-    completed_inside_serene: book?.completed_inside_serene ?? false,
-    is_current: book?.is_current ?? false,
-    is_private: book?.is_private ?? false,
-    show_in_home: book?.show_in_home ?? true,
-    show_in_notifications: book?.show_in_notifications ?? true,
-    show_in_mente: book?.show_in_mente ?? true,
-    include_in_quick_exports: book?.include_in_quick_exports ?? true,
+    status: source?.status ?? "quero_ler",
+    reading_origin: source?.reading_origin ?? "serene",
+    read_before_serene: source?.read_before_serene ?? false,
+    completed_inside_serene: source?.completed_inside_serene ?? false,
+    is_current: source?.is_current ?? false,
+    is_private: source?.is_private ?? false,
+    show_in_home: source?.show_in_home ?? true,
+    show_in_notifications: source?.show_in_notifications ?? true,
+    show_in_mente: source?.show_in_mente ?? true,
+    include_in_quick_exports: source?.include_in_quick_exports ?? true,
   };
 }
 
@@ -151,8 +163,28 @@ function optionalText(value: string) {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-export function BookForm({ book, categories, saving, onCancel, onSubmit }: BookFormProps) {
-  const [form, setForm] = useState<BookFormState>(() => createInitialState(book));
+function optionalSubjects(value: string) {
+  const subjects = Array.from(
+    new Set(
+      value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  );
+
+  return subjects.length > 0 ? subjects : null;
+}
+
+export function BookForm({
+  book,
+  categories,
+  initialDraft = null,
+  saving,
+  onCancel,
+  onSubmit,
+}: BookFormProps) {
+  const [form, setForm] = useState<BookFormState>(() => createInitialState(book, initialDraft));
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>(
     () => book?.categories.map((category) => category.id) ?? [],
   );
@@ -179,10 +211,13 @@ export function BookForm({ book, categories, saving, onCancel, onSubmit }: BookF
       publisher: optionalText(form.publisher),
       edition: optionalText(form.edition),
       publication_year: optionalNumber(form.publication_year),
+      language: optionalText(form.language),
+      isbn: optionalText(form.isbn),
+      subjects: optionalSubjects(form.subjects),
       total_pages: totalPages,
       current_page: optionalNumber(form.current_page) ?? 0,
       status,
-      source: "manual",
+      source: book?.source ?? initialDraft?.source ?? "manual",
       reading_origin: readingOrigin,
       is_current: form.is_current,
       is_private: form.is_private,
@@ -201,7 +236,13 @@ export function BookForm({ book, categories, saving, onCancel, onSubmit }: BookF
       completed_inside_serene:
         readingOrigin === "serene" && status === "lido" ? true : form.completed_inside_serene,
     };
-  }, [book?.estimated_minutes_per_page, book?.estimation_source, form]);
+  }, [
+    book?.estimated_minutes_per_page,
+    book?.estimation_source,
+    book?.source,
+    form,
+    initialDraft?.source,
+  ]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -361,6 +402,34 @@ export function BookForm({ book, categories, saving, onCancel, onSubmit }: BookF
               onChange={(event) => updateField("publication_year", event.target.value)}
               placeholder="Ano de publicação"
             />
+          </label>
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
+            Idioma
+            <input
+              className={fieldClass}
+              value={form.language}
+              onChange={(event) => updateField("language", event.target.value)}
+              placeholder="Ex.: pt, por, en"
+            />
+          </label>
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
+            ISBN
+            <input
+              className={fieldClass}
+              value={form.isbn}
+              onChange={(event) => updateField("isbn", event.target.value)}
+              placeholder="ISBN, se houver"
+            />
+          </label>
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)] md:col-span-2">
+            Assuntos
+            <input
+              className={fieldClass}
+              value={form.subjects}
+              onChange={(event) => updateField("subjects", event.target.value)}
+              placeholder="Filosofia, literatura, habitos"
+            />
+            <FieldHint>Opcional. Separe por virgulas; isso ajuda Biblioteca e Mente.</FieldHint>
           </label>
         </div>
       </FormSection>

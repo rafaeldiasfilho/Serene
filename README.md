@@ -71,6 +71,10 @@ Phase 18 adds audiobook-based outside-app reading estimates:
 
 - `supabase/fixes/013_audiobook_reading_progress.sql`
 
+Phase 19 adds intelligent book intake metadata:
+
+- `supabase/fixes/014_book_discovery_metadata.sql`
+
 Private beta users must use individual Supabase Auth accounts. Do not use one shared demo account for testers. To enable a beta user, create their Auth user, then mark their profile:
 
 ```sql
@@ -92,7 +96,7 @@ where email = 'admin@example.com';
 
 ## Project status
 
-SERENE is implemented through Phase 18 - Calculo Inteligente de Tempo de Leitura por Audiobook.
+SERENE is implemented through Phase 19 - Cadastro Inteligente de Livros.
 
 Current quality gates:
 
@@ -231,6 +235,17 @@ Phase 18 makes outside-app progress estimates more transparent without turning S
 - `Atualizar pagina` prioritizes real pace in the same book, then the user's real global pace, then audiobook duration, then a provisional default.
 - Real SERENE session time, outside-app estimated time, historical estimated time, and approximate total remain visibly separated.
 - Automatic audiobook duration lookup is prepared as future work; the app does not invent durations.
+
+## Phase 19 notes
+
+Phase 19 makes adding a book start with less work:
+
+- `Novo livro` opens a short intake flow where the reader starts with only `Nome do livro`.
+- Search suggestions use Open Library public search data and always require user confirmation before saving.
+- Results show title and author, plus cover, year, pages, publisher, language, ISBN, and subjects when the source provides them.
+- The user may confirm directly, edit the data in the full form, search again, cancel, or fall back to manual title-only cadastro.
+- `public.books` now stores optional `language`, `isbn`, and `subjects`; existing `publication_year` remains the published-year field.
+- `Adicionar por foto da capa` is visible as a prepared placeholder; OCR/IA identification remains future work.
 
 ## Phase 13 notes
 

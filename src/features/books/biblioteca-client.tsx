@@ -21,6 +21,7 @@ import { useAppState } from "@/components/providers/app-state-provider";
 import { BrainLoader } from "@/components/ui/brain-loader";
 import { BookCard } from "@/features/books/book-card";
 import { BookForm } from "@/features/books/book-form";
+import { BookIntakeDialog } from "@/features/books/book-intake-dialog";
 import {
   useBookLibrary,
   type BookWithCategories,
@@ -179,6 +180,9 @@ function getBookSignal(book: BookWithCategories) {
       book.author,
       book.description,
       book.publisher,
+      book.language,
+      book.isbn,
+      ...(book.subjects ?? []),
       ...book.categories.map((category) => category.name),
       ...book.shelves.map((shelf) => shelf.name),
     ]
@@ -412,6 +416,8 @@ export function BibliotecaClient() {
   const [orderBy, setOrderBy] = useState<OrderValue>("alfabetica");
   const [searchQuery, setSearchQuery] = useState("");
   const [editingBook, setEditingBook] = useState<BookWithCategories | null>(null);
+  const [intakeOpen, setIntakeOpen] = useState(false);
+  const [bookDraft, setBookDraft] = useState<Omit<BookInsert, "user_id"> | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -522,6 +528,32 @@ export function BibliotecaClient() {
     setFeedback("Livro salvo com calma.");
     setFormOpen(false);
     setEditingBook(null);
+    setBookDraft(null);
+  }
+
+  async function handleConfirmBookDraft(payload: Omit<BookInsert, "user_id">) {
+    setSaving(true);
+    setFeedback(null);
+    const result = await saveBook(null, payload, []);
+    setSaving(false);
+
+    if (!result.ok) {
+      setFeedback(result.message);
+      return result;
+    }
+
+    setFeedback("Livro salvo com calma.");
+    setIntakeOpen(false);
+    setBookDraft(null);
+    return result;
+  }
+
+  function handleEditBookDraft(payload: Omit<BookInsert, "user_id">) {
+    setBookDraft(payload);
+    setEditingBook(null);
+    setIntakeOpen(false);
+    setFormOpen(true);
+    setFeedback(null);
   }
 
   async function handleCreateCategory() {
@@ -716,13 +748,17 @@ export function BibliotecaClient() {
 
   function openCreateForm() {
     setEditingBook(null);
-    setFormOpen(true);
+    setBookDraft(null);
+    setIntakeOpen(true);
+    setFormOpen(false);
     setFeedback(null);
   }
 
   function openEditForm(book: BookWithCategories) {
     setEditingBook(book);
+    setBookDraft(null);
     setFormOpen(true);
+    setIntakeOpen(false);
     setFeedback(null);
   }
 
@@ -964,15 +1000,29 @@ export function BibliotecaClient() {
 
       {formOpen && (
         <BookForm
-          key={editingBook?.id ?? "new-book"}
+          key={editingBook?.id ?? bookDraft?.title ?? "new-book"}
           book={editingBook}
           categories={categories}
+          initialDraft={bookDraft}
           saving={saving}
           onCancel={() => {
             setFormOpen(false);
             setEditingBook(null);
+            setBookDraft(null);
           }}
           onSubmit={handleSaveBook}
+        />
+      )}
+
+      {intakeOpen && (
+        <BookIntakeDialog
+          saving={saving}
+          onClose={() => {
+            setIntakeOpen(false);
+            setBookDraft(null);
+          }}
+          onConfirm={handleConfirmBookDraft}
+          onEdit={handleEditBookDraft}
         />
       )}
 

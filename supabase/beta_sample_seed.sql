@@ -211,6 +211,25 @@ where existing.user_id = s.user_id
   and existing.source = 'beta_sample'
   and existing.title = b.title;
 
+update public.books existing
+set
+  language = coalesce(existing.language, 'pt'),
+  subjects = meta.subjects,
+  updated_at = now()
+from seed_beta_user s
+join (
+  values
+    ('Um livro para respirar', array['Literatura', 'Leitura calma', 'SERENE']::text[]),
+    ('A biblioteca interior', array['Biblioteca', 'Memoria', 'Organizacao']::text[]),
+    ('Cadernos de marca-texto', array['Estudos', 'Anotacoes', 'Marca-texto']::text[]),
+    ('Notas de uma leitura tranquila', array['Anotacoes', 'Reflexao', 'Leitura']::text[]),
+    ('Memoria de leitura', array['Mente', 'Historico', 'Memoria']::text[])
+) as meta(title, subjects)
+  on true
+where existing.user_id = s.user_id
+  and existing.source = 'beta_sample'
+  and existing.title = meta.title;
+
 insert into public.shelves (
   user_id,
   name,

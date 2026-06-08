@@ -113,6 +113,9 @@ export type Database = {
           publisher: string | null;
           edition: string | null;
           publication_year: number | null;
+          language: string | null;
+          isbn: string | null;
+          subjects: string[] | null;
           total_pages: number | null;
           current_page: number;
           status: BookStatus;
@@ -148,6 +151,9 @@ export type Database = {
           publisher?: string | null;
           edition?: string | null;
           publication_year?: number | null;
+          language?: string | null;
+          isbn?: string | null;
+          subjects?: string[] | null;
           total_pages?: number | null;
           current_page?: number;
           status?: BookStatus;
@@ -181,6 +187,9 @@ export type Database = {
           publisher?: string | null;
           edition?: string | null;
           publication_year?: number | null;
+          language?: string | null;
+          isbn?: string | null;
+          subjects?: string[] | null;
           total_pages?: number | null;
           current_page?: number;
           status?: BookStatus;
