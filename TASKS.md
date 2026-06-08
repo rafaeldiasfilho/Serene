@@ -690,3 +690,56 @@ Validation:
 - [x] `npm run typecheck` passes.
 - [x] `npm run lint` passes.
 - [x] `npm run build` passes.
+
+## Phase 17 - Vocabulario da Leitura e resumo de palavras do livro
+
+Goal:
+- [x] Add a calm, secondary reading vocabulary aid without turning SERENE into a dictionary app.
+- [x] Let the user save words during active reading while preserving reading focus, Mural behavior, annotations, Biblioteca, Mente, Trash, Export, and Beta rules.
+- [x] Keep vocabulary complementary to annotations; do not add it as a primary annotation type or primary navigation item.
+
+A. Data and safety:
+- [x] Add `public.vocabulary_entries` for user-owned saved words.
+- [x] Store word, optional definition, book, optional reading session, page, date, optional note, optional source, and user.
+- [x] Add useful indexes for user history, book history, session summary, and word lookup.
+- [x] Enable RLS and owner-only select/insert/update policies.
+- [x] Ensure insert/update policies validate optional book/session ownership.
+- [x] Preserve beta access restrictions for the new table.
+- [x] Avoid destructive vocabulary deletion flows in this phase.
+
+B. Reading flow:
+- [x] Add a discreet secondary `Vocabulario` button to the reading screen.
+- [x] Open a light modal asking which word the user wants to save.
+- [x] Allow saving without automatic definition.
+- [x] Show calm copy that automatic lookup is still in preparation.
+- [x] Allow optional manual meaning and optional note.
+- [x] Save the current page and active reading session when available.
+- [x] Show a small `Palavras consultadas neste livro` section after the book has saved words.
+
+C. Anotacoes and summaries:
+- [x] Add a secondary `Vocabulario` folder inside Anotacoes.
+- [x] Allow vocabulary search by word/meaning/note and filtering by book.
+- [x] Show `Palavras consultadas nesta leitura` in the session summary when words were saved in that session.
+- [x] Show `Vocabulario deste livro` when finishing a session completes the book.
+- [x] Keep vocabulary summary smaller than the main annotations section.
+
+Future:
+- [ ] Real dictionary/API integration.
+- [ ] Translation.
+- [ ] Synonyms.
+- [ ] Contextual examples.
+- [ ] AI-suggested meaning with source/confirmation.
+- [ ] Relate saved words to Mente.
+- [ ] Vocabulary review flow only if it can stay calm and useful.
+
+Validation:
+- [ ] Manual flow: save word during reading, see book history, finish session, see session vocabulary summary.
+- [ ] Manual book-completion flow: finish at final page, see full book vocabulary.
+- [ ] Manual Anotacoes flow: open Vocabulario folder, search, filter by book, open details.
+- [ ] Light/dark/system visual pass for vocabulary modal, reading history, summaries, and Anotacoes folder.
+- [ ] Mobile pass for vocabulary modal and reading secondary tools.
+- [ ] Apply `supabase/fixes/012_vocabulary_entries.sql` in the target Supabase project before browser QA.
+- [x] `git diff --check` passes.
+- [x] `npm run typecheck` passes.
+- [x] `npm run lint` passes.
+- [x] `npm run build` passes.

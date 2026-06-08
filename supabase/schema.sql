@@ -12,6 +12,7 @@
 -- 8) Historical reading time is always estimated/approximate.
 -- 9) Books and annotations are soft deleted with deleted_at by default.
 -- 10) Manual Biblioteca categories and automatic Mente categories are separate concepts.
+-- 11) Vocabulary entries are a small reading aid, not a replacement for annotations.
 
 create extension if not exists pgcrypto;
 create schema if not exists private;
@@ -528,7 +529,36 @@ create table if not exists public.annotation_colors (
 );
 
 -- ============================================================================
--- 13) timeline_events
+-- 13) vocabulary_entries
+-- ============================================================================
+
+create table if not exists public.vocabulary_entries (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  book_id uuid references public.books(id) on delete set null,
+  reading_session_id uuid references public.reading_sessions(id) on delete set null,
+  word text not null,
+  definition text,
+  page_number int,
+  note text,
+  source text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint vocabulary_entries_word_not_blank
+    check (length(trim(word)) > 0),
+  constraint vocabulary_entries_page_number_check
+    check (page_number is null or page_number >= 0)
+);
+
+comment on table public.vocabulary_entries is
+'Small reading vocabulary history. Complements annotations without replacing them or acting as a full dictionary.';
+comment on column public.vocabulary_entries.definition is
+'Manual or trusted-source meaning. Do not invent automatic definitions without a source.';
+comment on column public.vocabulary_entries.source is
+'Optional source for future dictionary/API/AI integrations. Manual entries may leave this null.';
+
+-- ============================================================================
+-- 14) timeline_events
 -- ============================================================================
 
 create table if not exists public.timeline_events (
@@ -545,7 +575,7 @@ create table if not exists public.timeline_events (
 );
 
 -- ============================================================================
--- 14) exports
+-- 15) exports
 -- ============================================================================
 
 create table if not exists public.exports (
@@ -563,7 +593,7 @@ comment on table public.exports is
 'Export metadata. Historical/private inclusion must be explicit and user-controlled.';
 
 -- ============================================================================
--- 15) user_settings
+-- 16) user_settings
 -- ============================================================================
 
 create table if not exists public.user_settings (
@@ -577,7 +607,7 @@ create table if not exists public.user_settings (
 );
 
 -- ============================================================================
--- 16) trash_items (optional helper table)
+-- 17) trash_items (optional helper table)
 -- ============================================================================
 
 create table if not exists public.trash_items (
@@ -594,7 +624,7 @@ comment on table public.trash_items is
 'Optional unified trash feed. Keep in sync with soft-deleted books/annotations if used.';
 
 -- ============================================================================
--- 17) feedback
+-- 18) feedback
 -- ============================================================================
 
 create table if not exists public.feedback (
@@ -709,6 +739,11 @@ create trigger trg_annotation_colors_updated_at
 before update on public.annotation_colors
 for each row execute function public.set_updated_at();
 
+drop trigger if exists trg_vocabulary_entries_updated_at on public.vocabulary_entries;
+create trigger trg_vocabulary_entries_updated_at
+before update on public.vocabulary_entries
+for each row execute function public.set_updated_at();
+
 drop trigger if exists trg_user_settings_updated_at on public.user_settings;
 create trigger trg_user_settings_updated_at
 before update on public.user_settings
@@ -761,6 +796,15 @@ create index if not exists idx_annotation_mural_positions_annotation_id on publi
 
 create index if not exists idx_mural_suggestions_session_id on public.mural_suggestions(session_id);
 
+create index if not exists idx_vocabulary_entries_user_created
+  on public.vocabulary_entries(user_id, created_at desc);
+create index if not exists idx_vocabulary_entries_book_created
+  on public.vocabulary_entries(book_id, created_at desc);
+create index if not exists idx_vocabulary_entries_session_created
+  on public.vocabulary_entries(reading_session_id, created_at desc);
+create index if not exists idx_vocabulary_entries_word
+  on public.vocabulary_entries(user_id, lower(word));
+
 create index if not exists idx_timeline_events_user_id on public.timeline_events(user_id);
 create index if not exists idx_exports_user_id on public.exports(user_id);
 create index if not exists idx_profiles_beta_access on public.profiles(is_beta_tester, access_status);
@@ -789,6 +833,7 @@ alter table public.annotations enable row level security;
 alter table public.annotation_mural_positions enable row level security;
 alter table public.mural_suggestions enable row level security;
 alter table public.annotation_colors enable row level security;
+alter table public.vocabulary_entries enable row level security;
 alter table public.timeline_events enable row level security;
 alter table public.exports enable row level security;
 alter table public.user_settings enable row level security;
@@ -811,6 +856,7 @@ grant select, insert, update, delete on table public.annotations to authenticate
 grant select, insert, update on table public.annotation_mural_positions to authenticated;
 grant select, insert, update on table public.mural_suggestions to authenticated;
 grant select, insert, update, delete on table public.annotation_colors to authenticated;
+grant select, insert, update on table public.vocabulary_entries to authenticated;
 grant select, insert, update on table public.timeline_events to authenticated;
 grant select, insert, update on table public.exports to authenticated;
 grant select, insert, update on table public.user_settings to authenticated;
@@ -1180,6 +1226,96 @@ for delete
 to authenticated
 using (((select auth.uid()) = user_id) and is_default = false);
 
+drop policy if exists vocabulary_entries_select_own on public.vocabulary_entries;
+create policy vocabulary_entries_select_own
+on public.vocabulary_entries
+for select
+to authenticated
+using ((select auth.uid()) = user_id);
+
+drop policy if exists vocabulary_entries_insert_own on public.vocabulary_entries;
+create policy vocabulary_entries_insert_own
+on public.vocabulary_entries
+for insert
+to authenticated
+with check (
+  (select auth.uid()) = user_id
+  and (
+    book_id is null
+    or exists (
+      select 1
+      from public.books b
+      where b.id = book_id
+        and b.user_id = (select auth.uid())
+        and b.deleted_at is null
+    )
+  )
+  and (
+    reading_session_id is null
+    or exists (
+      select 1
+      from public.reading_sessions rs
+      where rs.id = reading_session_id
+        and rs.user_id = (select auth.uid())
+        and rs.deleted_at is null
+    )
+  )
+  and (
+    book_id is null
+    or reading_session_id is null
+    or exists (
+      select 1
+      from public.reading_sessions rs
+      where rs.id = reading_session_id
+        and rs.book_id = book_id
+        and rs.user_id = (select auth.uid())
+        and rs.deleted_at is null
+    )
+  )
+);
+
+drop policy if exists vocabulary_entries_update_own on public.vocabulary_entries;
+create policy vocabulary_entries_update_own
+on public.vocabulary_entries
+for update
+to authenticated
+using ((select auth.uid()) = user_id)
+with check (
+  (select auth.uid()) = user_id
+  and (
+    book_id is null
+    or exists (
+      select 1
+      from public.books b
+      where b.id = book_id
+        and b.user_id = (select auth.uid())
+        and b.deleted_at is null
+    )
+  )
+  and (
+    reading_session_id is null
+    or exists (
+      select 1
+      from public.reading_sessions rs
+      where rs.id = reading_session_id
+        and rs.user_id = (select auth.uid())
+        and rs.deleted_at is null
+    )
+  )
+  and (
+    book_id is null
+    or reading_session_id is null
+    or exists (
+      select 1
+      from public.reading_sessions rs
+      where rs.id = reading_session_id
+        and rs.book_id = book_id
+        and rs.user_id = (select auth.uid())
+        and rs.deleted_at is null
+    )
+  )
+);
+
 drop policy if exists timeline_events_select_own on public.timeline_events;
 create policy timeline_events_select_own
 on public.timeline_events
@@ -1349,6 +1485,10 @@ drop policy if exists annotation_colors_select_admin on public.annotation_colors
 create policy annotation_colors_select_admin on public.annotation_colors
 for select to authenticated using (private.is_serene_admin());
 
+drop policy if exists vocabulary_entries_select_admin on public.vocabulary_entries;
+create policy vocabulary_entries_select_admin on public.vocabulary_entries
+for select to authenticated using (private.is_serene_admin());
+
 drop policy if exists timeline_events_select_admin on public.timeline_events;
 create policy timeline_events_select_admin on public.timeline_events
 for select to authenticated using (private.is_serene_admin());
@@ -1439,6 +1579,12 @@ with check (private.has_serene_beta_access());
 
 drop policy if exists annotation_colors_beta_access_required on public.annotation_colors;
 create policy annotation_colors_beta_access_required on public.annotation_colors
+as restrictive for all to authenticated
+using (private.has_serene_beta_access())
+with check (private.has_serene_beta_access());
+
+drop policy if exists vocabulary_entries_beta_access_required on public.vocabulary_entries;
+create policy vocabulary_entries_beta_access_required on public.vocabulary_entries
 as restrictive for all to authenticated
 using (private.has_serene_beta_access())
 with check (private.has_serene_beta_access());

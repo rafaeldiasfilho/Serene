@@ -22,6 +22,7 @@ Database choices must preserve comfort, safety, and clarity.
 - Trash behavior: deleted items are discoverable through soft-delete queries and optionally `trash_items`.
 - Mural data model: Mural stores visual position and suggestion state only; annotation content remains in `annotations`.
 - Reading time model: store real tracked time and estimated historical time separately.
+- Vocabulary entries are a light reading aid and must not replace annotations or become a full dictionary model.
 
 Recommended extension:
 
@@ -396,7 +397,26 @@ create table if not exists public.annotation_colors (
   updated_at timestamptz not null default now()
 );
 
--- 13) timeline_events
+-- 13) vocabulary_entries
+create table if not exists public.vocabulary_entries (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  book_id uuid references public.books(id) on delete set null,
+  reading_session_id uuid references public.reading_sessions(id) on delete set null,
+  word text not null,
+  definition text,
+  page_number int,
+  note text,
+  source text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint vocabulary_entries_word_not_blank
+    check (length(trim(word)) > 0),
+  constraint vocabulary_entries_page_number_check
+    check (page_number is null or page_number >= 0)
+);
+
+-- 14) timeline_events
 create table if not exists public.timeline_events (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
@@ -410,7 +430,7 @@ create table if not exists public.timeline_events (
   created_at timestamptz not null default now()
 );
 
--- 14) exports
+-- 15) exports
 create table if not exists public.exports (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
@@ -422,7 +442,7 @@ create table if not exists public.exports (
   created_at timestamptz not null default now()
 );
 
--- 15) user_settings
+-- 16) user_settings
 create table if not exists public.user_settings (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
@@ -434,7 +454,7 @@ create table if not exists public.user_settings (
     unique (user_id, key)
 );
 
--- 16) trash_items (optional helper table)
+-- 17) trash_items (optional helper table)
 create table if not exists public.trash_items (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.profiles(id) on delete cascade,
@@ -456,6 +476,7 @@ Recommended trigger checks for cross-table ownership on insert/update:
 - `book_automatic_mente_categories.user_id` must match both `books.user_id` and `automatic_mente_categories.user_id`.
 - `reading_sessions.user_id` must match `books.user_id`.
 - `annotations.user_id` must match `book_id` and `session_id` ownership when those fields are not null.
+- `vocabulary_entries.user_id` must match `book_id` and `reading_session_id` ownership when those fields are not null; if both are present, the session must belong to the same book.
 - `annotation_mural_positions.user_id` must match `annotations.user_id`.
 - `mural_suggestions.user_id` must match `reading_sessions.user_id`.
 
@@ -556,6 +577,11 @@ for each row execute function public.set_updated_at();
 drop trigger if exists trg_annotation_colors_updated_at on public.annotation_colors;
 create trigger trg_annotation_colors_updated_at
 before update on public.annotation_colors
+for each row execute function public.set_updated_at();
+
+drop trigger if exists trg_vocabulary_entries_updated_at on public.vocabulary_entries;
+create trigger trg_vocabulary_entries_updated_at
+before update on public.vocabulary_entries
 for each row execute function public.set_updated_at();
 
 drop trigger if exists trg_user_settings_updated_at on public.user_settings;
@@ -682,6 +708,18 @@ create index if not exists idx_annotation_mural_positions_session
 create index if not exists idx_mural_suggestions_session_status
   on public.mural_suggestions (session_id, status);
 
+create index if not exists idx_vocabulary_entries_user_created
+  on public.vocabulary_entries (user_id, created_at desc);
+
+create index if not exists idx_vocabulary_entries_book_created
+  on public.vocabulary_entries (book_id, created_at desc);
+
+create index if not exists idx_vocabulary_entries_session_created
+  on public.vocabulary_entries (reading_session_id, created_at desc);
+
+create index if not exists idx_vocabulary_entries_word
+  on public.vocabulary_entries (user_id, lower(word));
+
 create index if not exists idx_timeline_events_user_created
   on public.timeline_events (user_id, created_at desc);
 
@@ -712,6 +750,7 @@ alter table public.annotations enable row level security;
 alter table public.annotation_mural_positions enable row level security;
 alter table public.mural_suggestions enable row level security;
 alter table public.annotation_colors enable row level security;
+alter table public.vocabulary_entries enable row level security;
 alter table public.timeline_events enable row level security;
 alter table public.exports enable row level security;
 alter table public.user_settings enable row level security;
@@ -723,6 +762,7 @@ Recommended policy pattern:
 - `insert`: `with check (user_id = auth.uid())`.
 - `update`: owner-only.
 - `delete`: normally disallow for client role; use update for soft delete.
+- For `vocabulary_entries`, insert/update policies should also verify that optional `book_id` and `reading_session_id` belong to the same authenticated user and, when both are present, to each other.
 
 Example for a user-owned table:
 

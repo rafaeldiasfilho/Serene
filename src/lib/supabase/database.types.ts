@@ -551,6 +551,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      vocabulary_entries: {
+        Row: {
+          id: string;
+          user_id: string;
+          book_id: string | null;
+          reading_session_id: string | null;
+          word: string;
+          definition: string | null;
+          page_number: number | null;
+          note: string | null;
+          source: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          book_id?: string | null;
+          reading_session_id?: string | null;
+          word: string;
+          definition?: string | null;
+          page_number?: number | null;
+          note?: string | null;
+          source?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          book_id?: string | null;
+          reading_session_id?: string | null;
+          word?: string;
+          definition?: string | null;
+          page_number?: number | null;
+          note?: string | null;
+          source?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       automatic_mente_categories: {
         Row: {
           id: string;

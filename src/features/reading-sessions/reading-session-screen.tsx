@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
+  BookMarked,
   BookOpen,
   Camera,
   CheckCircle2,
@@ -44,10 +45,22 @@ import {
   useReadingSession,
 } from "@/features/reading-sessions/use-reading-session";
 import type { ReadingOpenedFrom } from "@/features/reading-sessions/reading-session-services";
+import { VocabularyDialog, type VocabularyDialogSubmitValue } from "@/features/vocabulary/vocabulary-dialog";
+import {
+  createVocabularyEntry,
+  listVocabularyEntriesForBook,
+  listVocabularyEntriesForSession,
+  type VocabularyEntryRow,
+} from "@/features/vocabulary/vocabulary-services";
 
 type SessionAnnotationSummary = {
   sessionId: string;
   annotations: AnnotationRow[];
+};
+
+type SessionVocabularySummary = {
+  sessionId: string;
+  entries: VocabularyEntryRow[];
 };
 
 type ReadingPresenceStatus = "active" | "paused";
@@ -88,6 +101,13 @@ function fallbackColors(): AnnotationColorOption[] {
     applies_to: null,
     is_default: index === 0,
   }));
+}
+
+function formatVocabularyDate(value: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+  }).format(new Date(value));
 }
 
 function ReadingPresenceIndicator({ status }: { status: ReadingPresenceStatus }) {
@@ -164,6 +184,7 @@ export function ReadingSessionScreen() {
   const [showFinishPrompt, setShowFinishPrompt] = useState(false);
   const [finishPageInput, setFinishPageInput] = useState("0");
   const [annotationModalOpen, setAnnotationModalOpen] = useState(false);
+  const [vocabularyDialogOpen, setVocabularyDialogOpen] = useState(false);
   const [captureDialogOpen, setCaptureDialogOpen] = useState(false);
   const [captureDraft, setCaptureDraft] = useState<CaptureReviewValue | null>(null);
   const [captureBooks, setCaptureBooks] = useState<CaptureBook[]>([]);
@@ -174,9 +195,13 @@ export function ReadingSessionScreen() {
   );
   const [sessionAnnotationSummary, setSessionAnnotationSummary] =
     useState<SessionAnnotationSummary | null>(null);
+  const [bookVocabularyEntries, setBookVocabularyEntries] = useState<VocabularyEntryRow[]>([]);
+  const [sessionVocabularySummary, setSessionVocabularySummary] =
+    useState<SessionVocabularySummary | null>(null);
   const [reviewLaterLoading, setReviewLaterLoading] = useState(false);
   const [reviewLaterFeedback, setReviewLaterFeedback] = useState<string | null>(null);
   const [annotationFeedback, setAnnotationFeedback] = useState<string | null>(null);
+  const [vocabularyFeedback, setVocabularyFeedback] = useState<string | null>(null);
   const autoStartAttemptRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -278,6 +303,31 @@ export function ReadingSessionScreen() {
   }, [user]);
 
   useEffect(() => {
+    if (!user || !book) {
+      return;
+    }
+
+    let isMounted = true;
+
+    void listVocabularyEntriesForBook(user.id, book.id).then(({ data, error }) => {
+      if (!isMounted) {
+        return;
+      }
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      setBookVocabularyEntries(data ?? []);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [book, setError, user]);
+
+  useEffect(() => {
     if (!user || !summary) {
       return;
     }
@@ -297,6 +347,34 @@ export function ReadingSessionScreen() {
       setSessionAnnotationSummary({
         sessionId: summary.sessionId,
         annotations: data ?? [],
+      });
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [setError, summary, user]);
+
+  useEffect(() => {
+    if (!user || !summary) {
+      return;
+    }
+
+    let isMounted = true;
+
+    void listVocabularyEntriesForSession(user.id, summary.sessionId).then(({ data, error }) => {
+      if (!isMounted) {
+        return;
+      }
+
+      if (error) {
+        setError(error.message);
+        return;
+      }
+
+      setSessionVocabularySummary({
+        sessionId: summary.sessionId,
+        entries: data ?? [],
       });
     });
 
@@ -334,6 +412,21 @@ export function ReadingSessionScreen() {
       : [];
   const summaryAnnotationsLoading = Boolean(
     summary && sessionAnnotationSummary?.sessionId !== summary.sessionId,
+  );
+  const sessionVocabularyEntries =
+    summary && sessionVocabularySummary?.sessionId === summary.sessionId
+      ? sessionVocabularySummary.entries
+      : [];
+  const summaryVocabularyLoading = Boolean(
+    summary && sessionVocabularySummary?.sessionId !== summary.sessionId,
+  );
+  const bookCompletedInSummary = Boolean(
+    summary &&
+      book &&
+      (book.status === "lido" ||
+        (book.total_pages !== null &&
+          summary.endPage !== null &&
+          summary.endPage >= book.total_pages)),
   );
 
   if (!envReady) {
@@ -526,6 +619,37 @@ export function ReadingSessionScreen() {
     return { ok: true, message: null };
   }
 
+  async function handleCreateVocabularyEntry(value: VocabularyDialogSubmitValue) {
+    if (!user || !book || !session || !isSessionOpen) {
+      return {
+        ok: false,
+        message: "Abra uma sessao ativa para guardar uma palavra deste livro.",
+      };
+    }
+
+    const result = await createVocabularyEntry({
+      user_id: user.id,
+      book_id: book.id,
+      reading_session_id: session.id,
+      word: value.word,
+      definition: value.definition,
+      page_number: currentPage,
+      note: value.note,
+      source: null,
+    });
+
+    if (result.error || !result.data) {
+      return {
+        ok: false,
+        message: result.error?.message ?? "Nao foi possivel guardar esta palavra.",
+      };
+    }
+
+    setBookVocabularyEntries((current) => [result.data, ...current]);
+    setVocabularyFeedback("Palavra guardada no vocabulario deste livro.");
+    return { ok: true, message: null };
+  }
+
   async function handleReviewLater() {
     if (!user || !summary) {
       return;
@@ -599,6 +723,18 @@ export function ReadingSessionScreen() {
             </button>
             <button
               type="button"
+              onClick={() => {
+                setVocabularyFeedback(null);
+                setVocabularyDialogOpen(true);
+              }}
+              disabled={!isSessionOpen || actionLoading || Boolean(summary)}
+              className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)] disabled:opacity-60"
+            >
+              <BookMarked className="size-4" />
+              {"Vocabul\u00e1rio"}
+            </button>
+            <button
+              type="button"
               onClick={handleOpenCapture}
               disabled={!isSessionOpen || actionLoading || Boolean(summary)}
               className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)] disabled:opacity-60"
@@ -660,6 +796,12 @@ export function ReadingSessionScreen() {
       {annotationFeedback && (
         <p className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-2 text-sm shadow-[var(--serene-shadow-soft)]">
           {annotationFeedback}
+        </p>
+      )}
+
+      {vocabularyFeedback && (
+        <p className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-2 text-sm shadow-[var(--serene-shadow-soft)]">
+          {vocabularyFeedback}
         </p>
       )}
 
@@ -729,6 +871,51 @@ export function ReadingSessionScreen() {
       </section>
       )}
 
+      {!summary && bookVocabularyEntries.length > 0 && (
+        <section className="rounded-[1.5rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)]">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--serene-muted)]">
+                {"Palavras consultadas neste livro"}
+              </p>
+              <h2 className="mt-1 text-base font-semibold">{"Vocabul\u00e1rio em forma\u00e7\u00e3o"}</h2>
+            </div>
+            <Link
+              href="/anotacoes?vocabulario=1"
+              className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-1.5 text-xs text-[var(--serene-muted)] transition hover:text-[var(--serene-fg)]"
+            >
+              Ver todas
+            </Link>
+          </div>
+
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {bookVocabularyEntries.slice(0, 6).map((entry) => (
+              <article
+                key={entry.id}
+                className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3 text-sm"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="font-semibold text-[var(--serene-fg)]">{entry.word}</h3>
+                  {entry.page_number !== null && (
+                    <span className="rounded-full border border-[var(--serene-border)] px-2 py-0.5 text-[11px] text-[var(--serene-muted)]">
+                      {`p. ${entry.page_number}`}
+                    </span>
+                  )}
+                </div>
+                {entry.definition && (
+                  <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-[var(--serene-muted)]">
+                    {entry.definition}
+                  </p>
+                )}
+                <p className="mt-2 text-[11px] text-[var(--serene-muted)]">
+                  {formatVocabularyDate(entry.created_at)}
+                </p>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
       {!summary && showFinishPrompt && (
         <section className="serene-soft-in rounded-[1.75rem] border border-[var(--serene-border)] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_94%,white_6%),var(--serene-surface))] p-5 shadow-[var(--serene-shadow-soft)] dark:bg-[linear-gradient(180deg,color-mix(in_oklab,var(--serene-surface)_92%,black_8%),var(--serene-surface))]">
           <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
@@ -781,6 +968,10 @@ export function ReadingSessionScreen() {
           bookTitle={book.title}
           annotations={sessionAnnotations}
           annotationsLoading={summaryAnnotationsLoading}
+          vocabularyEntries={sessionVocabularyEntries}
+          vocabularyLoading={summaryVocabularyLoading}
+          bookVocabularyEntries={bookVocabularyEntries}
+          bookCompleted={bookCompletedInSummary}
           reducedMotion={reducedMotionEnabled}
           reviewHref="/anotacoes"
           reviewLaterFeedback={reviewLaterFeedback}
@@ -821,6 +1012,15 @@ export function ReadingSessionScreen() {
             setCaptureDraft(null);
           }}
           onSubmit={handleCreateReadingAnnotation}
+        />
+      )}
+
+      {!summary && vocabularyDialogOpen && (
+        <VocabularyDialog
+          bookTitle={book.title}
+          currentPage={currentPage}
+          onClose={() => setVocabularyDialogOpen(false)}
+          onSubmit={handleCreateVocabularyEntry}
         />
       )}
 

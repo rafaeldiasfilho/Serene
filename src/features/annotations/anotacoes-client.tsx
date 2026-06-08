@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BookMarked,
   BookOpen,
   CheckCircle2,
   Plus,
@@ -20,6 +21,10 @@ import { primaryAnnotationTypeOptions } from "@/features/annotations/annotation-
 import { PostItStack } from "@/features/annotations/post-it-stack";
 import { useAnnotations } from "@/features/annotations/use-annotations";
 import type { AnnotationRow } from "@/features/annotations/annotation-services";
+import {
+  listVocabularyEntries,
+  type VocabularyEntryRow,
+} from "@/features/vocabulary/vocabulary-services";
 import type { AnnotationReviewStatus, AnnotationType } from "@/lib/supabase/database.types";
 
 type TypeFilter = "all" | AnnotationType | "other";
@@ -61,6 +66,21 @@ function getPostItColorLabel(color: string) {
   }
 
   return "Outros";
+}
+
+function formatVocabularyDate(value: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+  }).format(new Date(value));
+}
+
+function getVocabularyPreview(entry: VocabularyEntryRow) {
+  const definition = entry.definition?.trim();
+  if (!definition) {
+    return "Sem significado manual ainda.";
+  }
+  return definition.length > 110 ? `${definition.slice(0, 107)}...` : definition;
 }
 
 const primaryAnnotationTypeValues = new Set(
@@ -207,6 +227,10 @@ export function AnotacoesClient() {
   const [bookFilter, setBookFilter] = useState<BookFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [activeFolder, setActiveFolder] = useState<AnnotationFolder | null>(null);
+  const [vocabularyOpen, setVocabularyOpen] = useState(false);
+  const [vocabularyEntries, setVocabularyEntries] = useState<VocabularyEntryRow[]>([]);
+  const [vocabularyLoading, setVocabularyLoading] = useState(false);
+  const [vocabularyError, setVocabularyError] = useState<string | null>(null);
   const [postItColorFilter, setPostItColorFilter] = useState("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingAnnotation, setEditingAnnotation] = useState<AnnotationRow | null>(null);
@@ -298,6 +322,35 @@ export function AnotacoesClient() {
     typeFilter,
   ]);
 
+  const filteredVocabularyEntries = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    return vocabularyEntries.filter((entry) => {
+      if (bookFilter === "without_book" && entry.book_id !== null) {
+        return false;
+      }
+      if (bookFilter !== "all" && bookFilter !== "without_book" && entry.book_id !== bookFilter) {
+        return false;
+      }
+      if (!normalizedQuery) {
+        return true;
+      }
+
+      const bookTitle = entry.book_id ? booksById.get(entry.book_id)?.title ?? "" : "";
+      const searchable = [
+        entry.word,
+        entry.definition,
+        entry.note,
+        bookTitle,
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      return searchable.includes(normalizedQuery);
+    });
+  }, [bookFilter, booksById, query, vocabularyEntries]);
+
   const annotationViewItems = useMemo<AnnotationViewItem[]>(() => {
     const postItGroups = new Map<string, AnnotationRow[]>();
 
@@ -377,6 +430,52 @@ export function AnotacoesClient() {
       window.clearTimeout(timeoutId);
     };
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("vocabulario") !== "1") {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setActiveFolder(null);
+      setTypeFilter("all");
+      setPostItColorFilter("all");
+      setVocabularyOpen(true);
+      window.history.replaceState(null, "", "/anotacoes");
+    }, 0);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    let isMounted = true;
+    void listVocabularyEntries(user.id).then(({ data, error }) => {
+      if (!isMounted) {
+        return;
+      }
+
+      if (error) {
+        setVocabularyError(error.message);
+        setVocabularyEntries([]);
+      } else {
+        setVocabularyError(null);
+        setVocabularyEntries(data ?? []);
+      }
+
+      setVocabularyLoading(false);
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [user]);
 
   if (!envReady) {
     return (
@@ -484,9 +583,17 @@ export function AnotacoesClient() {
   }
 
   function openFolder(folder: AnnotationFolder) {
+    setVocabularyOpen(false);
     setActiveFolder(folder);
     setTypeFilter(folder);
     setPostItColorFilter("all");
+  }
+
+  function openVocabularyFolder() {
+    setActiveFolder(null);
+    setTypeFilter("all");
+    setPostItColorFilter("all");
+    setVocabularyOpen(true);
   }
 
   function openEditModal(annotation: AnnotationRow) {
@@ -549,6 +656,12 @@ export function AnotacoesClient() {
         </p>
       )}
 
+      {vocabularyError && (
+        <p className="serene-soft-in rounded-2xl border border-amber-300/70 bg-amber-50/90 px-4 py-3 text-sm text-amber-900 shadow-[var(--serene-shadow-soft)] dark:border-amber-500/30 dark:bg-amber-950/30 dark:text-amber-100">
+          {vocabularyError}
+        </p>
+      )}
+
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {annotationFolders.map((folder) => (
           <AnnotationFolderCard
@@ -560,6 +673,103 @@ export function AnotacoesClient() {
           />
         ))}
       </section>
+
+      <section
+        className={[
+          "serene-soft-in rounded-[1.5rem] border bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)]",
+          vocabularyOpen
+            ? "border-[var(--serene-accent)] ring-2 ring-[var(--serene-accent-soft)]"
+            : "border-[var(--serene-border)]",
+        ].join(" ")}
+      >
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-accent-soft)] text-[var(--serene-accent)]">
+              <BookMarked className="size-4" />
+            </span>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
+                Pasta secundaria
+              </p>
+              <h2 className="mt-1 text-base font-semibold">{"Vocabul\u00e1rio"}</h2>
+              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--serene-muted)]">
+                Palavras guardadas durante a leitura, organizadas por livro sem virar uma area principal.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-1.5 text-xs text-[var(--serene-muted)]">
+              {vocabularyEntries.length === 1 ? "1 palavra" : `${vocabularyEntries.length} palavras`}
+            </span>
+            <button
+              type="button"
+              onClick={openVocabularyFolder}
+              className="rounded-full bg-[var(--serene-accent)] px-3 py-1.5 text-xs font-semibold text-white shadow-[var(--serene-shadow-soft)]"
+            >
+              Abrir
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {vocabularyOpen && (
+      <section className="serene-soft-in rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)] sm:p-5">
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-semibold text-[var(--serene-text)]">
+              <Search className="size-4 text-[var(--serene-accent)]" />
+              Encontrar palavra
+            </div>
+            <p className="mt-1 text-xs leading-relaxed text-[var(--serene-muted)]">
+              Busque pelo termo, pelo significado escrito por voce ou pelo livro.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-xs text-[var(--serene-muted)]">
+              {filteredVocabularyEntries.length} de {vocabularyEntries.length} exibidas
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setVocabularyOpen(false);
+                setBookFilter("all");
+                setQuery("");
+              }}
+              className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-1.5 text-xs text-[var(--serene-muted)]"
+            >
+              Voltar para pastas
+            </button>
+          </div>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
+            Buscar
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="palavra, significado, livro..."
+              className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2.5 font-normal text-[var(--serene-text)] outline-none transition duration-300 placeholder:text-[var(--serene-muted)] focus:border-[var(--serene-accent)] focus:ring-2 focus:ring-[var(--serene-accent-soft)]"
+            />
+          </label>
+          <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
+            Livro
+            <select
+              value={bookFilter}
+              onChange={(event) => setBookFilter(event.target.value as BookFilter)}
+              className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-3 py-2.5 font-normal text-[var(--serene-text)] outline-none transition duration-300 focus:border-[var(--serene-accent)] focus:ring-2 focus:ring-[var(--serene-accent-soft)]"
+            >
+              <option value="all">Todos</option>
+              <option value="without_book">Sem livro</option>
+              {books.map((book) => (
+                <option key={book.id} value={book.id}>
+                  {book.title}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </section>
+      )}
 
       {activeFolder && (
       <section className="serene-soft-in rounded-[1.75rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)] sm:p-5">
@@ -727,6 +937,71 @@ export function AnotacoesClient() {
             <p className="text-sm text-[var(--serene-muted)]">Reunindo suas memórias de leitura...</p>
           </div>
         </section>
+      ) : vocabularyOpen ? (
+        vocabularyLoading ? (
+          <section className="serene-soft-in grid min-h-48 place-items-center rounded-[2rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] shadow-[var(--serene-shadow-soft)]">
+            <div className="flex flex-col items-center gap-3 text-center">
+              <BrainLoader />
+              <p className="text-sm text-[var(--serene-muted)]">Carregando vocabulario...</p>
+            </div>
+          </section>
+        ) : filteredVocabularyEntries.length === 0 ? (
+          <section className="serene-rise rounded-[2rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-7 shadow-[var(--serene-shadow-soft)]">
+            <span className="grid size-12 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-accent-soft)] text-[var(--serene-accent)]">
+              <BookMarked className="size-5" />
+            </span>
+            <h2 className="mt-4 text-xl font-semibold text-[var(--serene-text)]">
+              Nenhuma palavra neste filtro
+            </h2>
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-[var(--serene-muted)]">
+              Salve palavras pela tela de leitura. Elas aparecem aqui como um historico leve por livro.
+            </p>
+          </section>
+        ) : (
+          <section className="grid gap-3 md:grid-cols-2">
+            {filteredVocabularyEntries.map((entry) => {
+              const bookTitle = entry.book_id ? booksById.get(entry.book_id)?.title ?? null : null;
+
+              return (
+                <details
+                  key={entry.id}
+                  className="serene-card-enter rounded-[1.5rem] border border-[var(--serene-border)] bg-[var(--serene-surface)] p-4 shadow-[var(--serene-shadow-soft)]"
+                >
+                  <summary className="cursor-pointer">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="font-semibold text-[var(--serene-text)]">{entry.word}</h3>
+                      <span className="text-xs text-[var(--serene-muted)]">
+                        {formatVocabularyDate(entry.created_at)}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-[var(--serene-muted)]">
+                      {getVocabularyPreview(entry)}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2 text-xs text-[var(--serene-muted)]">
+                      {bookTitle && (
+                        <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-2.5 py-1">
+                          {bookTitle}
+                        </span>
+                      )}
+                      {entry.page_number !== null && (
+                        <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-2.5 py-1">
+                          {`p. ${entry.page_number}`}
+                        </span>
+                      )}
+                    </div>
+                  </summary>
+
+                  {(entry.definition || entry.note) && (
+                    <div className="mt-4 space-y-2 border-t border-[var(--serene-border)] pt-3 text-sm leading-relaxed text-[var(--serene-muted)]">
+                      {entry.definition && <p>{entry.definition}</p>}
+                      {entry.note && <p>{entry.note}</p>}
+                    </div>
+                  )}
+                </details>
+              );
+            })}
+          </section>
+        )
       ) : !activeFolder ? (
         <section className="serene-rise rounded-[2rem] border border-dashed border-[var(--serene-border)] bg-[var(--serene-surface)] p-7 shadow-[var(--serene-shadow-soft)]">
           <span className="grid size-12 place-items-center rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-accent-soft)] text-[var(--serene-accent)]">

@@ -63,6 +63,10 @@ Phase 15D adds Biblioteca shelves:
 
 - `supabase/fixes/011_biblioteca_shelves.sql`
 
+Phase 17 adds reading vocabulary:
+
+- `supabase/fixes/012_vocabulary_entries.sql`
+
 Private beta users must use individual Supabase Auth accounts. Do not use one shared demo account for testers. To enable a beta user, create their Auth user, then mark their profile:
 
 ```sql
@@ -84,7 +88,7 @@ where email = 'admin@example.com';
 
 ## Project status
 
-SERENE is implemented through Phase 16 - Reorganizacao simples da experiencia SERENE.
+SERENE is implemented through Phase 17 - Vocabulario da Leitura e resumo de palavras do livro.
 
 Current quality gates:
 
@@ -199,6 +203,20 @@ Phase 16 reorganizes the experience so SERENE feels calmer and more self-organiz
 - Premium must not block the SERENE essence: reading, unlimited annotations, organized export, Mente, history, shelves/categories, and essential personalization remain core.
 
 No authentication, reading/session logic, annotation CRUD logic, beta access rules, RLS, or destructive deletion behavior changed in Phase 15D, Phase 15E, Phase 15F, Phase 15G, or Phase 16.
+
+## Phase 17 notes
+
+Phase 17 adds a light reading vocabulary aid without making SERENE a dictionary app:
+
+- Reading has a secondary `Vocabulario` tool for saving a word during an active session.
+- Automatic dictionary lookup is intentionally marked as future work; users may save the word and write a manual meaning or note.
+- `public.vocabulary_entries` stores words by user, book, optional reading session, page, date, optional definition, optional note, and optional future source.
+- The reading screen shows a small `Palavras consultadas neste livro` history after words exist for that book.
+- Anotacoes includes a secondary `Vocabulario` folder with search and book filtering.
+- Session summaries show `Palavras consultadas nesta leitura` when the session has saved words.
+- When a finished session completes the book, the summary shows `Vocabulario deste livro`.
+
+No primary navigation item, flashcards, quiz, translator, or invented definitions were added.
 
 ## Phase 13 notes
 

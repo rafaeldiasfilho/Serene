@@ -10,6 +10,7 @@ import {
 } from "@/features/annotations/annotation-definitions";
 import type { AnnotationRow } from "@/features/annotations/annotation-services";
 import { formatReadingDuration } from "@/features/reading-sessions/use-reading-session";
+import type { VocabularyEntryRow } from "@/features/vocabulary/vocabulary-services";
 import type { AnnotationType } from "@/lib/supabase/database.types";
 
 type SessionEndSummary = {
@@ -26,6 +27,10 @@ type SessionEndRitualProps = {
   bookTitle: string;
   annotations: AnnotationRow[];
   annotationsLoading: boolean;
+  vocabularyEntries: VocabularyEntryRow[];
+  vocabularyLoading: boolean;
+  bookVocabularyEntries: VocabularyEntryRow[];
+  bookCompleted: boolean;
   reducedMotion: boolean;
   reviewHref: string;
   reviewLaterFeedback: string | null;
@@ -102,6 +107,28 @@ function getNoteLabel(annotation: AnnotationRow) {
   return content.length > 46 ? `${content.slice(0, 43)}...` : content;
 }
 
+function getShortDefinition(entry: VocabularyEntryRow) {
+  const definition = entry.definition?.trim();
+  if (!definition) {
+    return null;
+  }
+  return definition.length > 90 ? `${definition.slice(0, 87)}...` : definition;
+}
+
+function formatVocabularyMeta(entry: VocabularyEntryRow) {
+  const parts: string[] = [];
+  if (entry.page_number !== null) {
+    parts.push(`p. ${entry.page_number}`);
+  }
+  parts.push(
+    new Intl.DateTimeFormat("pt-BR", {
+      day: "2-digit",
+      month: "short",
+    }).format(new Date(entry.created_at)),
+  );
+  return parts.join(" - ");
+}
+
 function getRitualNoteClass(type: AnnotationType) {
   if (type === "post_it") {
     return "session-ritual-note-post-it";
@@ -153,15 +180,144 @@ function getReadingTimePhrase(activeSeconds: number, bookTitle: string) {
   return "Mais um peda\u00e7o da sua leitura foi guardado.";
 }
 
+function SessionVocabularyPanel({
+  entries,
+  loading,
+}: {
+  entries: VocabularyEntryRow[];
+  loading: boolean;
+}) {
+  if (loading) {
+    return (
+      <section className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 shadow-[var(--serene-shadow-soft)]">
+        <p className="text-sm text-[var(--serene-muted)]">
+          {"Organizando palavras consultadas nesta leitura..."}
+        </p>
+      </section>
+    );
+  }
+
+  if (entries.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 shadow-[var(--serene-shadow-soft)]">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h3 className="text-base font-semibold">{"Palavras consultadas nesta leitura"}</h3>
+          <p className="mt-1 text-sm text-[var(--serene-muted)]">
+            {entries.length} {pluralize(entries.length, "palavra", "palavras")} {"guardada"}
+            {entries.length === 1 ? "" : "s"}.
+          </p>
+        </div>
+        <Link
+          href="/anotacoes?vocabulario=1"
+          className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-1.5 text-xs text-[var(--serene-muted)] transition hover:text-[var(--serene-fg)]"
+        >
+          Ver todas
+        </Link>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        {entries.slice(0, 5).map((entry) => (
+          <span
+            key={entry.id}
+            className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-1.5 text-sm shadow-[var(--serene-shadow-soft)]"
+          >
+            {entry.word}
+          </span>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BookVocabularyPanel({
+  entries,
+}: {
+  entries: VocabularyEntryRow[];
+}) {
+  if (entries.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 shadow-[var(--serene-shadow-soft)]">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
+            {"Palavras que este livro te apresentou"}
+          </p>
+          <h3 className="mt-1 text-base font-semibold">{"Vocabul\u00e1rio deste livro"}</h3>
+          <p className="mt-1 text-sm text-[var(--serene-muted)]">
+            {entries.length} {pluralize(entries.length, "palavra", "palavras")} {"salva"}
+            {entries.length === 1 ? "" : "s"} {"ao longo da leitura."}
+          </p>
+        </div>
+        <Link
+          href="/anotacoes?vocabulario=1"
+          className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-1.5 text-xs text-[var(--serene-muted)] transition hover:text-[var(--serene-fg)]"
+        >
+          {"Abrir hist\u00f3rico"}
+        </Link>
+      </div>
+
+      <div className="mt-4 grid max-h-80 gap-2 overflow-y-auto pr-1">
+        {entries.map((entry) => {
+          const shortDefinition = getShortDefinition(entry);
+          const hasDetails = Boolean(entry.definition || entry.note);
+
+          return (
+            <details
+              key={entry.id}
+              className="rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] p-3 text-sm"
+            >
+              <summary className="cursor-pointer">
+                <span className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-semibold text-[var(--serene-fg)]">{entry.word}</span>
+                  <span className="text-xs text-[var(--serene-muted)]">
+                    {formatVocabularyMeta(entry)}
+                  </span>
+                </span>
+                {shortDefinition && (
+                  <span className="mt-2 block text-xs leading-relaxed text-[var(--serene-muted)]">
+                    {shortDefinition}
+                  </span>
+                )}
+                {!hasDetails && (
+                  <span className="mt-2 block text-xs text-[var(--serene-muted)]">
+                    {"Sem significado manual ainda."}
+                  </span>
+                )}
+              </summary>
+              {hasDetails && (
+                <div className="mt-3 space-y-2 border-t border-[var(--serene-border)] pt-3 text-xs leading-relaxed text-[var(--serene-muted)]">
+                  {entry.definition && <p>{entry.definition}</p>}
+                  {entry.note && <p>{entry.note}</p>}
+                </div>
+              )}
+            </details>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function SummaryPanel({
   annotations,
   annotationsLoading,
+  bookCompleted,
   bookTitle,
+  bookVocabularyEntries,
   onReviewLater,
   reviewHref,
   reviewLaterFeedback,
   reviewLaterLoading,
   summary,
+  vocabularyEntries,
+  vocabularyLoading,
 }: Omit<SessionEndRitualProps, "reducedMotion">) {
   const typeCounts = useMemo(() => buildTypeCounts(annotations), [annotations]);
   const favoriteCount = useMemo(
@@ -290,6 +446,10 @@ function SummaryPanel({
           )}
         </div>
       </section>
+
+      <SessionVocabularyPanel entries={vocabularyEntries} loading={vocabularyLoading} />
+
+      {bookCompleted && <BookVocabularyPanel entries={bookVocabularyEntries} />}
 
       {reviewLaterFeedback && (
         <p className="rounded-xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 text-sm shadow-[var(--serene-shadow-soft)]">
