@@ -682,6 +682,7 @@ function MenteDashboard({
           <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--serene-muted)]">
             Clique em uma area do cerebro para ver livros, anotacoes e tempo dedicado. A tela
             inicial fica contemplativa; os detalhes aparecem quando voce escolhe uma area.
+            Seu tempo dedicado a leitura inclui sessoes registradas e estimativas confirmadas.
           </p>
         </div>
         <div className="hidden">

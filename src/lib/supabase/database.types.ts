@@ -4,6 +4,12 @@ export type ProfileRole = "reader" | "admin";
 export type ProfileAccessStatus = "pending" | "active" | "paused" | "suspended";
 export type BookStatus = "quero_ler" | "lendo" | "pausado" | "lido";
 export type ReadingOrigin = "historico" | "serene";
+export type ReadingEstimateSource =
+  | "user_book_pace"
+  | "user_global_pace"
+  | "audiobook_duration"
+  | "default_average"
+  | "manual_adjustment";
 export type ReadingSessionStatus = "active" | "paused" | "finished" | "cancelled";
 export type AnnotationType =
   | "quick_note"
@@ -121,6 +127,11 @@ export type Database = {
           estimated_reading_seconds: number | null;
           estimated_reading_source: string | null;
           estimated_reading_confidence: string | null;
+          audiobook_duration_minutes: number | null;
+          audiobook_source: string | null;
+          audiobook_is_confirmed: boolean;
+          estimated_minutes_per_page: number | null;
+          estimation_source: ReadingEstimateSource | null;
           read_before_serene: boolean;
           completed_inside_serene: boolean;
           deleted_at: string | null;
@@ -151,6 +162,11 @@ export type Database = {
           estimated_reading_seconds?: number | null;
           estimated_reading_source?: string | null;
           estimated_reading_confidence?: string | null;
+          audiobook_duration_minutes?: number | null;
+          audiobook_source?: string | null;
+          audiobook_is_confirmed?: boolean;
+          estimated_minutes_per_page?: number | null;
+          estimation_source?: ReadingEstimateSource | null;
           read_before_serene?: boolean;
           completed_inside_serene?: boolean;
           deleted_at?: string | null;
@@ -179,6 +195,11 @@ export type Database = {
           estimated_reading_seconds?: number | null;
           estimated_reading_source?: string | null;
           estimated_reading_confidence?: string | null;
+          audiobook_duration_minutes?: number | null;
+          audiobook_source?: string | null;
+          audiobook_is_confirmed?: boolean;
+          estimated_minutes_per_page?: number | null;
+          estimation_source?: ReadingEstimateSource | null;
           read_before_serene?: boolean;
           completed_inside_serene?: boolean;
           deleted_at?: string | null;
@@ -360,6 +381,47 @@ export type Database = {
           paused_at?: string;
           resumed_at?: string | null;
           duration_seconds?: number;
+        };
+        Relationships: [];
+      };
+      reading_progress_entries: {
+        Row: {
+          id: string;
+          user_id: string;
+          book_id: string;
+          reading_session_id: string | null;
+          from_page: number | null;
+          to_page: number;
+          pages_read: number;
+          estimated_minutes: number | null;
+          estimation_source: ReadingEstimateSource | null;
+          is_estimated: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          book_id: string;
+          reading_session_id?: string | null;
+          from_page?: number | null;
+          to_page: number;
+          pages_read: number;
+          estimated_minutes?: number | null;
+          estimation_source?: ReadingEstimateSource | null;
+          is_estimated?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          reading_session_id?: string | null;
+          from_page?: number | null;
+          to_page?: number;
+          pages_read?: number;
+          estimated_minutes?: number | null;
+          estimation_source?: ReadingEstimateSource | null;
+          is_estimated?: boolean;
+          updated_at?: string;
         };
         Relationships: [];
       };

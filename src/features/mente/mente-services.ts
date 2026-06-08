@@ -3,6 +3,8 @@ import type { Database } from "@/lib/supabase/database.types";
 
 export type MenteBookRow = Database["public"]["Tables"]["books"]["Row"];
 export type MenteSessionRow = Database["public"]["Tables"]["reading_sessions"]["Row"];
+export type MenteReadingProgressEntryRow =
+  Database["public"]["Tables"]["reading_progress_entries"]["Row"];
 export type MenteAnnotationRow = Database["public"]["Tables"]["annotations"]["Row"];
 export type MenteTimelineEventRow = Database["public"]["Tables"]["timeline_events"]["Row"];
 export type MenteAutomaticCategoryRow =
@@ -17,6 +19,7 @@ export type MenteManualCategoryRow =
 export type MenteSourceData = {
   books: MenteBookRow[];
   sessions: MenteSessionRow[];
+  readingProgressEntries: MenteReadingProgressEntryRow[];
   annotations: MenteAnnotationRow[];
   timelineEvents: MenteTimelineEventRow[];
   automaticCategories: MenteAutomaticCategoryRow[];
@@ -47,6 +50,7 @@ export async function loadMenteSourceData(userId: string): Promise<ServiceResult
   const [
     booksResult,
     sessionsResult,
+    readingProgressEntriesResult,
     annotationsResult,
     timelineEventsResult,
     automaticCategoriesResult,
@@ -68,6 +72,12 @@ export async function loadMenteSourceData(userId: string): Promise<ServiceResult
       .eq("user_id", userId)
       .is("deleted_at", null)
       .order("started_at", { ascending: false }),
+    supabase
+      .from("reading_progress_entries")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("is_estimated", true)
+      .order("created_at", { ascending: false }),
     supabase
       .from("annotations")
       .select("*")
@@ -99,6 +109,7 @@ export async function loadMenteSourceData(userId: string): Promise<ServiceResult
   const firstError =
     booksResult.error ??
     sessionsResult.error ??
+    readingProgressEntriesResult.error ??
     annotationsResult.error ??
     timelineEventsResult.error ??
     automaticCategoriesResult.error ??
@@ -114,6 +125,7 @@ export async function loadMenteSourceData(userId: string): Promise<ServiceResult
     data: {
       books: booksResult.data ?? [],
       sessions: sessionsResult.data ?? [],
+      readingProgressEntries: readingProgressEntriesResult.data ?? [],
       annotations: annotationsResult.data ?? [],
       timelineEvents: timelineEventsResult.data ?? [],
       automaticCategories: automaticCategoriesResult.data ?? [],

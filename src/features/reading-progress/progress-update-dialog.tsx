@@ -10,6 +10,7 @@ import {
   type ProgressBook,
   type ProgressContext,
 } from "@/features/reading-progress/reading-progress-services";
+import type { ReadingEstimateSource } from "@/lib/supabase/database.types";
 
 type ProgressUpdateDialogProps = {
   userId: string;
@@ -36,6 +37,30 @@ function formatDuration(seconds: number) {
 function parsePage(value: string) {
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+function estimateSourceLabel(source: ReadingEstimateSource) {
+  const labels: Record<ReadingEstimateSource, string> = {
+    user_book_pace: "seu ritmo medio neste livro",
+    user_global_pace: "seu ritmo medio geral",
+    audiobook_duration: "duracao do audiobook deste livro",
+    default_average: "media provisoria",
+    manual_adjustment: "ajuste manual",
+  };
+
+  return labels[source];
+}
+
+function estimateSourceHint(source: ReadingEstimateSource) {
+  const hints: Record<ReadingEstimateSource, string> = {
+    user_book_pace: "Base: seu ritmo medio neste livro.",
+    user_global_pace: "Base: seu ritmo medio geral.",
+    audiobook_duration: "Base: duracao do audiobook deste livro.",
+    default_average: "Base: media provisoria.",
+    manual_adjustment: "Base: ajuste manual.",
+  };
+
+  return hints[source];
 }
 
 export function ProgressUpdateDialog({
@@ -74,12 +99,13 @@ export function ProgressUpdateDialog({
   }, [book, userId]);
 
   const page = parsePage(pageInput);
-  const secondsPerPage = context?.personalSecondsPerPage ?? FALLBACK_SECONDS_PER_PAGE;
-  const estimationSource = context?.personalSecondsPerPage
-    ? "personal_average"
-    : "initial_average";
+  const secondsPerPage = context?.recommendedSecondsPerPage ?? FALLBACK_SECONDS_PER_PAGE;
+  const estimationSource = context?.recommendedSource ?? "default_average";
   const pagesAdvanced = page !== null ? Math.max(page - book.current_page, 0) : 0;
   const estimatedSeconds = Math.round(pagesAdvanced * secondsPerPage);
+  const outsideEstimatedAfter = (context?.outsideEstimatedSeconds ?? 0) + estimatedSeconds;
+  const hasEstimatedTime =
+    outsideEstimatedAfter > 0 || (context?.historicalEstimatedSeconds ?? 0) > 0;
   const totalAfter = useMemo(() => {
     const base =
       (context?.realSeconds ?? 0) +
@@ -197,7 +223,7 @@ export function ProgressUpdateDialog({
                 Tempo estimado fora do app
               </p>
               <p className="mt-1 font-semibold">
-                {formatDuration((context?.outsideEstimatedSeconds ?? 0) + estimatedSeconds)}
+                aprox. {formatDuration(outsideEstimatedAfter)}
               </p>
             </div>
             <div className="rounded-2xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface-soft)_72%,transparent)] p-3">
@@ -205,7 +231,10 @@ export function ProgressUpdateDialog({
               <p className="mt-2 text-xs text-[var(--serene-muted)]">
                 Tempo total dedicado ao livro
               </p>
-              <p className="mt-1 font-semibold">{formatDuration(totalAfter)}</p>
+              <p className="mt-1 font-semibold">
+                {hasEstimatedTime ? "aprox. " : ""}
+                {formatDuration(totalAfter)}
+              </p>
             </div>
           </div>
 
@@ -215,10 +244,11 @@ export function ProgressUpdateDialog({
             ) : pagesAdvanced > 0 ? (
               <>
                 Voce avancou {pagesAdvanced} pagina{pagesAdvanced === 1 ? "" : "s"}. O tempo
-                estimado e de aproximadamente {formatDuration(estimatedSeconds)} usando{" "}
-                {context?.personalSecondsPerPage
-                  ? "sua media real de leitura."
-                  : "uma media inicial simples, que melhora com o uso."}
+                estimado e de aproximadamente {formatDuration(estimatedSeconds)}.{" "}
+                {estimateSourceHint(estimationSource)}
+                {estimationSource === "default_average"
+                  ? " Ela melhora quando voce registra sessoes reais ou informa uma duracao de audiobook."
+                  : ""}
               </>
             ) : page !== null && page < book.current_page ? (
               <span className="inline-flex gap-2">
@@ -226,9 +256,18 @@ export function ProgressUpdateDialog({
                 Esta acao corrige a pagina marcada e nao cria tempo estimado novo.
               </span>
             ) : (
-              "Informe uma pagina maior para registrar novo tempo estimado fora do app."
+              <>
+                Informe uma pagina maior para registrar novo tempo estimado fora do app.{" "}
+                {estimateSourceHint(estimationSource)}
+              </>
             )}
           </div>
+          {!loadingContext && (
+            <p className="px-1 text-xs leading-relaxed text-[var(--serene-muted)]">
+              A base atual e {estimateSourceLabel(estimationSource)}. Tempo estimado fica separado
+              das sessoes reais registradas no SERENE.
+            </p>
+          )}
         </div>
 
         {feedback && (

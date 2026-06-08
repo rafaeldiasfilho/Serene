@@ -38,6 +38,9 @@ type BookFormState = {
   publication_year: string;
   total_pages: string;
   current_page: string;
+  audiobook_duration_minutes: string;
+  audiobook_source: string;
+  audiobook_is_confirmed: boolean;
   status: BookStatus;
   reading_origin: ReadingOrigin;
   read_before_serene: boolean;
@@ -120,6 +123,9 @@ function createInitialState(book: BookWithCategories | null): BookFormState {
     publication_year: book?.publication_year?.toString() ?? "",
     total_pages: book?.total_pages?.toString() ?? "",
     current_page: book?.current_page?.toString() ?? "0",
+    audiobook_duration_minutes: book?.audiobook_duration_minutes?.toString() ?? "",
+    audiobook_source: book?.audiobook_source ?? "",
+    audiobook_is_confirmed: book?.audiobook_is_confirmed ?? false,
     status: book?.status ?? "quero_ler",
     reading_origin: book?.reading_origin ?? "serene",
     read_before_serene: book?.read_before_serene ?? false,
@@ -157,6 +163,13 @@ export function BookForm({ book, categories, saving, onCancel, onSubmit }: BookF
   const normalizedPayload = useMemo<Omit<BookInsert, "user_id">>(() => {
     const status = form.status;
     const readingOrigin = form.reading_origin;
+    const totalPages = optionalNumber(form.total_pages);
+    const audiobookDurationMinutes = optionalNumber(form.audiobook_duration_minutes);
+    const hasAudiobookBase =
+      audiobookDurationMinutes !== null &&
+      audiobookDurationMinutes > 0 &&
+      totalPages !== null &&
+      totalPages > 0;
 
     return {
       title: form.title.trim(),
@@ -166,7 +179,7 @@ export function BookForm({ book, categories, saving, onCancel, onSubmit }: BookF
       publisher: optionalText(form.publisher),
       edition: optionalText(form.edition),
       publication_year: optionalNumber(form.publication_year),
-      total_pages: optionalNumber(form.total_pages),
+      total_pages: totalPages,
       current_page: optionalNumber(form.current_page) ?? 0,
       status,
       source: "manual",
@@ -177,11 +190,18 @@ export function BookForm({ book, categories, saving, onCancel, onSubmit }: BookF
       show_in_notifications: form.show_in_notifications,
       show_in_mente: form.show_in_mente,
       include_in_quick_exports: form.include_in_quick_exports,
+      audiobook_duration_minutes: audiobookDurationMinutes,
+      audiobook_source: optionalText(form.audiobook_source),
+      audiobook_is_confirmed: form.audiobook_is_confirmed,
+      estimated_minutes_per_page: hasAudiobookBase
+        ? Number((audiobookDurationMinutes / totalPages).toFixed(2))
+        : (book?.estimated_minutes_per_page ?? null),
+      estimation_source: hasAudiobookBase ? "audiobook_duration" : (book?.estimation_source ?? null),
       read_before_serene: readingOrigin === "historico" ? true : form.read_before_serene,
       completed_inside_serene:
         readingOrigin === "serene" && status === "lido" ? true : form.completed_inside_serene,
     };
-  }, [form]);
+  }, [book?.estimated_minutes_per_page, book?.estimation_source, form]);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -197,6 +217,15 @@ export function BookForm({ book, categories, saving, onCancel, onSubmit }: BookF
 
     if (totalPages > 0 && currentPage > totalPages) {
       setError("A página atual não pode ser maior que o total de páginas.");
+      return;
+    }
+
+    if (
+      normalizedPayload.audiobook_duration_minutes !== null &&
+      normalizedPayload.audiobook_duration_minutes !== undefined &&
+      normalizedPayload.audiobook_duration_minutes <= 0
+    ) {
+      setError("A duracao do audiobook deve ser informada em minutos positivos.");
       return;
     }
 
@@ -392,6 +421,49 @@ export function BookForm({ book, categories, saving, onCancel, onSubmit }: BookF
               ))}
             </select>
           </label>
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-dashed border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_78%,transparent)] p-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
+              Audiobook completo (minutos)
+              <input
+                type="number"
+                min="1"
+                className={fieldClass}
+                value={form.audiobook_duration_minutes}
+                onChange={(event) =>
+                  updateField("audiobook_duration_minutes", event.target.value)
+                }
+                placeholder="Ex.: 500"
+              />
+              <FieldHint>Opcional. Use apenas se voce tiver uma duracao confiavel.</FieldHint>
+            </label>
+            <label className="grid gap-1.5 text-sm font-semibold text-[var(--serene-text)]">
+              Fonte da duracao
+              <input
+                className={fieldClass}
+                value={form.audiobook_source}
+                onChange={(event) => updateField("audiobook_source", event.target.value)}
+                placeholder="Ex.: Audible, livro informado, editora"
+              />
+            </label>
+          </div>
+          <label className="mt-3 flex items-start gap-3 text-sm">
+            <input
+              className={checkboxClass}
+              type="checkbox"
+              checked={form.audiobook_is_confirmed}
+              onChange={(event) => updateField("audiobook_is_confirmed", event.target.checked)}
+            />
+            <ChoiceText title="Duracao confirmada">
+              Marca que voce conferiu se a duracao corresponde ao audiobook completo.
+            </ChoiceText>
+          </label>
+          <p className="mt-3 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 text-xs leading-relaxed text-[var(--serene-muted)]">
+            A busca automatica da duracao do audiobook ainda esta em preparacao. Voce pode informar
+            manualmente a duracao estimada se quiser.
+          </p>
         </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-3">

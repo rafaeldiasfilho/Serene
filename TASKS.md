@@ -743,3 +743,53 @@ Validation:
 - [x] `npm run typecheck` passes.
 - [x] `npm run lint` passes.
 - [x] `npm run build` passes.
+
+## Phase 18 - Calculo Inteligente de Tempo de Leitura por Audiobook
+
+Goal:
+- [x] Estimate reading done outside the app more intelligently while keeping real and estimated time clearly separated.
+- [x] Use audiobook duration as an initial base when available, but prioritize the user's real reading pace when there is enough data.
+- [x] Keep the experience calm and transparent, without making SERENE feel like a technical calculator.
+
+A. Data and safety:
+- [x] Add optional audiobook fields to `books`: duration in minutes, source, confirmation flag, estimated minutes per page, and estimation source.
+- [x] Add `public.reading_progress_entries` for user-owned outside-app progress estimates.
+- [x] Store book, optional reading session, from/to page, pages read, estimated minutes, source, and timestamps.
+- [x] Add useful indexes for user history, book history, session link, and estimation source.
+- [x] Enable RLS and owner-only select/insert/update policies with book/session ownership checks.
+- [x] Preserve existing `timeline_events` compatibility while avoiding double-counted estimates through `progress_entry_id`.
+
+B. Estimate priority:
+- [x] First use the user's real pace in the same book when real sessions have page deltas.
+- [x] Then use the user's real global pace across books.
+- [x] Then use audiobook duration divided by total pages.
+- [x] Then use a provisional default average.
+- [x] Save the active `estimation_source` when outside-app progress is confirmed.
+
+C. Product flow:
+- [x] Add manual audiobook duration/source/confirmation fields to the book form.
+- [x] Show that automatic audiobook duration lookup is still in preparation and never invent a duration.
+- [x] Update `Atualizar pagina` to show pages advanced, approximate estimated time, and the source of the estimate.
+- [x] Treat lower page input as progress correction and avoid creating negative/estimated reading time.
+- [x] Keep real SERENE time, estimated outside-app time, historical estimated time, and approximate total separated in copy.
+- [x] Show a discreet time/base summary on book cards when relevant.
+- [x] Let Mente include confirmed outside-app estimates without exposing calculation details on the initial screen.
+
+Future:
+- [ ] Real automatic audiobook duration lookup through a reliable API/source.
+- [ ] Confirm whether an audiobook is complete or abridged.
+- [ ] Compare audiobook duration across editions.
+- [ ] Advanced automatic adjustment by personal reading pace.
+- [ ] Estimate by chapter.
+- [ ] Estimate by book difficulty.
+- [ ] Sync estimates with ISBN/edition metadata.
+
+Validation:
+- [ ] Manual flow: add audiobook duration to a book, update page outside the app, confirm estimate source, and verify separated time totals.
+- [ ] Manual correction flow: lower current page and confirm no new estimated time is created.
+- [ ] Manual Mente flow: verify initial copy stays simple and selected areas include estimated outside-app time.
+- [ ] Apply `supabase/fixes/013_audiobook_reading_progress.sql` in the target Supabase project before browser QA.
+- [x] `git diff --check` passes.
+- [x] `npm run typecheck` passes.
+- [x] `npm run lint` passes.
+- [x] `npm run build` passes.

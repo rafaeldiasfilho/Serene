@@ -143,6 +143,11 @@ create table if not exists public.books (
   estimated_reading_seconds int,
   estimated_reading_source text,
   estimated_reading_confidence text,
+  audiobook_duration_minutes int,
+  audiobook_source text,
+  audiobook_is_confirmed boolean not null default false,
+  estimated_minutes_per_page numeric,
+  estimation_source text,
   read_before_serene boolean not null default false,
   completed_inside_serene boolean not null default false,
   deleted_at timestamptz,
@@ -161,7 +166,22 @@ create table if not exists public.books (
   constraint books_publication_year_check
     check (publication_year is null or publication_year > 0),
   constraint books_estimated_reading_seconds_check
-    check (estimated_reading_seconds is null or estimated_reading_seconds >= 0)
+    check (estimated_reading_seconds is null or estimated_reading_seconds >= 0),
+  constraint books_audiobook_duration_minutes_check
+    check (audiobook_duration_minutes is null or audiobook_duration_minutes > 0),
+  constraint books_estimated_minutes_per_page_check
+    check (estimated_minutes_per_page is null or estimated_minutes_per_page > 0),
+  constraint books_estimation_source_check
+    check (
+      estimation_source is null
+      or estimation_source in (
+        'user_book_pace',
+        'user_global_pace',
+        'audiobook_duration',
+        'default_average',
+        'manual_adjustment'
+      )
+    )
 );
 
 -- 3) manual_categories
@@ -285,6 +305,42 @@ create table if not exists public.reading_pauses (
     check (duration_seconds >= 0),
   constraint reading_pauses_resumed_after_paused_check
     check (resumed_at is null or resumed_at >= paused_at)
+);
+
+-- reading_progress_entries
+create table if not exists public.reading_progress_entries (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references public.profiles(id) on delete cascade,
+  book_id uuid not null references public.books(id) on delete cascade,
+  reading_session_id uuid references public.reading_sessions(id) on delete set null,
+  from_page int,
+  to_page int not null,
+  pages_read int not null,
+  estimated_minutes int,
+  estimation_source text,
+  is_estimated boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  constraint reading_progress_entries_pages_check
+    check (
+      (from_page is null or from_page >= 0)
+      and to_page >= 0
+      and pages_read >= 0
+      and (from_page is null or to_page >= from_page)
+    ),
+  constraint reading_progress_entries_estimated_minutes_check
+    check (estimated_minutes is null or estimated_minutes >= 0),
+  constraint reading_progress_entries_estimation_source_check
+    check (
+      estimation_source is null
+      or estimation_source in (
+        'user_book_pace',
+        'user_global_pace',
+        'audiobook_duration',
+        'default_average',
+        'manual_adjustment'
+      )
+    )
 );
 
 -- 9) annotations
@@ -475,6 +531,7 @@ Recommended trigger checks for cross-table ownership on insert/update:
 - `book_shelves.user_id` must match both `books.user_id` and `shelves.user_id`.
 - `book_automatic_mente_categories.user_id` must match both `books.user_id` and `automatic_mente_categories.user_id`.
 - `reading_sessions.user_id` must match `books.user_id`.
+- `reading_progress_entries.user_id` must match `books.user_id`; when `reading_session_id` is present, it must match the same user and book.
 - `annotations.user_id` must match `book_id` and `session_id` ownership when those fields are not null.
 - `vocabulary_entries.user_id` must match `book_id` and `reading_session_id` ownership when those fields are not null; if both are present, the session must belong to the same book.
 - `annotation_mural_positions.user_id` must match `annotations.user_id`.
@@ -557,6 +614,11 @@ for each row execute function public.set_updated_at();
 drop trigger if exists trg_reading_sessions_updated_at on public.reading_sessions;
 create trigger trg_reading_sessions_updated_at
 before update on public.reading_sessions
+for each row execute function public.set_updated_at();
+
+drop trigger if exists trg_reading_progress_entries_updated_at on public.reading_progress_entries;
+create trigger trg_reading_progress_entries_updated_at
+before update on public.reading_progress_entries
 for each row execute function public.set_updated_at();
 
 drop trigger if exists trg_annotations_updated_at on public.annotations;
@@ -650,6 +712,9 @@ create index if not exists idx_books_user_status_active
   on public.books (user_id, status)
   where deleted_at is null;
 
+create index if not exists idx_books_estimation_source
+  on public.books (estimation_source);
+
 create index if not exists idx_manual_categories_user_active
   on public.manual_categories (user_id, name)
   where deleted_at is null;
@@ -678,6 +743,18 @@ create index if not exists idx_reading_sessions_book_active
 
 create index if not exists idx_reading_pauses_session
   on public.reading_pauses (session_id, paused_at);
+
+create index if not exists idx_reading_progress_entries_user_created
+  on public.reading_progress_entries (user_id, created_at desc);
+
+create index if not exists idx_reading_progress_entries_book_created
+  on public.reading_progress_entries (book_id, created_at desc);
+
+create index if not exists idx_reading_progress_entries_session_id
+  on public.reading_progress_entries (reading_session_id);
+
+create index if not exists idx_reading_progress_entries_estimation_source
+  on public.reading_progress_entries (estimation_source);
 
 create index if not exists idx_annotations_user_active
   on public.annotations (user_id, created_at desc)
@@ -746,6 +823,7 @@ alter table public.automatic_mente_categories enable row level security;
 alter table public.book_automatic_mente_categories enable row level security;
 alter table public.reading_sessions enable row level security;
 alter table public.reading_pauses enable row level security;
+alter table public.reading_progress_entries enable row level security;
 alter table public.annotations enable row level security;
 alter table public.annotation_mural_positions enable row level security;
 alter table public.mural_suggestions enable row level security;
@@ -762,6 +840,7 @@ Recommended policy pattern:
 - `insert`: `with check (user_id = auth.uid())`.
 - `update`: owner-only.
 - `delete`: normally disallow for client role; use update for soft delete.
+- For `reading_progress_entries`, insert/update policies should also verify that the referenced `book_id` belongs to the authenticated user and that optional `reading_session_id` belongs to the same user and book.
 - For `vocabulary_entries`, insert/update policies should also verify that optional `book_id` and `reading_session_id` belong to the same authenticated user and, when both are present, to each other.
 
 Example for a user-owned table:
@@ -830,16 +909,34 @@ Store separately:
 - Estimated historical reading time:
   - `books.estimated_reading_seconds`
   - for `reading_origin = 'historico'` and/or `read_before_serene = true`
+- Estimated outside-app progress:
+  - `reading_progress_entries.estimated_minutes`
+  - `reading_progress_entries.estimation_source`
+  - optional compatibility events in `timeline_events` should not be double-counted when they reference a `progress_entry_id`.
+- Audiobook-based estimation fields:
+  - `books.audiobook_duration_minutes`
+  - `books.audiobook_source`
+  - `books.audiobook_is_confirmed`
+  - `books.estimated_minutes_per_page`
+  - `books.estimation_source`
+
+Outside-app estimate source priority:
+1. `user_book_pace`: real user pace in the same book.
+2. `user_global_pace`: real user pace across other books.
+3. `audiobook_duration`: audiobook duration divided by total pages.
+4. `default_average`: provisional fallback.
 
 Never mix these fields in storage.
 Combine only in derived analytics and always label:
 - real registered time
+- estimated outside-app time
 - estimated historical time
 - approximate total
 
 Avoid double counting:
 - use `count(distinct books.id)` for unique book totals.
 - for Mente totals, aggregate books and sessions in separate subqueries.
+- when `reading_progress_entries` and legacy `timeline_events` exist together, ignore legacy events that include `metadata.progress_entry_id`.
 
 ## 11) Notes On Privacy Fields
 

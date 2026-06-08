@@ -13,7 +13,10 @@ import {
   listBookManualCategories,
   listBookShelves,
   listBooks,
+  listEstimatedProgressEvents,
   listManualCategories,
+  listReadingProgressEntriesForBooks,
+  listReadingSessionBookStats,
   listShelves,
   removeBookFromShelf,
   removeCategoryFromBook,
@@ -22,7 +25,10 @@ import {
   updateBook,
   updateShelf,
   type BookInsert,
+  type BookEstimatedProgressEventRow,
   type BookManualCategoryRow,
+  type BookReadingProgressEntryRow,
+  type BookReadingSessionStatsRow,
   type BookRow,
   type BookShelfRow,
   type BookUpdate,
@@ -35,6 +41,11 @@ export type BookWithCategories = BookRow & {
   annotationCount: number;
   categories: ManualCategoryRow[];
   shelves: ShelfRow[];
+  realReadingSeconds: number;
+  estimatedOutsideSeconds: number;
+  estimatedHistoricalSeconds: number;
+  approximateTotalReadingSeconds: number;
+  estimationBaseLabel: string;
 };
 
 export type ShelfWithBooks = ShelfRow & {
@@ -43,6 +54,50 @@ export type ShelfWithBooks = ShelfRow & {
   books: BookWithCategories[];
 };
 
+function metadataNumber(metadata: BookEstimatedProgressEventRow["metadata"], key: string) {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return 0;
+  }
+
+  const value = metadata[key];
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function metadataString(metadata: BookEstimatedProgressEventRow["metadata"], key: string) {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return null;
+  }
+
+  const value = metadata[key];
+  return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
+function estimatedHistoricalSecondsForBook(book: BookRow) {
+  if (book.reading_origin !== "historico" && !book.read_before_serene) {
+    return 0;
+  }
+
+  return book.estimated_reading_seconds ?? 0;
+}
+
+function estimationBaseLabel(book: BookRow) {
+  switch (book.estimation_source) {
+    case "user_book_pace":
+    case "user_global_pace":
+      return "Estimativa baseada no seu ritmo de leitura.";
+    case "audiobook_duration":
+      return "Estimativa baseada no audiobook deste livro.";
+    case "manual_adjustment":
+      return "Estimativa ajustada manualmente.";
+    case "default_average":
+      return "Estimativa baseada em media provisoria.";
+    default:
+      return book.audiobook_duration_minutes
+        ? "Estimativa pode usar o audiobook deste livro."
+        : "Estimativa baseada em media provisoria.";
+  }
+}
+
 export function useBookLibrary(userId: string | null) {
   const [books, setBooks] = useState<BookRow[]>([]);
   const [categories, setCategories] = useState<ManualCategoryRow[]>([]);
@@ -50,6 +105,11 @@ export function useBookLibrary(userId: string | null) {
   const [shelves, setShelves] = useState<ShelfRow[]>([]);
   const [shelfRelations, setShelfRelations] = useState<BookShelfRow[]>([]);
   const [annotationBookIds, setAnnotationBookIds] = useState<Array<string | null>>([]);
+  const [sessionStats, setSessionStats] = useState<BookReadingSessionStatsRow[]>([]);
+  const [progressEntries, setProgressEntries] = useState<BookReadingProgressEntryRow[]>([]);
+  const [estimatedProgressEvents, setEstimatedProgressEvents] = useState<
+    BookEstimatedProgressEventRow[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,6 +121,9 @@ export function useBookLibrary(userId: string | null) {
       setShelves([]);
       setShelfRelations([]);
       setAnnotationBookIds([]);
+      setSessionStats([]);
+      setProgressEntries([]);
+      setEstimatedProgressEvents([]);
       setLoading(false);
       return;
     }
@@ -75,6 +138,9 @@ export function useBookLibrary(userId: string | null) {
       shelvesResult,
       shelfRelationsResult,
       annotationLinksResult,
+      sessionStatsResult,
+      progressEntriesResult,
+      estimatedProgressEventsResult,
     ] = await Promise.all([
       listBooks(userId),
       listManualCategories(userId),
@@ -82,6 +148,9 @@ export function useBookLibrary(userId: string | null) {
       listShelves(userId),
       listBookShelves(userId),
       listAnnotationBookLinks(userId),
+      listReadingSessionBookStats(userId),
+      listReadingProgressEntriesForBooks(userId),
+      listEstimatedProgressEvents(userId),
     ]);
 
     if (
@@ -90,7 +159,10 @@ export function useBookLibrary(userId: string | null) {
       relationsResult.error ||
       shelvesResult.error ||
       shelfRelationsResult.error ||
-      annotationLinksResult.error
+      annotationLinksResult.error ||
+      sessionStatsResult.error ||
+      progressEntriesResult.error ||
+      estimatedProgressEventsResult.error
     ) {
       setError(
         booksResult.error?.message ??
@@ -99,6 +171,9 @@ export function useBookLibrary(userId: string | null) {
           shelvesResult.error?.message ??
           shelfRelationsResult.error?.message ??
           annotationLinksResult.error?.message ??
+          sessionStatsResult.error?.message ??
+          progressEntriesResult.error?.message ??
+          estimatedProgressEventsResult.error?.message ??
           "Nao foi possivel carregar a Biblioteca.",
       );
       setLoading(false);
@@ -111,6 +186,9 @@ export function useBookLibrary(userId: string | null) {
     setShelves(shelvesResult.data ?? []);
     setShelfRelations(shelfRelationsResult.data ?? []);
     setAnnotationBookIds((annotationLinksResult.data ?? []).map((link) => link.book_id));
+    setSessionStats(sessionStatsResult.data ?? []);
+    setProgressEntries(progressEntriesResult.data ?? []);
+    setEstimatedProgressEvents(estimatedProgressEventsResult.data ?? []);
     setLoading(false);
   }, [userId]);
 
@@ -132,19 +210,69 @@ export function useBookLibrary(userId: string | null) {
       annotationCountByBook.set(bookId, (annotationCountByBook.get(bookId) ?? 0) + 1);
     });
 
-    return books.map((book) => ({
-      ...book,
-      annotationCount: annotationCountByBook.get(book.id) ?? 0,
-      categories: relations
-        .filter((relation) => relation.book_id === book.id)
-        .map((relation) => categories.find((category) => category.id === relation.category_id))
-        .filter((category): category is ManualCategoryRow => Boolean(category)),
-      shelves: shelfRelations
-        .filter((relation) => relation.book_id === book.id)
-        .map((relation) => shelves.find((shelf) => shelf.id === relation.shelf_id))
-        .filter((shelf): shelf is ShelfRow => Boolean(shelf)),
-    }));
-  }, [annotationBookIds, books, categories, relations, shelfRelations, shelves]);
+    const realSecondsByBook = new Map<string, number>();
+    sessionStats.forEach((session) => {
+      realSecondsByBook.set(
+        session.book_id,
+        (realSecondsByBook.get(session.book_id) ?? 0) + (session.active_seconds ?? 0),
+      );
+    });
+
+    const estimatedOutsideSecondsByBook = new Map<string, number>();
+    progressEntries.forEach((entry) => {
+      estimatedOutsideSecondsByBook.set(
+        entry.book_id,
+        (estimatedOutsideSecondsByBook.get(entry.book_id) ?? 0) +
+          (entry.estimated_minutes ?? 0) * 60,
+      );
+    });
+    estimatedProgressEvents.forEach((event) => {
+      if (!event.book_id || metadataString(event.metadata, "progress_entry_id")) {
+        return;
+      }
+
+      estimatedOutsideSecondsByBook.set(
+        event.book_id,
+        (estimatedOutsideSecondsByBook.get(event.book_id) ?? 0) +
+          metadataNumber(event.metadata, "estimated_seconds"),
+      );
+    });
+
+    return books.map((book) => {
+      const realReadingSeconds = realSecondsByBook.get(book.id) ?? 0;
+      const estimatedOutsideSeconds = estimatedOutsideSecondsByBook.get(book.id) ?? 0;
+      const estimatedHistoricalSeconds = estimatedHistoricalSecondsForBook(book);
+
+      return {
+        ...book,
+        annotationCount: annotationCountByBook.get(book.id) ?? 0,
+        categories: relations
+          .filter((relation) => relation.book_id === book.id)
+          .map((relation) => categories.find((category) => category.id === relation.category_id))
+          .filter((category): category is ManualCategoryRow => Boolean(category)),
+        shelves: shelfRelations
+          .filter((relation) => relation.book_id === book.id)
+          .map((relation) => shelves.find((shelf) => shelf.id === relation.shelf_id))
+          .filter((shelf): shelf is ShelfRow => Boolean(shelf)),
+        realReadingSeconds,
+        estimatedOutsideSeconds,
+        estimatedHistoricalSeconds,
+        approximateTotalReadingSeconds:
+          realReadingSeconds + estimatedOutsideSeconds + estimatedHistoricalSeconds,
+        estimationBaseLabel: estimationBaseLabel(book),
+      };
+    });
+  }, [
+    annotationBookIds,
+    books,
+    categories,
+    estimatedProgressEvents,
+    progressEntries,
+    relations,
+    sessionStats,
+    shelfRelations,
+    shelves,
+  ]);
 
   const shelvesWithBooks = useMemo<ShelfWithBooks[]>(() => {
     return shelves.map((shelf) => {

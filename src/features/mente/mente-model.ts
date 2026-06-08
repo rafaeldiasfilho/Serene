@@ -3,6 +3,7 @@ import type {
   MenteAutomaticCategoryRow,
   MenteBookRow,
   MenteManualCategoryRow,
+  MenteReadingProgressEntryRow,
   MenteSessionRow,
   MenteSourceData,
   MenteTimelineEventRow,
@@ -310,6 +311,19 @@ function metadataNumber(metadata: MenteTimelineEventRow["metadata"], key: string
   return typeof value === "number" && Number.isFinite(value) ? value : 0;
 }
 
+function metadataString(metadata: MenteTimelineEventRow["metadata"], key: string) {
+  if (!metadata || typeof metadata !== "object" || Array.isArray(metadata)) {
+    return null;
+  }
+
+  const value = metadata[key];
+  return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
+function estimatedSecondsFromProgressEntry(entry: MenteReadingProgressEntryRow) {
+  return (entry.estimated_minutes ?? 0) * 60;
+}
+
 function labelForDay(value: string) {
   const date = new Date(`${value}T12:00:00`);
   if (Number.isNaN(date.getTime())) {
@@ -426,6 +440,9 @@ export function buildMenteInsight(source: MenteSourceData): MenteInsight {
   const sessions = source.sessions.filter(
     (session) => visibleBookIds.has(session.book_id) && session.status !== "cancelled",
   );
+  const outsideProgressEntries = source.readingProgressEntries.filter((entry) =>
+    visibleBookIds.has(entry.book_id),
+  );
   const outsideProgressEvents = source.timelineEvents.filter(
     (event) => event.book_id !== null && visibleBookIds.has(event.book_id),
   );
@@ -434,8 +451,20 @@ export function buildMenteInsight(source: MenteSourceData): MenteInsight {
   );
 
   const estimatedOutsideSecondsByBook = new Map<string, number>();
+  for (const entry of outsideProgressEntries) {
+    estimatedOutsideSecondsByBook.set(
+      entry.book_id,
+      (estimatedOutsideSecondsByBook.get(entry.book_id) ?? 0) +
+        estimatedSecondsFromProgressEntry(entry),
+    );
+  }
+
   for (const event of outsideProgressEvents) {
     if (!event.book_id) {
+      continue;
+    }
+
+    if (metadataString(event.metadata, "progress_entry_id")) {
       continue;
     }
 

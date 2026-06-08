@@ -11,6 +11,18 @@ export type ShelfRow = Database["public"]["Tables"]["shelves"]["Row"];
 export type ShelfInsert = Database["public"]["Tables"]["shelves"]["Insert"];
 export type ShelfUpdate = Database["public"]["Tables"]["shelves"]["Update"];
 export type BookShelfRow = Database["public"]["Tables"]["book_shelves"]["Row"];
+export type BookReadingSessionStatsRow = Pick<
+  Database["public"]["Tables"]["reading_sessions"]["Row"],
+  "book_id" | "active_seconds" | "start_page" | "end_page" | "status"
+>;
+export type BookReadingProgressEntryRow = Pick<
+  Database["public"]["Tables"]["reading_progress_entries"]["Row"],
+  "book_id" | "estimated_minutes" | "is_estimated"
+>;
+export type BookEstimatedProgressEventRow = Pick<
+  Database["public"]["Tables"]["timeline_events"]["Row"],
+  "book_id" | "metadata"
+>;
 
 export async function listBooks(userId: string) {
   const supabase = getSupabaseBrowserClient();
@@ -223,4 +235,32 @@ export async function listAnnotationBookLinks(userId: string) {
     .eq("user_id", userId)
     .is("deleted_at", null)
     .not("book_id", "is", null);
+}
+
+export async function listReadingSessionBookStats(userId: string) {
+  const supabase = getSupabaseBrowserClient();
+  return supabase
+    .from("reading_sessions")
+    .select("book_id,active_seconds,start_page,end_page,status")
+    .eq("user_id", userId)
+    .is("deleted_at", null)
+    .neq("status", "cancelled");
+}
+
+export async function listReadingProgressEntriesForBooks(userId: string) {
+  const supabase = getSupabaseBrowserClient();
+  return supabase
+    .from("reading_progress_entries")
+    .select("book_id,estimated_minutes,is_estimated")
+    .eq("user_id", userId)
+    .eq("is_estimated", true);
+}
+
+export async function listEstimatedProgressEvents(userId: string) {
+  const supabase = getSupabaseBrowserClient();
+  return supabase
+    .from("timeline_events")
+    .select("book_id,metadata")
+    .eq("user_id", userId)
+    .eq("event_type", "estimated_progress_registered");
 }

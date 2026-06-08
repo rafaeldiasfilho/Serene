@@ -67,6 +67,10 @@ Phase 17 adds reading vocabulary:
 
 - `supabase/fixes/012_vocabulary_entries.sql`
 
+Phase 18 adds audiobook-based outside-app reading estimates:
+
+- `supabase/fixes/013_audiobook_reading_progress.sql`
+
 Private beta users must use individual Supabase Auth accounts. Do not use one shared demo account for testers. To enable a beta user, create their Auth user, then mark their profile:
 
 ```sql
@@ -88,7 +92,7 @@ where email = 'admin@example.com';
 
 ## Project status
 
-SERENE is implemented through Phase 17 - Vocabulario da Leitura e resumo de palavras do livro.
+SERENE is implemented through Phase 18 - Calculo Inteligente de Tempo de Leitura por Audiobook.
 
 Current quality gates:
 
@@ -217,6 +221,16 @@ Phase 17 adds a light reading vocabulary aid without making SERENE a dictionary 
 - When a finished session completes the book, the summary shows `Vocabulario deste livro`.
 
 No primary navigation item, flashcards, quiz, translator, or invented definitions were added.
+
+## Phase 18 notes
+
+Phase 18 makes outside-app progress estimates more transparent without turning SERENE into a calculation tool:
+
+- Books can store optional audiobook duration, source, confirmation state, estimated minutes per page, and current estimation source.
+- `public.reading_progress_entries` stores confirmed outside-app progress with pages advanced, estimated minutes, and the source of the estimate.
+- `Atualizar pagina` prioritizes real pace in the same book, then the user's real global pace, then audiobook duration, then a provisional default.
+- Real SERENE session time, outside-app estimated time, historical estimated time, and approximate total remain visibly separated.
+- Automatic audiobook duration lookup is prepared as future work; the app does not invent durations.
 
 ## Phase 13 notes
 

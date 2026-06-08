@@ -50,6 +50,21 @@ function getReadingActionLabel(book: BookWithCategories) {
   return book.current_page > 0 ? "Retomar leitura" : "Iniciar leitura";
 }
 
+function formatDuration(seconds: number) {
+  if (seconds <= 0) {
+    return "0 min";
+  }
+
+  const minutes = Math.round(seconds / 60);
+  if (minutes < 60) {
+    return `${minutes} min`;
+  }
+
+  const hours = Math.floor(minutes / 60);
+  const restMinutes = minutes % 60;
+  return restMinutes > 0 ? `${hours}h ${restMinutes}min` : `${hours}h`;
+}
+
 function hashTitle(title: string) {
   let hash = 0;
 
@@ -85,6 +100,13 @@ export function BookCard({
     book.total_pages && book.total_pages > 0
       ? Math.min(100, Math.round((book.current_page / book.total_pages) * 100))
       : 0;
+  const hasEstimatedTime = book.estimatedOutsideSeconds > 0 || book.estimatedHistoricalSeconds > 0;
+  const shouldShowTimeSummary =
+    !compact &&
+    (book.current_page > 0 ||
+      book.realReadingSeconds > 0 ||
+      hasEstimatedTime ||
+      Boolean(book.audiobook_duration_minutes));
 
   return (
     <article
@@ -158,6 +180,35 @@ export function BookCard({
               </div>
               <p className="mt-1 text-xs text-[var(--serene-muted)]">
                 Pagina {book.current_page} de {book.total_pages}
+              </p>
+            </div>
+          )}
+
+          {shouldShowTimeSummary && (
+            <div className="mt-3 rounded-2xl border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface)_82%,transparent)] p-3">
+              <div className="grid gap-2 text-xs text-[var(--serene-muted)] sm:grid-cols-3">
+                <div>
+                  <p>Tempo registrado</p>
+                  <p className="mt-0.5 font-semibold text-[var(--serene-fg)]">
+                    {formatDuration(book.realReadingSeconds)}
+                  </p>
+                </div>
+                <div>
+                  <p>Estimado fora</p>
+                  <p className="mt-0.5 font-semibold text-[var(--serene-fg)]">
+                    aprox. {formatDuration(book.estimatedOutsideSeconds)}
+                  </p>
+                </div>
+                <div>
+                  <p>Total dedicado</p>
+                  <p className="mt-0.5 font-semibold text-[var(--serene-fg)]">
+                    {hasEstimatedTime ? "aprox. " : ""}
+                    {formatDuration(book.approximateTotalReadingSeconds)}
+                  </p>
+                </div>
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-[var(--serene-muted)]">
+                {book.estimationBaseLabel}
               </p>
             </div>
           )}
