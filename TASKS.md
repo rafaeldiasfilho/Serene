@@ -891,3 +891,52 @@ Validation:
 - [x] `npm run typecheck` passes.
 - [x] `npm run lint` passes.
 - [x] `npm run build` passes.
+
+## Phase 21 - Revisao final de simplicidade apos novos fluxos
+
+Goal:
+- [x] Keep SERENE calm after Vocabulary, audiobook estimates, intelligent book intake, and the more visible Mural.
+- [x] Preserve the primary hierarchy: Inicio, Biblioteca, Anotacoes, and Mente.
+- [x] Avoid adding new functionality while reviewing weight, language, and discoverability.
+
+A. Essencial agora:
+- [x] Confirm Mural, Vocabulario, Timeline, Exportar, and beta tooling are not competing as primary navigation.
+- [x] Keep Mural contextual to Leitura, Livro/Biblioteca, and filtered Anotacoes.
+- [x] Keep Vocabulario as reading support in Leitura and a secondary Anotacoes folder.
+- [x] Keep audiobook duration as an estimate base, not an absolute truth.
+- [x] Keep real SERENE time, estimated outside-app time, and approximate total separated in user-facing copy.
+- [x] Keep intelligent book intake starting with `Nome do livro` and requiring confirmation before saving.
+- [x] Keep Biblioteca organized around automatic shelves plus `Todos os livros`.
+- [x] Keep Mente focused on interpretation with details shown after selection.
+
+B. Simplificado/oculto:
+- [x] Removed the duplicate large Mural action block from the reading controls and kept a smaller onboarding hint.
+- [x] Left Mural out of the main menu and out of annotation-type choices.
+- [x] Left Vocabulario out of the main menu and out of flashcard/quiz/study flows.
+- [x] Left cover-photo registration as a calm prepared path instead of implementing OCR now.
+- [x] Left audiobook lookup as a prepared/manual field instead of inventing durations.
+- [x] Kept Timeline parked outside the current product flow.
+
+C. Futuro:
+- [ ] Real dictionary/API lookup for Vocabulario, with sources.
+- [ ] Translation, synonyms, contextual examples, and optional IA meaning suggestions.
+- [ ] Connect saved words to Mente only when it can stay quiet and useful.
+- [ ] Real reliable audiobook duration lookup, complete-vs-abridged confirmation, edition comparison, chapter estimates, difficulty estimates, and ISBN sync.
+- [ ] Cover-photo OCR/IA flowing through the same book confirmation panel.
+- [ ] Manual adjustment of automatic Biblioteca shelves without making categories mandatory.
+- [ ] Further Mente drill-down only on demand, without turning it into analytics.
+
+Validation:
+- [ ] Manual visual pass in light/dark themes for Inicio, Biblioteca, Anotacoes, Leitura, Mural, Mente, Configuracoes, Lixeira, and Perfil.
+- [ ] Manual responsive pass for reading controls, Mural fixed area, Biblioteca shelves, Anotacoes folders, and Mente area details.
+- [ ] Manual flow: verify Mural opens from reading without pausing the timer.
+- [ ] Manual flow: save a vocabulary word during reading and confirm it appears in the book/session summaries.
+- [ ] Manual flow: update page outside the app and confirm estimated/real time labels stay separate.
+- [ ] Manual flow: create a book from `Nome do livro`, confirm/edit before saving, and verify the photo option remains a placeholder.
+- [ ] Manual flow: confirm Mural and Vocabulario are not primary menu items.
+- [ ] Browser QA with the in-app browser when the connector is available.
+- [ ] Apply pending Supabase phase fixes in the target project before production browser QA.
+- [x] `git diff --check` passes.
+- [x] `npm run typecheck` passes.
+- [x] `npm run lint` passes.
+- [x] `npm run build` passes.

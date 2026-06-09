@@ -96,7 +96,7 @@ where email = 'admin@example.com';
 
 ## Project status
 
-SERENE is implemented through Phase 20 - Mural mais visivel e encontravel.
+SERENE is implemented through Phase 21 - revisao final de simplicidade apos os novos fluxos.
 
 Current quality gates:
 
@@ -256,6 +256,17 @@ Phase 20 makes the Mural easier to find without turning it into a primary app ar
 - Biblioteca book cards expose a secondary `Mural` action. If the book has an active or paused session, it opens the Mural directly; otherwise SERENE shows a calm `Mural deste livro` prompt with `Iniciar leitura`.
 - Anotacoes shows `Organizar no Mural` when a folder is filtered to a specific book, with the same active-session requirement.
 - Mural still lives under the contextual reading route `/leitura/[bookId]/mural` and is not a main navigation item.
+
+## Phase 21 notes
+
+Phase 21 is a simplicity pass after Vocabulary, audiobook estimates, intelligent book intake, and the more visible Mural:
+
+- Primary navigation remains only Inicio, Biblioteca, Anotacoes, and Mente.
+- Mural stays contextual to reading, book cards, and filtered Anotacoes; it was not promoted to the main menu.
+- Vocabulary remains a light reading aid inside Leitura and Anotacoes, not a dictionary or study module.
+- Outside-app time remains estimated and separated from real SERENE session time; approximate totals are labeled as such.
+- Intelligent book intake still starts with `Nome do livro`, requires confirmation before saving, and keeps the cover-photo path as a prepared placeholder.
+- No database table, route, or major feature was added in this phase.
 
 ## Phase 13 notes
 
