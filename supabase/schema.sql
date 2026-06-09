@@ -631,6 +631,7 @@ create table if not exists public.vocabulary_entries (
   page_number int,
   note text,
   source text,
+  deleted_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint vocabulary_entries_word_not_blank
@@ -640,11 +641,11 @@ create table if not exists public.vocabulary_entries (
 );
 
 comment on table public.vocabulary_entries is
-'Small reading vocabulary history. Complements annotations without replacing them or acting as a full dictionary.';
+'Saved words found through the reading dictionary. Complements annotations without becoming a heavy study module.';
 comment on column public.vocabulary_entries.definition is
 'Manual or trusted-source meaning. Do not invent automatic definitions without a source.';
 comment on column public.vocabulary_entries.source is
-'Optional source for future dictionary/API/AI integrations. Manual entries may leave this null.';
+'Dictionary/source name used for the saved definition. Manual entries may leave this null.';
 
 -- ============================================================================
 -- 14) timeline_events
@@ -913,6 +914,9 @@ create index if not exists idx_vocabulary_entries_session_created
   on public.vocabulary_entries(reading_session_id, created_at desc);
 create index if not exists idx_vocabulary_entries_word
   on public.vocabulary_entries(user_id, lower(word));
+create index if not exists idx_vocabulary_entries_active_book_word
+  on public.vocabulary_entries(user_id, book_id, lower(word))
+  where deleted_at is null;
 
 create index if not exists idx_timeline_events_user_id on public.timeline_events(user_id);
 create index if not exists idx_exports_user_id on public.exports(user_id);

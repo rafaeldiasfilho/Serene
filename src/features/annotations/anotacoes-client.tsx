@@ -9,6 +9,7 @@ import {
   RefreshCw,
   Search,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -31,6 +32,7 @@ import {
 } from "@/features/reading-sessions/reading-session-services";
 import {
   listVocabularyEntries,
+  softDeleteVocabularyEntry,
   type VocabularyEntryRow,
 } from "@/features/vocabulary/vocabulary-services";
 import type { AnnotationReviewStatus, AnnotationType } from "@/lib/supabase/database.types";
@@ -568,6 +570,27 @@ export function AnotacoesClient() {
     );
   }
 
+  async function handleRemoveVocabularyEntry(entry: VocabularyEntryRow) {
+    if (!user) {
+      return;
+    }
+
+    const confirmed = window.confirm("Remover esta palavra do vocabulario?");
+    if (!confirmed) {
+      return;
+    }
+
+    const result = await softDeleteVocabularyEntry(entry.id, user.id);
+
+    if (result.error) {
+      setFeedback(result.error.message);
+      return;
+    }
+
+    setVocabularyEntries((current) => current.filter((item) => item.id !== entry.id));
+    setFeedback("Palavra removida do vocabulario.");
+  }
+
   async function handleToggleFavorite(annotation: AnnotationRow, nextValue: boolean) {
     const result = await setFavorite(annotation, nextValue);
     if (!result.ok) {
@@ -1083,12 +1106,23 @@ export function AnotacoesClient() {
                     </div>
                   </summary>
 
-                  {(entry.definition || entry.note) && (
+                  {(entry.definition || entry.note || entry.source) && (
                     <div className="mt-4 space-y-2 border-t border-[var(--serene-border)] pt-3 text-sm leading-relaxed text-[var(--serene-muted)]">
                       {entry.definition && <p>{entry.definition}</p>}
                       {entry.note && <p>{entry.note}</p>}
+                      {entry.source && <p className="text-xs">Fonte: {entry.source}</p>}
                     </div>
                   )}
+                  <div className="mt-4 flex justify-end border-t border-[var(--serene-border)] pt-3">
+                    <button
+                      type="button"
+                      onClick={() => void handleRemoveVocabularyEntry(entry)}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-1.5 text-xs text-[var(--serene-muted)] transition hover:text-[var(--serene-fg)]"
+                    >
+                      <Trash2 className="size-3.5" />
+                      Remover
+                    </button>
+                  </div>
                 </details>
               );
             })}

@@ -724,7 +724,7 @@ C. Anotacoes and summaries:
 - [x] Keep vocabulary summary smaller than the main annotations section.
 
 Future:
-- [ ] Real dictionary/API integration.
+- [ ] Additional dictionary sources and provider fallback controls.
 - [ ] Translation.
 - [ ] Synonyms.
 - [ ] Contextual examples.
@@ -741,6 +741,58 @@ Validation:
 - [ ] Apply `supabase/fixes/012_vocabulary_entries.sql` in the target Supabase project before browser QA.
 - [x] `git diff --check` passes.
 - [x] `npm run typecheck` passes.
+- [x] `npm run lint` passes.
+- [x] `npm run build` passes.
+
+## Phase 17B - Dicionario funcional na leitura
+
+Goal:
+- [x] Make the reading tool work first as a dictionary, with saved vocabulary as a consequence.
+- [x] Let the reader search a word, see the definition inside SERENE, and optionally save it to the book vocabulary.
+- [x] Never invent definitions without a source.
+
+A. Dictionary lookup:
+- [x] Rename the reading action to `Dicionario`.
+- [x] Replace the manual-only modal with a search-first modal.
+- [x] Use `Qual palavra voce quer entender?` and support Enter/search button.
+- [x] Add `/api/dictionary` as a normalized dictionary route.
+- [x] Use Dicionario Aberto for Portuguese lookups.
+- [x] Use Free Dictionary API for non-Portuguese language codes supported by that provider.
+- [x] Show loading, found, not found, and error states without technical errors.
+- [x] Show word, part of speech when available, main definition, short alternate definitions, example when available, and source.
+
+B. Saving vocabulary:
+- [x] Let the user consult without saving.
+- [x] Save only when the user chooses `Salvar no vocabulario deste livro`.
+- [x] Store trusted definition and source when available.
+- [x] Allow manual saving if no definition is found, without inventing meaning.
+- [x] Prevent duplicate saved words in the same book.
+- [x] Update missing definition/source/note on an existing saved word when useful.
+
+C. History and safety:
+- [x] Keep Anotacoes as the secondary `Vocabulario` folder.
+- [x] Keep Dicionario out of the annotation `+` type list and out of primary navigation.
+- [x] Rename the reading history section to `Vocabulario deste livro` and show only saved words.
+- [x] Add soft removal for saved vocabulary through `deleted_at`.
+- [x] Add `supabase/fixes/015_vocabulary_dictionary_lookup.sql`.
+
+Future:
+- [ ] Multilingual UI for selecting word language manually.
+- [ ] Translation.
+- [ ] Synonyms.
+- [ ] Richer contextual examples.
+- [ ] Configurable external dictionary/API provider.
+- [ ] IA meaning suggestions only with source/confirmation.
+
+Validation:
+- [ ] Manual flow: open Dicionario during reading, search a Portuguese word, view definition, and close without saving.
+- [ ] Manual flow: search a word, save it, verify it appears in `Vocabulario deste livro`.
+- [ ] Manual flow: search/save same word twice and verify it does not duplicate.
+- [ ] Manual flow: remove a saved word from reading/Anotacoes and verify it disappears from normal lists.
+- [ ] Browser visual pass for the reading dictionary modal when the in-app browser connector is available.
+- [ ] Apply `supabase/fixes/015_vocabulary_dictionary_lookup.sql` in the target Supabase project before production QA.
+- [x] `npm run typecheck` passes.
+- [x] `git diff --check` passes.
 - [x] `npm run lint` passes.
 - [x] `npm run build` passes.
 
@@ -918,7 +970,7 @@ B. Simplificado/oculto:
 - [x] Kept Timeline parked outside the current product flow.
 
 C. Futuro:
-- [ ] Real dictionary/API lookup for Vocabulario, with sources.
+- [ ] Additional dictionary/API sources for Vocabulario, with source selection and redundancy.
 - [ ] Translation, synonyms, contextual examples, and optional IA meaning suggestions.
 - [ ] Connect saved words to Mente only when it can stay quiet and useful.
 - [ ] Real reliable audiobook duration lookup, complete-vs-abridged confirmation, edition comparison, chapter estimates, difficulty estimates, and ISBN sync.

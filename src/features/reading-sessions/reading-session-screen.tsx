@@ -15,6 +15,7 @@ import {
   PlayCircle,
   Plus,
   Save,
+  Trash2,
   XCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -50,6 +51,8 @@ import {
   createVocabularyEntry,
   listVocabularyEntriesForBook,
   listVocabularyEntriesForSession,
+  softDeleteVocabularyEntry,
+  updateVocabularyEntry,
   type VocabularyEntryRow,
 } from "@/features/vocabulary/vocabulary-services";
 
@@ -108,6 +111,10 @@ function formatVocabularyDate(value: string) {
     day: "2-digit",
     month: "short",
   }).format(new Date(value));
+}
+
+function getVocabularyKey(word: string) {
+  return word.trim().toLocaleLowerCase("pt-BR");
 }
 
 function ReadingPresenceIndicator({ status }: { status: ReadingPresenceStatus }) {
@@ -627,6 +634,46 @@ export function ReadingSessionScreen() {
       };
     }
 
+    const existingEntry = bookVocabularyEntries.find(
+      (entry) => getVocabularyKey(entry.word) === getVocabularyKey(value.word),
+    );
+
+    if (existingEntry) {
+      const shouldUpdateDefinition = !existingEntry.definition && Boolean(value.definition);
+      const shouldUpdateSource = !existingEntry.source && Boolean(value.source);
+      const shouldUpdateNote = !existingEntry.note && Boolean(value.note);
+
+      if (shouldUpdateDefinition || shouldUpdateSource || shouldUpdateNote) {
+        const updateResult = await updateVocabularyEntry(existingEntry.id, user.id, {
+          definition: shouldUpdateDefinition ? value.definition : existingEntry.definition,
+          source: shouldUpdateSource ? value.source : existingEntry.source,
+          note: shouldUpdateNote ? value.note : existingEntry.note,
+        });
+
+        if (updateResult.error || !updateResult.data) {
+          return {
+            ok: false,
+            message: updateResult.error?.message ?? "Nao foi possivel atualizar esta palavra.",
+          };
+        }
+
+        setBookVocabularyEntries((current) =>
+          current.map((entry) => (entry.id === updateResult.data.id ? updateResult.data : entry)),
+        );
+        setVocabularyFeedback("Essa palavra ja estava no vocabulario deste livro. Atualizei os detalhes.");
+        return {
+          ok: true,
+          message: "Essa palavra ja estava no vocabulario deste livro. Atualizei os detalhes.",
+        };
+      }
+
+      setVocabularyFeedback("Essa palavra ja esta no vocabulario deste livro.");
+      return {
+        ok: true,
+        message: "Essa palavra ja esta no vocabulario deste livro.",
+      };
+    }
+
     const result = await createVocabularyEntry({
       user_id: user.id,
       book_id: book.id,
@@ -635,7 +682,7 @@ export function ReadingSessionScreen() {
       definition: value.definition,
       page_number: currentPage,
       note: value.note,
-      source: null,
+      source: value.source,
     });
 
     if (result.error || !result.data) {
@@ -646,8 +693,29 @@ export function ReadingSessionScreen() {
     }
 
     setBookVocabularyEntries((current) => [result.data, ...current]);
-    setVocabularyFeedback("Palavra guardada no vocabulario deste livro.");
-    return { ok: true, message: null };
+    setVocabularyFeedback("Palavra salva no vocabulario deste livro.");
+    return { ok: true, message: "Palavra salva." };
+  }
+
+  async function handleRemoveVocabularyEntry(entry: VocabularyEntryRow) {
+    if (!user) {
+      return;
+    }
+
+    const confirmed = window.confirm("Remover esta palavra do vocabulario deste livro?");
+    if (!confirmed) {
+      return;
+    }
+
+    const result = await softDeleteVocabularyEntry(entry.id, user.id);
+
+    if (result.error) {
+      setVocabularyFeedback(result.error.message);
+      return;
+    }
+
+    setBookVocabularyEntries((current) => current.filter((item) => item.id !== entry.id));
+    setVocabularyFeedback("Palavra removida do vocabulario deste livro.");
   }
 
   async function handleReviewLater() {
@@ -732,7 +800,7 @@ export function ReadingSessionScreen() {
               className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] px-3 py-2 text-sm text-[var(--serene-muted)] shadow-[var(--serene-shadow-soft)] transition hover:text-[var(--serene-fg)] disabled:opacity-60"
             >
               <BookMarked className="size-4" />
-              {"Vocabul\u00e1rio"}
+              {"Dicion\u00e1rio"}
             </button>
             <button
               type="button"
@@ -882,9 +950,9 @@ export function ReadingSessionScreen() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--serene-muted)]">
-                {"Palavras consultadas neste livro"}
+                {"Palavras salvas neste livro"}
               </p>
-              <h2 className="mt-1 text-base font-semibold">{"Vocabul\u00e1rio em forma\u00e7\u00e3o"}</h2>
+              <h2 className="mt-1 text-base font-semibold">{"Vocabul\u00e1rio deste livro"}</h2>
             </div>
             <Link
               href="/anotacoes?vocabulario=1"
@@ -916,6 +984,14 @@ export function ReadingSessionScreen() {
                 <p className="mt-2 text-[11px] text-[var(--serene-muted)]">
                   {formatVocabularyDate(entry.created_at)}
                 </p>
+                <button
+                  type="button"
+                  onClick={() => void handleRemoveVocabularyEntry(entry)}
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-2.5 py-1 text-[11px] text-[var(--serene-muted)] transition hover:text-[var(--serene-fg)]"
+                >
+                  <Trash2 className="size-3" />
+                  Remover
+                </button>
               </article>
             ))}
           </div>
@@ -1029,7 +1105,9 @@ export function ReadingSessionScreen() {
       {!summary && vocabularyDialogOpen && (
         <VocabularyDialog
           bookTitle={book.title}
+          bookLanguage={book.language}
           currentPage={currentPage}
+          recentEntries={bookVocabularyEntries}
           onClose={() => setVocabularyDialogOpen(false)}
           onSubmit={handleCreateVocabularyEntry}
         />

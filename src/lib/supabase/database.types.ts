@@ -633,6 +633,7 @@ export type Database = {
           page_number: number | null;
           note: string | null;
           source: string | null;
+          deleted_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -646,6 +647,7 @@ export type Database = {
           page_number?: number | null;
           note?: string | null;
           source?: string | null;
+          deleted_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -657,6 +659,7 @@ export type Database = {
           page_number?: number | null;
           note?: string | null;
           source?: string | null;
+          deleted_at?: string | null;
           updated_at?: string;
         };
         Relationships: [];

@@ -75,6 +75,10 @@ Phase 19 adds intelligent book intake metadata:
 
 - `supabase/fixes/014_book_discovery_metadata.sql`
 
+Phase 17B updates the reading dictionary/vocabulary flow:
+
+- `supabase/fixes/015_vocabulary_dictionary_lookup.sql`
+
 Private beta users must use individual Supabase Auth accounts. Do not use one shared demo account for testers. To enable a beta user, create their Auth user, then mark their profile:
 
 ```sql
@@ -96,7 +100,7 @@ where email = 'admin@example.com';
 
 ## Project status
 
-SERENE is implemented through Phase 21 - revisao final de simplicidade apos os novos fluxos.
+SERENE is implemented through Phase 21, with Phase 17B dictionary correction applied.
 
 Current quality gates:
 
@@ -214,12 +218,14 @@ No authentication, reading/session logic, annotation CRUD logic, beta access rul
 
 ## Phase 17 notes
 
-Phase 17 adds a light reading vocabulary aid without making SERENE a dictionary app:
+Phase 17 adds a light reading vocabulary aid without making SERENE a study app:
 
-- Reading has a secondary `Vocabulario` tool for saving a word during an active session.
-- Automatic dictionary lookup is intentionally marked as future work; users may save the word and write a manual meaning or note.
-- `public.vocabulary_entries` stores words by user, book, optional reading session, page, date, optional definition, optional note, and optional future source.
-- The reading screen shows a small `Palavras consultadas neste livro` history after words exist for that book.
+- Reading has a secondary `Dicionario` tool for looking up a word during an active session.
+- Phase 17B adds a real lookup flow through `/api/dictionary`, using Dicionario Aberto for Portuguese and Free Dictionary API for other supported language codes.
+- The reader can consult a word without saving it.
+- `public.vocabulary_entries` stores only saved words by user, book, optional reading session, page, date, optional definition, optional note, and source.
+- Saved vocabulary entries now support `deleted_at` so removing a word from the vocabulary is reversible at the data layer.
+- The reading screen shows a small `Vocabulario deste livro` history after words are saved for that book.
 - Anotacoes includes a secondary `Vocabulario` folder with search and book filtering.
 - Session summaries show `Palavras consultadas nesta leitura` when the session has saved words.
 - When a finished session completes the book, the summary shows `Vocabulario deste livro`.

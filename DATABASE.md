@@ -471,6 +471,7 @@ create table if not exists public.vocabulary_entries (
   page_number int,
   note text,
   source text,
+  deleted_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint vocabulary_entries_word_not_blank
@@ -810,6 +811,10 @@ create index if not exists idx_vocabulary_entries_session_created
 
 create index if not exists idx_vocabulary_entries_word
   on public.vocabulary_entries (user_id, lower(word));
+
+create index if not exists idx_vocabulary_entries_active_book_word
+  on public.vocabulary_entries (user_id, book_id, lower(word))
+  where deleted_at is null;
 
 create index if not exists idx_timeline_events_user_created
   on public.timeline_events (user_id, created_at desc);
