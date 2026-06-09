@@ -5,6 +5,7 @@ import type {
   Json,
   ReadingEstimateSource,
 } from "@/lib/supabase/database.types";
+import { LOAD_ERROR_MESSAGE, SAVE_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 
 export const FALLBACK_SECONDS_PER_PAGE = 90;
 export const ESTIMATED_PROGRESS_EVENT_TYPE = "estimated_progress_registered";
@@ -198,7 +199,12 @@ export async function loadProgressContext(userId: string, book: ProgressBook) {
     progressEntriesResult.error ??
     outsideEventsResult.error;
   if (error) {
-    return { data: null, error: { message: error.message } };
+    return {
+      data: null,
+      error: {
+        message: userFacingError(error, LOAD_ERROR_MESSAGE, "Falha ao carregar contexto de progresso."),
+      },
+    };
   }
 
   const bookStats = paceStatsFromSessions(bookSessionsResult.data ?? []);
@@ -266,7 +272,12 @@ export async function saveProgressUpdate(input: ProgressSaveInput) {
     .single();
 
   if (bookResult.error) {
-    return { data: null, error: { message: bookResult.error.message } };
+    return {
+      data: null,
+      error: {
+        message: userFacingError(bookResult.error, SAVE_ERROR_MESSAGE, "Falha ao atualizar progresso do livro."),
+      },
+    };
   }
 
   if (!shouldRecordEstimate) {
@@ -294,7 +305,13 @@ export async function saveProgressUpdate(input: ProgressSaveInput) {
     return {
       data: null,
       error: {
-        message: progressResult.error?.message ?? "Nao foi possivel registrar o tempo estimado.",
+        message: progressResult.error
+          ? userFacingError(
+              progressResult.error,
+              SAVE_ERROR_MESSAGE,
+              "Falha ao registrar progresso estimado.",
+            )
+          : "Não foi possível salvar essa alteração agora.",
       },
     };
   }

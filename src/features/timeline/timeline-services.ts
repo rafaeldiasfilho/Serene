@@ -1,5 +1,6 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
+import { LOAD_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 
 export type TimelineEventRow = Database["public"]["Tables"]["timeline_events"]["Row"];
 export type TimelineBookRow = Pick<
@@ -118,7 +119,12 @@ export async function loadTimelineSourceData(
     .limit(240);
 
   if (eventsResult.error) {
-    return { data: null, error: { message: eventsResult.error.message } };
+    return {
+      data: null,
+      error: {
+        message: userFacingError(eventsResult.error, LOAD_ERROR_MESSAGE, "Falha ao carregar linha do tempo."),
+      },
+    };
   }
 
   const events = eventsResult.data ?? [];
@@ -149,7 +155,12 @@ export async function loadTimelineSourceData(
   const relationshipError = sessionsResult.error ?? annotationsResult.error;
 
   if (relationshipError) {
-    return { data: null, error: { message: relationshipError.message } };
+    return {
+      data: null,
+      error: {
+        message: userFacingError(relationshipError, LOAD_ERROR_MESSAGE, "Falha ao carregar vinculos da linha do tempo."),
+      },
+    };
   }
 
   const sessionRows = sessionsResult.data ?? [];
@@ -172,7 +183,12 @@ export async function loadTimelineSourceData(
       : { data: [] as TimelineBookRow[], error: null };
 
   if (booksResult.error) {
-    return { data: null, error: { message: booksResult.error.message } };
+    return {
+      data: null,
+      error: {
+        message: userFacingError(booksResult.error, LOAD_ERROR_MESSAGE, "Falha ao carregar livros da linha do tempo."),
+      },
+    };
   }
 
   return {

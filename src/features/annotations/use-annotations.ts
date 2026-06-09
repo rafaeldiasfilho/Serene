@@ -19,6 +19,7 @@ import {
   fallbackAnnotationColors,
 } from "@/features/annotations/annotation-definitions";
 import type { AnnotationReviewStatus } from "@/lib/supabase/database.types";
+import { ACTION_ERROR_MESSAGE, LOAD_ERROR_MESSAGE, SAVE_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 
 export type AnnotationColorOption = {
   id: string;
@@ -79,13 +80,10 @@ export function useAnnotations(userId: string | null) {
       listAnnotationColors(userId),
     ]);
 
-    if (annotationsResult.error || booksResult.error || colorsResult.error) {
-      setError(
-        annotationsResult.error?.message ??
-          booksResult.error?.message ??
-          colorsResult.error?.message ??
-          "Nao foi possivel carregar as anotacoes.",
-      );
+    const firstError = annotationsResult.error ?? booksResult.error ?? colorsResult.error;
+
+    if (firstError) {
+      setError(userFacingError(firstError, LOAD_ERROR_MESSAGE, "Falha ao carregar anotacoes."));
       setLoading(false);
       return;
     }
@@ -117,7 +115,10 @@ export function useAnnotations(userId: string | null) {
       setSaving(false);
 
       if (result.error) {
-        return { ok: false, message: result.error.message };
+        return {
+          ok: false,
+          message: userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao criar anotacao."),
+        };
       }
 
       await refresh();
@@ -137,7 +138,10 @@ export function useAnnotations(userId: string | null) {
       setSaving(false);
 
       if (result.error) {
-        return { ok: false, message: result.error.message };
+        return {
+          ok: false,
+          message: userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao editar anotacao."),
+        };
       }
 
       await refresh();
@@ -157,7 +161,10 @@ export function useAnnotations(userId: string | null) {
       setSaving(false);
 
       if (result.error) {
-        return { ok: false, message: result.error.message };
+        return {
+          ok: false,
+          message: userFacingError(result.error, ACTION_ERROR_MESSAGE, "Falha ao mover anotacao para Lixeira."),
+        };
       }
 
       await refresh();

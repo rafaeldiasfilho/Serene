@@ -19,6 +19,7 @@ import { AuthPanel } from "@/components/auth/auth-panel";
 import { useAppState } from "@/components/providers/app-state-provider";
 import { BrainLoader } from "@/components/ui/brain-loader";
 import { OPEN_ANNOTATION_SHORTCUT_EVENT } from "@/lib/shortcuts";
+import { SAVE_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 import { AnnotationModal, type AnnotationModalSubmitValue } from "@/features/annotations/annotation-modal";
 import {
   createAnnotation,
@@ -398,7 +399,7 @@ export function HomeClient() {
     if (result.error) {
       return {
         ok: false,
-        message: result.error.message,
+        message: userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao salvar anotacao no Inicio."),
       };
     }
 
@@ -498,6 +499,16 @@ export function HomeClient() {
             Adicione seu primeiro livro quando quiser. O Início ganha vida quando há uma leitura
             para voltar.
           </p>
+          <div className="mt-4 max-w-xl rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4 text-sm leading-relaxed text-[var(--serene-muted)]">
+            <p>
+              Primeiro, adicione um livro. Depois, inicie uma leitura ou use Atualizar pagina quando
+              ler fora do app.
+            </p>
+            <p className="mt-2">
+              Na leitura, o + guarda anotacoes, o Dicionario salva palavras e o Mural organiza
+              ideias. Se algo confundir, envie feedback pelo Menu.
+            </p>
+          </div>
           <Link
             href="/biblioteca"
             className="mt-5 inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--serene-shadow-soft)]"

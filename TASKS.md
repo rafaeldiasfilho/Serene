@@ -992,3 +992,62 @@ Validation:
 - [x] `npm run typecheck` passes.
 - [x] `npm run lint` passes.
 - [x] `npm run build` passes.
+
+## Phase 22 - Revisao do Beta Existente e Liberacao Controlada
+
+Goal:
+- [x] Revisar o beta fechado existente sem recriar `/beta`, feedback, perfis ou fluxos de acesso.
+- [x] Preservar perfis beta, acesso ativo/inativo/pendente, `last_seen_at`, painel `/beta`, politicas admin e remocao do login demo publico.
+- [x] Reforcar RLS/grants das tabelas usadas por Vocabulario/Dicionario, `reading_progress_entries`, cadastro inteligente, Biblioteca/Estantes, Mural, Mente e Anotacoes em pastas.
+- [x] Adicionar `supabase/fixes/016_beta_release_review.sql` como fix idempotente de revisao do beta.
+- [x] Manter `public.feedback` como tabela unica de feedback beta.
+- [x] Garantir labels de feedback para Erro, Sugestao, Confusao, Elogio, Ideia e Dificuldade.
+- [x] Trocar erros tecnicos visiveis por mensagens calmas, mantendo detalhes no console.
+- [x] Adicionar microcopy curta no primeiro estado vazio do Inicio para orientar novos testadores.
+
+Checklist de liberacao beta:
+- [x] build passou.
+- [ ] login funciona.
+- [ ] beta access funciona.
+- [ ] `/beta` funciona para admin.
+- [ ] usuario comum nao acessa `/beta`.
+- [ ] RLS testado com dois usuarios.
+- [ ] livros isolados por usuario.
+- [ ] anotacoes isoladas.
+- [ ] vocabulario isolado.
+- [ ] progresso estimado isolado.
+- [ ] Mural isolado.
+- [ ] feedback funcionando.
+- [ ] tema claro/escuro ok.
+- [ ] erros crus removidos.
+- [ ] app online testado.
+
+Teste real com dois usuarios:
+- [ ] Usuario A cadastra livro.
+- [ ] Usuario A inicia leitura.
+- [ ] Usuario A atualiza pagina.
+- [ ] Usuario A cria anotacao.
+- [ ] Usuario A cria post-it.
+- [ ] Usuario A consulta/salva palavra no Dicionario.
+- [ ] Usuario A abre Mural.
+- [ ] Usuario A envia feedback.
+- [ ] Usuario B entra em outra conta.
+- [ ] Usuario B nao ve nenhum dado do Usuario A.
+- [ ] Usuario B cria seus proprios dados.
+- [ ] Usuario B envia feedback.
+- [ ] Confirmar que nenhum dado vazou entre contas.
+
+Plano de liberacao:
+- Primeira rodada: 3 a 5 usuarios.
+- Objetivo: encontrar erros grandes e telas confusas.
+- Segunda rodada: 10 a 15 usuarios.
+- Objetivo: validar uso real.
+- Nao divulgar publicamente ainda.
+
+Validation:
+- [ ] Apply `supabase/fixes/016_beta_release_review.sql` in the target Supabase project.
+- [ ] Manual deployed Supabase/Vercel pass with two beta users and one admin user.
+- [x] `git diff --check` passes.
+- [x] `npm run typecheck` passes.
+- [x] `npm run lint` passes.
+- [x] `npm run build` passes.

@@ -7,6 +7,7 @@ import type {
   ReadingOrigin,
   ReadingSessionStatus,
 } from "@/lib/supabase/database.types";
+import { LOAD_ERROR_MESSAGE, SAVE_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 
 export type ExportBookRow = Database["public"]["Tables"]["books"]["Row"];
 export type ExportAnnotationRow = Database["public"]["Tables"]["annotations"]["Row"];
@@ -551,7 +552,12 @@ export async function loadExportSourceData(
     exportsResult.error;
 
   if (firstError) {
-    return { data: null, error: { message: firstError.message } };
+    return {
+      data: null,
+      error: {
+        message: userFacingError(firstError, LOAD_ERROR_MESSAGE, "Falha ao carregar dados de exportacao."),
+      },
+    };
   }
 
   return {
@@ -1186,7 +1192,11 @@ export async function createExportRecord(input: {
   if (exportResult.error || !exportResult.data) {
     return {
       data: null,
-      error: { message: exportResult.error?.message ?? "Nao foi possivel registrar a exportacao." },
+      error: {
+        message: exportResult.error
+          ? userFacingError(exportResult.error, SAVE_ERROR_MESSAGE, "Falha ao registrar exportacao.")
+          : "Não foi possível salvar essa alteração agora.",
+      },
     };
   }
 

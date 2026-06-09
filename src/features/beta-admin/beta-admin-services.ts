@@ -1,5 +1,6 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
+import { LOAD_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 
 export type BetaUserRow = Pick<
   Database["public"]["Tables"]["profiles"]["Row"],
@@ -79,7 +80,12 @@ export async function loadBetaOverview(): Promise<{
     latestFeedbackResult.error;
 
   if (firstError) {
-    return { data: null, error: { message: firstError.message } };
+    return {
+      data: null,
+      error: {
+        message: userFacingError(firstError, LOAD_ERROR_MESSAGE, "Falha ao carregar painel beta."),
+      },
+    };
   }
 
   return {

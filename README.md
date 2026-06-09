@@ -79,6 +79,10 @@ Phase 17B updates the reading dictionary/vocabulary flow:
 
 - `supabase/fixes/015_vocabulary_dictionary_lookup.sql`
 
+Phase 22 reviews the existing closed beta after the newer product flows:
+
+- `supabase/fixes/016_beta_release_review.sql`
+
 Private beta users must use individual Supabase Auth accounts. Do not use one shared demo account for testers. To enable a beta user, create their Auth user, then mark their profile:
 
 ```sql
@@ -100,7 +104,7 @@ where email = 'admin@example.com';
 
 ## Project status
 
-SERENE is implemented through Phase 21, with Phase 17B dictionary correction applied.
+SERENE is implemented through Phase 22, with the existing closed beta reviewed for the newer vocabulary, progress, Biblioteca, Mural, Mente, and annotations-folder flows.
 
 Current quality gates:
 
@@ -138,7 +142,7 @@ Vercel deployment checklist:
 - Set `NEXT_PUBLIC_SUPABASE_URL`.
 - Set `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 - Do not set or expose `SUPABASE_SERVICE_ROLE_KEY` unless adding server-only admin code.
-- Apply `supabase/fixes/010_private_beta_feedback_admin.sql` before inviting testers.
+- Apply required fixes through `supabase/fixes/016_beta_release_review.sql` before inviting testers.
 - Mark each selected tester individually in `profiles`.
 
 Manual beta validation checklist:
@@ -152,6 +156,16 @@ Manual beta validation checklist:
 - Regular user cannot access `/beta`.
 
 Pending manual checks: cross-account isolation and admin/regular access should be verified with two real beta accounts in the deployed Supabase project.
+
+## Phase 22 notes
+
+Phase 22 does not recreate beta. It reinforces the existing beta system for controlled release:
+
+- `/beta`, `profiles` beta fields, `last_seen_at`, active/pending access, and admin policies are preserved.
+- `public.feedback` remains the single beta feedback table; reader-facing feedback labels cover Erro, Sugestao, Confusao, Elogio, Ideia, and Dificuldade.
+- `supabase/fixes/016_beta_release_review.sql` reasserts authenticated grants, RLS, beta access requirements, and owner/relationship checks for newer flows.
+- The UI keeps technical Supabase errors in the console and shows calm retry/feedback messages to readers.
+- Before release, test with two real accounts and one admin account; no shared public demo login should be used.
 
 ## Phase 15 notes
 

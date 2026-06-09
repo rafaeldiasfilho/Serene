@@ -21,6 +21,7 @@ import {
   updateReadingSession,
 } from "@/features/reading-sessions/reading-session-services";
 import { notifyReadingSessionChanged } from "@/features/reading-sessions/reading-session-events";
+import { ACTION_ERROR_MESSAGE, LOAD_ERROR_MESSAGE, SAVE_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 
 type SessionSummary = {
   sessionId: string;
@@ -172,7 +173,7 @@ export function useReadingSession({ userId, bookId, openedFrom }: UseReadingSess
     ]);
 
     if (bookResult.error) {
-      setError(bookResult.error.message);
+      setError(userFacingError(bookResult.error, LOAD_ERROR_MESSAGE, "Falha ao carregar livro da leitura."));
       setLoading(false);
       return;
     }
@@ -186,7 +187,7 @@ export function useReadingSession({ userId, bookId, openedFrom }: UseReadingSess
     setBook(bookResult.data);
 
     if (openSessionResult.error) {
-      setError(openSessionResult.error.message);
+      setError(userFacingError(openSessionResult.error, LOAD_ERROR_MESSAGE, "Falha ao carregar sessao aberta."));
       setLoading(false);
       return;
     }
@@ -211,7 +212,7 @@ export function useReadingSession({ userId, bookId, openedFrom }: UseReadingSess
     if (openSession.status === "paused") {
       const openPauseResult = await getOpenPauseForSession(userId, openSession.id);
       if (openPauseResult.error) {
-        setError(openPauseResult.error.message);
+        setError(userFacingError(openPauseResult.error, LOAD_ERROR_MESSAGE, "Falha ao carregar pausa aberta."));
       } else {
         setOpenPause(openPauseResult.data ?? null);
       }
@@ -279,7 +280,11 @@ export function useReadingSession({ userId, bookId, openedFrom }: UseReadingSess
 
     if (sessionResult.error || !sessionResult.data) {
       setActionLoading(false);
-      setError(sessionResult.error?.message ?? "Nao foi possivel iniciar a leitura.");
+      setError(
+        sessionResult.error
+          ? userFacingError(sessionResult.error, SAVE_ERROR_MESSAGE, "Falha ao iniciar leitura.")
+          : "Não foi possível salvar essa alteração agora.",
+      );
       return false;
     }
 
@@ -332,7 +337,7 @@ export function useReadingSession({ userId, bookId, openedFrom }: UseReadingSess
 
       if (bookResult.error) {
         setActionLoading(false);
-        setError(bookResult.error.message);
+        setError(userFacingError(bookResult.error, SAVE_ERROR_MESSAGE, "Falha ao atualizar livro da sessao."));
         return false;
       }
 
@@ -342,7 +347,7 @@ export function useReadingSession({ userId, bookId, openedFrom }: UseReadingSess
 
       if (sessionResult?.error) {
         setActionLoading(false);
-        setError(sessionResult.error.message);
+        setError(userFacingError(sessionResult.error, SAVE_ERROR_MESSAGE, "Falha ao atualizar sessao."));
         return false;
       }
 
@@ -378,7 +383,11 @@ export function useReadingSession({ userId, bookId, openedFrom }: UseReadingSess
 
     if (pauseResult.error || !pauseResult.data) {
       setActionLoading(false);
-      setError(pauseResult.error?.message ?? "Nao foi possivel pausar a leitura.");
+      setError(
+        pauseResult.error
+          ? userFacingError(pauseResult.error, SAVE_ERROR_MESSAGE, "Falha ao criar pausa.")
+          : "Não foi possível salvar essa alteração agora.",
+      );
       return false;
     }
 
@@ -391,7 +400,11 @@ export function useReadingSession({ userId, bookId, openedFrom }: UseReadingSess
 
     if (sessionResult.error || !sessionResult.data) {
       setActionLoading(false);
-      setError(sessionResult.error?.message ?? "Nao foi possivel pausar a sessao.");
+      setError(
+        sessionResult.error
+          ? userFacingError(sessionResult.error, SAVE_ERROR_MESSAGE, "Falha ao pausar sessao.")
+          : "Não foi possível salvar essa alteração agora.",
+      );
       return false;
     }
 
@@ -424,7 +437,7 @@ export function useReadingSession({ userId, bookId, openedFrom }: UseReadingSess
 
     if (pauseResult.error) {
       setActionLoading(false);
-      setError(pauseResult.error.message);
+      setError(userFacingError(pauseResult.error, SAVE_ERROR_MESSAGE, "Falha ao fechar pausa."));
       return false;
     }
 
@@ -437,7 +450,11 @@ export function useReadingSession({ userId, bookId, openedFrom }: UseReadingSess
 
     if (sessionResult.error || !sessionResult.data) {
       setActionLoading(false);
-      setError(sessionResult.error?.message ?? "Nao foi possivel retomar a leitura.");
+      setError(
+        sessionResult.error
+          ? userFacingError(sessionResult.error, SAVE_ERROR_MESSAGE, "Falha ao retomar leitura.")
+          : "Não foi possível salvar essa alteração agora.",
+      );
       return false;
     }
 
@@ -462,7 +479,11 @@ export function useReadingSession({ userId, bookId, openedFrom }: UseReadingSess
 
     if (sessionResult.error || !sessionResult.data) {
       setMuralOpen(!nextValue);
-      setError(sessionResult.error?.message ?? "Nao foi possivel atualizar o Mural.");
+      setError(
+        sessionResult.error
+          ? userFacingError(sessionResult.error, SAVE_ERROR_MESSAGE, "Falha ao atualizar Mural.")
+          : "Não foi possível salvar essa alteração agora.",
+      );
       return false;
     }
 
@@ -506,7 +527,7 @@ export function useReadingSession({ userId, bookId, openedFrom }: UseReadingSess
       return {
         ok: false,
         pausedSeconds: session.paused_seconds,
-        message: pauseResult.error.message,
+        message: userFacingError(pauseResult.error, SAVE_ERROR_MESSAGE, "Falha ao fechar pausa atual."),
       };
     }
 
@@ -536,10 +557,10 @@ export function useReadingSession({ userId, bookId, openedFrom }: UseReadingSess
       const pauseCloseResult = await closeOpenPauseIfNeeded();
       if (!pauseCloseResult.ok) {
         setActionLoading(false);
-        setError(pauseCloseResult.message ?? "Nao foi possivel fechar a pausa atual.");
+        setError(pauseCloseResult.message ?? ACTION_ERROR_MESSAGE);
         return {
           ok: false,
-          message: pauseCloseResult.message ?? "Nao foi possivel fechar a pausa atual.",
+          message: pauseCloseResult.message ?? ACTION_ERROR_MESSAGE,
         };
       }
 
@@ -561,7 +582,9 @@ export function useReadingSession({ userId, bookId, openedFrom }: UseReadingSess
 
       if (sessionResult.error || !sessionResult.data) {
         setActionLoading(false);
-        const message = sessionResult.error?.message ?? "Nao foi possivel finalizar a sessao.";
+        const message = sessionResult.error
+          ? userFacingError(sessionResult.error, SAVE_ERROR_MESSAGE, "Falha ao finalizar sessao.")
+          : "Não foi possível salvar essa alteração agora.";
         setError(message);
         return { ok: false, message };
       }
@@ -609,7 +632,7 @@ export function useReadingSession({ userId, bookId, openedFrom }: UseReadingSess
     const pauseCloseResult = await closeOpenPauseIfNeeded();
     if (!pauseCloseResult.ok) {
       setActionLoading(false);
-      const message = pauseCloseResult.message ?? "Nao foi possivel encerrar a pausa atual.";
+      const message = pauseCloseResult.message ?? ACTION_ERROR_MESSAGE;
       setError(message);
       return { ok: false, message };
     }
@@ -631,7 +654,9 @@ export function useReadingSession({ userId, bookId, openedFrom }: UseReadingSess
 
     if (sessionResult.error || !sessionResult.data) {
       setActionLoading(false);
-      const message = sessionResult.error?.message ?? "Nao foi possivel cancelar a sessao.";
+      const message = sessionResult.error
+        ? userFacingError(sessionResult.error, SAVE_ERROR_MESSAGE, "Falha ao cancelar sessao.")
+        : "Não foi possível salvar essa alteração agora.";
       setError(message);
       return { ok: false, message };
     }
@@ -688,7 +713,11 @@ export function useReadingSession({ userId, bookId, openedFrom }: UseReadingSess
     const sessionResult = await updateReadingSession(session.id, userId, payload);
     if (sessionResult.error || !sessionResult.data) {
       setActionLoading(false);
-      setError(sessionResult.error?.message ?? "Nao foi possivel minimizar a sessao.");
+      setError(
+        sessionResult.error
+          ? userFacingError(sessionResult.error, SAVE_ERROR_MESSAGE, "Falha ao minimizar sessao.")
+          : "Não foi possível salvar essa alteração agora.",
+      );
       return false;
     }
 
@@ -713,7 +742,11 @@ export function useReadingSession({ userId, bookId, openedFrom }: UseReadingSess
 
     if (sessionResult.error || !sessionResult.data) {
       setActionLoading(false);
-      setError(sessionResult.error?.message ?? "Nao foi possivel restaurar a sessao.");
+      setError(
+        sessionResult.error
+          ? userFacingError(sessionResult.error, SAVE_ERROR_MESSAGE, "Falha ao restaurar sessao.")
+          : "Não foi possível salvar essa alteração agora.",
+      );
       return false;
     }
 

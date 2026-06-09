@@ -36,6 +36,7 @@ import {
   type ShelfRow,
   type ShelfUpdate,
 } from "@/features/books/book-services";
+import { ACTION_ERROR_MESSAGE, LOAD_ERROR_MESSAGE, SAVE_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 
 export type BookWithCategories = BookRow & {
   annotationCount: number;
@@ -153,29 +154,19 @@ export function useBookLibrary(userId: string | null) {
       listEstimatedProgressEvents(userId),
     ]);
 
-    if (
-      booksResult.error ||
-      categoriesResult.error ||
-      relationsResult.error ||
-      shelvesResult.error ||
-      shelfRelationsResult.error ||
-      annotationLinksResult.error ||
-      sessionStatsResult.error ||
-      progressEntriesResult.error ||
-      estimatedProgressEventsResult.error
-    ) {
-      setError(
-        booksResult.error?.message ??
-          categoriesResult.error?.message ??
-          relationsResult.error?.message ??
-          shelvesResult.error?.message ??
-          shelfRelationsResult.error?.message ??
-          annotationLinksResult.error?.message ??
-          sessionStatsResult.error?.message ??
-          progressEntriesResult.error?.message ??
-          estimatedProgressEventsResult.error?.message ??
-          "Nao foi possivel carregar a Biblioteca.",
-      );
+    const firstError =
+      booksResult.error ??
+      categoriesResult.error ??
+      relationsResult.error ??
+      shelvesResult.error ??
+      shelfRelationsResult.error ??
+      annotationLinksResult.error ??
+      sessionStatsResult.error ??
+      progressEntriesResult.error ??
+      estimatedProgressEventsResult.error;
+
+    if (firstError) {
+      setError(userFacingError(firstError, LOAD_ERROR_MESSAGE, "Falha ao carregar Biblioteca."));
       setLoading(false);
       return;
     }
@@ -304,14 +295,23 @@ export function useBookLibrary(userId: string | null) {
         : await createBook({ ...(payload as Omit<BookInsert, "user_id">), user_id: userId });
 
       if (result.error || !result.data) {
-        return { ok: false, message: result.error?.message ?? "Nao foi possivel salvar o livro." };
+        return {
+          ok: false,
+          message: result.error
+            ? userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao salvar livro.")
+            : "Não foi possível salvar essa alteração agora.",
+        };
       }
 
       const relationResult = await assignCategoriesToBook(userId, result.data.id, categoryIds);
       if (relationResult.error) {
         return {
           ok: false,
-          message: relationResult.error.message,
+          message: userFacingError(
+            relationResult.error,
+            SAVE_ERROR_MESSAGE,
+            "Falha ao vincular categorias ao livro.",
+          ),
         };
       }
 
@@ -329,7 +329,10 @@ export function useBookLibrary(userId: string | null) {
 
       const result = await createManualCategory(userId, name, color);
       if (result.error) {
-        return { ok: false, message: result.error.message };
+        return {
+          ok: false,
+          message: userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao criar categoria."),
+        };
       }
 
       await refresh();
@@ -350,7 +353,10 @@ export function useBookLibrary(userId: string | null) {
         description: description?.trim() ? description.trim() : null,
       });
       if (result.error) {
-        return { ok: false, message: result.error.message };
+        return {
+          ok: false,
+          message: userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao criar estante."),
+        };
       }
 
       await refresh();
@@ -367,7 +373,10 @@ export function useBookLibrary(userId: string | null) {
 
       const result = await updateShelf(shelfId, userId, payload);
       if (result.error) {
-        return { ok: false, message: result.error.message };
+        return {
+          ok: false,
+          message: userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao editar estante."),
+        };
       }
 
       await refresh();
@@ -384,7 +393,10 @@ export function useBookLibrary(userId: string | null) {
 
       const result = await softDeleteBook(bookId, userId);
       if (result.error) {
-        return { ok: false, message: result.error.message };
+        return {
+          ok: false,
+          message: userFacingError(result.error, ACTION_ERROR_MESSAGE, "Falha ao mover livro para Lixeira."),
+        };
       }
 
       await refresh();
@@ -401,7 +413,10 @@ export function useBookLibrary(userId: string | null) {
 
       const result = await softDeleteShelf(shelfId, userId);
       if (result.error) {
-        return { ok: false, message: result.error.message };
+        return {
+          ok: false,
+          message: userFacingError(result.error, ACTION_ERROR_MESSAGE, "Falha ao remover estante."),
+        };
       }
 
       await refresh();
@@ -418,7 +433,10 @@ export function useBookLibrary(userId: string | null) {
 
       const result = await removeCategoryFromBook(userId, bookId, categoryId);
       if (result.error) {
-        return { ok: false, message: result.error.message };
+        return {
+          ok: false,
+          message: userFacingError(result.error, ACTION_ERROR_MESSAGE, "Falha ao remover categoria."),
+        };
       }
 
       await refresh();
@@ -435,7 +453,10 @@ export function useBookLibrary(userId: string | null) {
 
       const result = await assignShelvesToBook(userId, bookId, shelfIds);
       if (result.error) {
-        return { ok: false, message: result.error.message };
+        return {
+          ok: false,
+          message: userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao atualizar estantes do livro."),
+        };
       }
 
       await refresh();
@@ -452,7 +473,10 @@ export function useBookLibrary(userId: string | null) {
 
       const result = await assignBooksToShelf(userId, shelfId, bookIds);
       if (result.error) {
-        return { ok: false, message: result.error.message };
+        return {
+          ok: false,
+          message: userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao atualizar livros da estante."),
+        };
       }
 
       await refresh();
@@ -469,7 +493,10 @@ export function useBookLibrary(userId: string | null) {
 
       const result = await removeBookFromShelf(userId, bookId, shelfId);
       if (result.error) {
-        return { ok: false, message: result.error.message };
+        return {
+          ok: false,
+          message: userFacingError(result.error, ACTION_ERROR_MESSAGE, "Falha ao remover livro da estante."),
+        };
       }
 
       await refresh();

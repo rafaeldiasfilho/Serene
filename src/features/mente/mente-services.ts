@@ -1,5 +1,6 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
+import { LOAD_ERROR_MESSAGE, SAVE_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 
 export type MenteBookRow = Database["public"]["Tables"]["books"]["Row"];
 export type MenteSessionRow = Database["public"]["Tables"]["reading_sessions"]["Row"];
@@ -118,7 +119,10 @@ export async function loadMenteSourceData(userId: string): Promise<ServiceResult
     manualCategoriesResult.error;
 
   if (firstError) {
-    return { data: null, error: { message: firstError.message } };
+    return {
+      data: null,
+      error: { message: userFacingError(firstError, LOAD_ERROR_MESSAGE, "Falha ao carregar Mente.") },
+    };
   }
 
   return {
@@ -152,7 +156,16 @@ export async function createManualCategoryFromMente(input: {
     .is("deleted_at", null);
 
   if (existingCategoriesResult.error) {
-    return { data: null, error: { message: existingCategoriesResult.error.message } };
+    return {
+      data: null,
+      error: {
+        message: userFacingError(
+          existingCategoriesResult.error,
+          LOAD_ERROR_MESSAGE,
+          "Falha ao verificar categorias da Mente.",
+        ),
+      },
+    };
   }
 
   const inputKey = normalizeKey(input.name);
@@ -176,7 +189,11 @@ export async function createManualCategoryFromMente(input: {
     if (categoryResult.error || !categoryResult.data) {
       return {
         data: null,
-        error: { message: categoryResult.error?.message ?? "Nao foi possivel criar a categoria." },
+        error: {
+          message: categoryResult.error
+            ? userFacingError(categoryResult.error, SAVE_ERROR_MESSAGE, "Falha ao criar categoria pela Mente.")
+            : "Não foi possível salvar essa alteração agora.",
+        },
       };
     }
 
@@ -199,7 +216,16 @@ export async function createManualCategoryFromMente(input: {
     );
 
   if (relationResult.error) {
-    return { data: manualCategory, error: { message: relationResult.error.message } };
+    return {
+      data: manualCategory,
+      error: {
+        message: userFacingError(
+          relationResult.error,
+          SAVE_ERROR_MESSAGE,
+          "Falha ao vincular livros a categoria da Mente.",
+        ),
+      },
+    };
   }
 
   return { data: manualCategory, error: null };

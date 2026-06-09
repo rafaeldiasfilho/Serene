@@ -24,6 +24,7 @@ import { AuthPanel } from "@/components/auth/auth-panel";
 import { useAppState } from "@/components/providers/app-state-provider";
 import { BrainLoader } from "@/components/ui/brain-loader";
 import { OPEN_ANNOTATION_SHORTCUT_EVENT } from "@/lib/shortcuts";
+import { ACTION_ERROR_MESSAGE, LOAD_ERROR_MESSAGE, SAVE_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 import { AnnotationModal, type AnnotationModalSubmitValue } from "@/features/annotations/annotation-modal";
 import {
   createAnnotation,
@@ -322,7 +323,7 @@ export function ReadingSessionScreen() {
       }
 
       if (error) {
-        setError(error.message);
+        setError(userFacingError(error, LOAD_ERROR_MESSAGE, "Falha ao carregar vocabulario do livro."));
         return;
       }
 
@@ -347,7 +348,7 @@ export function ReadingSessionScreen() {
       }
 
       if (error) {
-        setError(error.message);
+        setError(userFacingError(error, LOAD_ERROR_MESSAGE, "Falha ao carregar resumo de anotacoes."));
         return;
       }
 
@@ -375,7 +376,7 @@ export function ReadingSessionScreen() {
       }
 
       if (error) {
-        setError(error.message);
+        setError(userFacingError(error, LOAD_ERROR_MESSAGE, "Falha ao carregar resumo de vocabulario."));
         return;
       }
 
@@ -567,7 +568,7 @@ export function ReadingSessionScreen() {
     setCaptureBooksLoaded(true);
 
     if (error) {
-      setError(error.message);
+      setError(userFacingError(error, LOAD_ERROR_MESSAGE, "Falha ao carregar livros para captura."));
       return;
     }
 
@@ -614,7 +615,7 @@ export function ReadingSessionScreen() {
     if (result.error) {
       return {
         ok: false,
-        message: result.error.message,
+        message: userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao salvar anotacao da leitura."),
       };
     }
 
@@ -653,7 +654,9 @@ export function ReadingSessionScreen() {
         if (updateResult.error || !updateResult.data) {
           return {
             ok: false,
-            message: updateResult.error?.message ?? "Nao foi possivel atualizar esta palavra.",
+            message: updateResult.error
+              ? userFacingError(updateResult.error, SAVE_ERROR_MESSAGE, "Falha ao atualizar palavra salva.")
+              : "Não foi possível salvar essa alteração agora.",
           };
         }
 
@@ -688,7 +691,9 @@ export function ReadingSessionScreen() {
     if (result.error || !result.data) {
       return {
         ok: false,
-        message: result.error?.message ?? "Nao foi possivel guardar esta palavra.",
+        message: result.error
+          ? userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao guardar palavra.")
+          : "Não foi possível salvar essa alteração agora.",
       };
     }
 
@@ -710,7 +715,9 @@ export function ReadingSessionScreen() {
     const result = await softDeleteVocabularyEntry(entry.id, user.id);
 
     if (result.error) {
-      setVocabularyFeedback(result.error.message);
+      setVocabularyFeedback(
+        userFacingError(result.error, ACTION_ERROR_MESSAGE, "Falha ao remover palavra salva."),
+      );
       return;
     }
 
@@ -731,7 +738,7 @@ export function ReadingSessionScreen() {
     setReviewLaterLoading(false);
 
     if (result.error) {
-      setError(result.error.message);
+      setError(userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao marcar anotacoes para revisar."));
       return;
     }
 

@@ -29,6 +29,7 @@ import {
   type TrashBookRow,
 } from "@/features/trash/trash-services";
 import type { AnnotationType } from "@/lib/supabase/database.types";
+import { ACTION_ERROR_MESSAGE, LOAD_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 
 type TrashFilter = "all" | "books" | "annotations";
 type AnnotationTrashFilter = "all" | Exclude<AnnotationType, "ocr_page"> | "others";
@@ -144,13 +145,10 @@ export function TrashClient() {
       listBooksForTrash(user.id),
     ]);
 
-    if (booksResult.error || annotationsResult.error || bookTitlesResult.error) {
-      setError(
-        booksResult.error?.message ??
-          annotationsResult.error?.message ??
-          bookTitlesResult.error?.message ??
-          "Não foi possível carregar a Lixeira.",
-      );
+    const firstError = booksResult.error ?? annotationsResult.error ?? bookTitlesResult.error;
+
+    if (firstError) {
+      setError(userFacingError(firstError, LOAD_ERROR_MESSAGE, "Falha ao carregar Lixeira."));
       setLoading(false);
       return;
     }
@@ -181,7 +179,7 @@ export function TrashClient() {
     setSaving(false);
 
     if (result.error) {
-      setFeedback(result.error.message);
+      setFeedback(userFacingError(result.error, ACTION_ERROR_MESSAGE, "Falha ao restaurar item da Lixeira."));
       return;
     }
 
@@ -205,7 +203,7 @@ export function TrashClient() {
     setSaving(false);
 
     if (result.error) {
-      setFeedback(result.error.message);
+      setFeedback(userFacingError(result.error, ACTION_ERROR_MESSAGE, "Falha ao excluir item permanentemente."));
       return;
     }
 

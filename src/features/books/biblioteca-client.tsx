@@ -36,6 +36,7 @@ import {
   updateReadingSession,
 } from "@/features/reading-sessions/reading-session-services";
 import type { BookStatus } from "@/lib/supabase/database.types";
+import { ACTION_ERROR_MESSAGE, LOAD_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 
 type FilterValue = "todos" | "lendo" | "quero_ler" | "pausado" | "lido";
 type OrderValue = "alfabetica" | "recentes" | "status" | "autor";
@@ -782,7 +783,7 @@ export function BibliotecaClient() {
     const sessionResult = await getOpenSessionForBook(user.id, book.id);
 
     if (sessionResult.error) {
-      setFeedback(sessionResult.error.message);
+      setFeedback(userFacingError(sessionResult.error, LOAD_ERROR_MESSAGE, "Falha ao verificar sessao do Mural."));
       return;
     }
 
@@ -797,7 +798,7 @@ export function BibliotecaClient() {
     });
 
     if (muralResult.error) {
-      setFeedback(muralResult.error.message);
+      setFeedback(userFacingError(muralResult.error, ACTION_ERROR_MESSAGE, "Falha ao abrir Mural pela Biblioteca."));
       return;
     }
 

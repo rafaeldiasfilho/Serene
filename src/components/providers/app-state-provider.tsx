@@ -13,6 +13,7 @@ import type { Session, User } from "@supabase/supabase-js";
 
 import { getSupabaseBrowserClient, hasSupabaseEnv } from "@/lib/supabase/client";
 import type { Database } from "@/lib/supabase/database.types";
+import { ACTION_ERROR_MESSAGE, LOAD_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 import type {
   Profile,
   ProfileAccessStatus,
@@ -219,7 +220,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         return;
       }
       if (error) {
-        setAuthError(error.message);
+        setAuthError(userFacingError(error, LOAD_ERROR_MESSAGE, "Falha ao carregar sessao."));
       }
       setSession(data.session ?? null);
       if (!data.session) {
@@ -277,7 +278,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         if (error) {
           setProfile(null);
           setProfileState("error");
-          setProfileError(error.message);
+          setProfileError(userFacingError(error, LOAD_ERROR_MESSAGE, "Falha ao carregar perfil."));
           return;
         }
 
@@ -291,7 +292,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           if (insertResult.error) {
             setProfile(null);
             setProfileState("missing");
-            setProfileError(insertResult.error.message);
+            setProfileError(
+              userFacingError(insertResult.error, LOAD_ERROR_MESSAGE, "Falha ao preparar perfil."),
+            );
             return;
           }
           profileData = insertResult.data;
@@ -337,7 +340,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       setActionLoading(false);
 
       if (error) {
-        setAuthError(error.message);
+        setAuthError(userFacingError(error, ACTION_ERROR_MESSAGE, "Falha no login."));
         return false;
       }
 

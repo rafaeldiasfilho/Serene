@@ -16,6 +16,7 @@ import {
 } from "@/features/reading-sessions/reading-session-events";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { ReadingSessionStatus } from "@/lib/supabase/database.types";
+import { LOAD_ERROR_MESSAGE, SAVE_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 
 const OPEN_SESSION_STATUSES = ["active", "paused"] satisfies ReadingSessionStatus[];
 
@@ -108,7 +109,7 @@ export function useActiveReadingSession(userId: string | null, refreshKey?: stri
     const sessionResult = await getLatestOpenReadingSession(userId);
     if (sessionResult.error) {
       setRows(null);
-      setError(sessionResult.error.message);
+      setError(userFacingError(sessionResult.error, LOAD_ERROR_MESSAGE, "Falha ao carregar leitura ativa."));
       setLoading(false);
       return;
     }
@@ -127,9 +128,11 @@ export function useActiveReadingSession(userId: string | null, refreshKey?: stri
         : Promise.resolve({ data: null, error: null }),
     ]);
 
-    if (bookResult.error || pauseResult.error) {
+    const firstError = bookResult.error ?? pauseResult.error;
+
+    if (firstError) {
       setRows(null);
-      setError(bookResult.error?.message ?? pauseResult.error?.message ?? "Nao foi possivel ler a sessao ativa.");
+      setError(userFacingError(firstError, LOAD_ERROR_MESSAGE, "Falha ao carregar dados da leitura ativa."));
       setLoading(false);
       return;
     }
@@ -224,7 +227,11 @@ export function useActiveReadingSession(userId: string | null, refreshKey?: stri
     });
 
     if (result.error || !result.data) {
-      setError(result.error?.message ?? "Nao foi possivel restaurar a leitura.");
+      setError(
+        result.error
+          ? userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao restaurar leitura ativa.")
+          : "Não foi possível salvar essa alteração agora.",
+      );
       return false;
     }
 

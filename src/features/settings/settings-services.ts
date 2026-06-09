@@ -1,5 +1,6 @@
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { Database, Json } from "@/lib/supabase/database.types";
+import { LOAD_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 
 export type UserSettingRow = Database["public"]["Tables"]["user_settings"]["Row"];
 export type AnnotationColorRow = Database["public"]["Tables"]["annotation_colors"]["Row"];
@@ -231,7 +232,16 @@ export async function getPrivacySafetyCounts(userId: string): Promise<{
     quickExportAnnotations.error;
 
   if (firstError) {
-    return { data: null, error: { message: firstError.message } };
+    return {
+      data: null,
+      error: {
+        message: userFacingError(
+          firstError,
+          LOAD_ERROR_MESSAGE,
+          "Falha ao carregar contadores de privacidade.",
+        ),
+      },
+    };
   }
 
   return {

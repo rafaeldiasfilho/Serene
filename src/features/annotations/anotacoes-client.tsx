@@ -18,6 +18,7 @@ import { AuthPanel } from "@/components/auth/auth-panel";
 import { useAppState } from "@/components/providers/app-state-provider";
 import { BrainLoader } from "@/components/ui/brain-loader";
 import { OPEN_ANNOTATION_SHORTCUT_EVENT } from "@/lib/shortcuts";
+import { ACTION_ERROR_MESSAGE, LOAD_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 import { AnnotationCard } from "@/features/annotations/annotation-card";
 import { AnnotationModal, type AnnotationModalSubmitValue } from "@/features/annotations/annotation-modal";
 import { primaryAnnotationTypeOptions } from "@/features/annotations/annotation-definitions";
@@ -482,7 +483,7 @@ export function AnotacoesClient() {
       }
 
       if (error) {
-        setVocabularyError(error.message);
+        setVocabularyError(userFacingError(error, LOAD_ERROR_MESSAGE, "Falha ao carregar vocabulario em Anotacoes."));
         setVocabularyEntries([]);
       } else {
         setVocabularyError(null);
@@ -583,7 +584,7 @@ export function AnotacoesClient() {
     const result = await softDeleteVocabularyEntry(entry.id, user.id);
 
     if (result.error) {
-      setFeedback(result.error.message);
+      setFeedback(userFacingError(result.error, ACTION_ERROR_MESSAGE, "Falha ao remover palavra em Anotacoes."));
       return;
     }
 
@@ -646,7 +647,7 @@ export function AnotacoesClient() {
     const sessionResult = await getOpenSessionForBook(user.id, selectedMuralBook.id);
 
     if (sessionResult.error) {
-      setFeedback(sessionResult.error.message);
+      setFeedback(userFacingError(sessionResult.error, LOAD_ERROR_MESSAGE, "Falha ao verificar sessao para Mural."));
       return;
     }
 
@@ -661,7 +662,7 @@ export function AnotacoesClient() {
     });
 
     if (muralResult.error) {
-      setFeedback(muralResult.error.message);
+      setFeedback(userFacingError(muralResult.error, ACTION_ERROR_MESSAGE, "Falha ao abrir Mural por Anotacoes."));
       return;
     }
 

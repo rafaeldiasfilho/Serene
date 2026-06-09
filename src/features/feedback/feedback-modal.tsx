@@ -4,6 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { MessageSquare, Send, X } from "lucide-react";
 
 import type { FeedbackScreen, FeedbackType } from "@/lib/supabase/database.types";
+import { SAVE_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 import {
   feedbackScreens,
   feedbackTypes,
@@ -55,7 +56,7 @@ export function FeedbackModal({ defaultScreen, onClose, userId }: FeedbackModalP
     setLoading(false);
 
     if (result.error) {
-      setError(result.error.message);
+      setError(userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao enviar feedback."));
       return;
     }
 

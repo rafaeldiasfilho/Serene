@@ -5,12 +5,12 @@ export type FeedbackRow = Database["public"]["Tables"]["feedback"]["Row"];
 export type FeedbackInsert = Database["public"]["Tables"]["feedback"]["Insert"];
 
 export const feedbackTypes: Array<{ value: FeedbackType; label: string }> = [
-  { value: "Bug", label: "Bug" },
+  { value: "Bug", label: "Erro" },
   { value: "Suggestion", label: "Sugestão" },
   { value: "Difficulty", label: "Dificuldade" },
-  { value: "Confusing", label: "Confuso" },
-  { value: "Liked", label: "Gostei" },
-  { value: "New idea", label: "Nova ideia" },
+  { value: "Confusing", label: "Confusão" },
+  { value: "Liked", label: "Elogio" },
+  { value: "New idea", label: "Ideia" },
 ];
 
 export const feedbackScreens: FeedbackScreen[] = [

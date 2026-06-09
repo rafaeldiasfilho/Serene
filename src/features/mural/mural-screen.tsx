@@ -19,6 +19,7 @@ import { AuthPanel } from "@/components/auth/auth-panel";
 import { useAppState } from "@/components/providers/app-state-provider";
 import { BrainLoader } from "@/components/ui/brain-loader";
 import { OPEN_ANNOTATION_SHORTCUT_EVENT } from "@/lib/shortcuts";
+import { ACTION_ERROR_MESSAGE, LOAD_ERROR_MESSAGE, SAVE_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 import {
   AnnotationModal,
   type AnnotationModalSubmitValue,
@@ -809,13 +810,10 @@ export function MuralScreen() {
       getUserSetting(user.id, "mural_preferences"),
     ]);
 
-    if (bookResult.error || sessionResult.error || colorsResult.error) {
-      setError(
-        bookResult.error?.message ??
-          sessionResult.error?.message ??
-          colorsResult.error?.message ??
-          "Nao foi possivel abrir o Mural.",
-      );
+    const firstOpeningError = bookResult.error ?? sessionResult.error ?? colorsResult.error;
+
+    if (firstOpeningError) {
+      setError(userFacingError(firstOpeningError, LOAD_ERROR_MESSAGE, "Falha ao abrir Mural."));
       setLoading(false);
       return;
     }
@@ -851,19 +849,14 @@ export function MuralScreen() {
       listMuralSuggestions(user.id, activeSession.id),
     ]);
 
-    if (
-      pauseResult.error ||
-      annotationsResult.error ||
-      positionsResult.error ||
-      suggestionsResult.error
-    ) {
-      setError(
-        pauseResult.error?.message ??
-          annotationsResult.error?.message ??
-          positionsResult.error?.message ??
-          suggestionsResult.error?.message ??
-          "Nao foi possivel carregar o Mural.",
-      );
+    const firstMuralError =
+      pauseResult.error ??
+      annotationsResult.error ??
+      positionsResult.error ??
+      suggestionsResult.error;
+
+    if (firstMuralError) {
+      setError(userFacingError(firstMuralError, LOAD_ERROR_MESSAGE, "Falha ao carregar Mural."));
       setLoading(false);
       return;
     }
@@ -883,7 +876,7 @@ export function MuralScreen() {
     if (missingPositions.length > 0) {
       const upsertResult = await upsertMuralPositions(missingPositions);
       if (upsertResult.error) {
-        setError(upsertResult.error.message);
+        setError(userFacingError(upsertResult.error, SAVE_ERROR_MESSAGE, "Falha ao salvar posicoes do Mural."));
         setLoading(false);
         return;
       }
@@ -913,7 +906,9 @@ export function MuralScreen() {
       if (missingSuggestions.length > 0) {
         const suggestionResult = await createMuralSuggestions(missingSuggestions);
         if (suggestionResult.error) {
-          setError(suggestionResult.error.message);
+          setError(
+            userFacingError(suggestionResult.error, SAVE_ERROR_MESSAGE, "Falha ao criar sugestoes do Mural."),
+          );
           setLoading(false);
           return;
         }
@@ -1086,7 +1081,7 @@ export function MuralScreen() {
           z_index: finalRect.zIndex,
         }).then(({ error: updateError, data }) => {
           if (updateError) {
-            setError(updateError.message);
+            setError(userFacingError(updateError, SAVE_ERROR_MESSAGE, "Falha ao mover anotacao no Mural."));
             void loadMural();
             return;
           }
@@ -1100,7 +1095,7 @@ export function MuralScreen() {
         void updateMuralSuggestionPosition(activeInteraction.id, activeUser.id, payload).then(
           ({ error: updateError, data }) => {
             if (updateError) {
-              setError(updateError.message);
+              setError(userFacingError(updateError, SAVE_ERROR_MESSAGE, "Falha ao mover sugestao no Mural."));
               void loadMural();
               return;
             }
@@ -1249,7 +1244,7 @@ export function MuralScreen() {
     setSaving(false);
 
     if (result.error) {
-      setError(result.error.message);
+      setError(userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao fechar Mural."));
       return;
     }
 
@@ -1270,7 +1265,7 @@ export function MuralScreen() {
     setSaving(false);
 
     if (result.error) {
-      setError(result.error.message);
+      setError(userFacingError(result.error, ACTION_ERROR_MESSAGE, "Falha ao atualizar sugestao do Mural."));
       return;
     }
 
@@ -1291,7 +1286,7 @@ export function MuralScreen() {
     setSaving(false);
 
     if (result.error) {
-      setError(result.error.message);
+      setError(userFacingError(result.error, ACTION_ERROR_MESSAGE, "Falha ao mover anotacao do Mural para Lixeira."));
       return;
     }
 
@@ -1325,7 +1320,10 @@ export function MuralScreen() {
       });
 
       if (result.error) {
-        return { ok: false, message: result.error.message };
+        return {
+          ok: false,
+          message: userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao editar anotacao pelo Mural."),
+        };
       }
 
       setFeedback("Anotacao atualizada no Mural e nas outras telas.");
@@ -1352,7 +1350,9 @@ export function MuralScreen() {
     if (created.error || !created.data) {
       return {
         ok: false,
-        message: created.error?.message ?? "Nao foi possivel criar a anotacao.",
+        message: created.error
+          ? userFacingError(created.error, SAVE_ERROR_MESSAGE, "Falha ao criar anotacao pelo Mural.")
+          : "Não foi possível salvar essa alteração agora.",
       };
     }
 
@@ -1369,7 +1369,14 @@ export function MuralScreen() {
       });
 
       if (suggestionResult.error) {
-        return { ok: false, message: suggestionResult.error.message };
+        return {
+          ok: false,
+          message: userFacingError(
+            suggestionResult.error,
+            SAVE_ERROR_MESSAGE,
+            "Falha ao converter sugestao em anotacao.",
+          ),
+        };
       }
     } else {
       const positionPayload: MuralPositionInsert = {
@@ -1390,7 +1397,10 @@ export function MuralScreen() {
 
       const positionResult = await upsertMuralPositions([positionPayload]);
       if (positionResult.error) {
-        return { ok: false, message: positionResult.error.message };
+        return {
+          ok: false,
+          message: userFacingError(positionResult.error, SAVE_ERROR_MESSAGE, "Falha ao posicionar anotacao no Mural."),
+        };
       }
     }
 

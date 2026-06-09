@@ -54,6 +54,7 @@ import {
   type QuickExportPrivacySetting,
 } from "@/features/settings/settings-services";
 import type { ReadingCloseBehavior, ThemePreference } from "@/lib/supabase/types";
+import { ACTION_ERROR_MESSAGE, LOAD_ERROR_MESSAGE, SAVE_ERROR_MESSAGE, userFacingError } from "@/lib/user-facing-error";
 
 type ColorDraft = {
   name: string;
@@ -271,19 +272,14 @@ export function SettingsClient() {
         getPrivacySafetyCounts(user.id),
       ]);
 
-    if (
-      muralResult.error ||
-      quickExportResult.error ||
-      colorsResult.error ||
-      privacyCountsResult.error
-    ) {
-      setError(
-        muralResult.error?.message ??
-          quickExportResult.error?.message ??
-          colorsResult.error?.message ??
-          privacyCountsResult.error?.message ??
-          "Nao foi possivel carregar as configuracoes.",
-      );
+    const firstError =
+      muralResult.error ??
+      quickExportResult.error ??
+      colorsResult.error ??
+      privacyCountsResult.error;
+
+    if (firstError) {
+      setError(userFacingError(firstError, LOAD_ERROR_MESSAGE, "Falha ao carregar configuracoes."));
       setLoading(false);
       return;
     }
@@ -324,7 +320,7 @@ export function SettingsClient() {
     setSavingKey(null);
 
     if (result.error) {
-      setFeedback(result.error.message);
+      setFeedback(userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao salvar preferencias do Mural."));
       await loadSettings();
       return;
     }
@@ -343,7 +339,7 @@ export function SettingsClient() {
     setSavingKey(null);
 
     if (result.error) {
-      setFeedback(result.error.message);
+      setFeedback(userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao salvar privacidade de exportacao."));
       await loadSettings();
       return;
     }
@@ -404,7 +400,7 @@ export function SettingsClient() {
     setSavingKey(null);
 
     if (result.error) {
-      setFeedback(result.error.message);
+      setFeedback(userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao salvar cor de anotacao."));
       return;
     }
 
@@ -422,7 +418,7 @@ export function SettingsClient() {
     setSavingKey(null);
 
     if (result.error) {
-      setFeedback(result.error.message);
+      setFeedback(userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao definir cor padrao."));
       return;
     }
 
@@ -447,7 +443,7 @@ export function SettingsClient() {
     setSavingKey(null);
 
     if (result.error) {
-      setFeedback(result.error.message);
+      setFeedback(userFacingError(result.error, ACTION_ERROR_MESSAGE, "Falha ao remover cor personalizada."));
       return;
     }
 
@@ -475,7 +471,7 @@ export function SettingsClient() {
     setSavingKey(null);
 
     if (result.error) {
-      setFeedback(result.error.message);
+      setFeedback(userFacingError(result.error, SAVE_ERROR_MESSAGE, "Falha ao adicionar cor personalizada."));
       return;
     }
 
@@ -499,7 +495,12 @@ export function SettingsClient() {
     setSavingKey(null);
 
     if (updateResult.error || settingResult.error) {
-      setFeedback(updateResult.error?.message ?? settingResult.error?.message ?? "Falha ao salvar.");
+      const firstSaveError = updateResult.error ?? settingResult.error;
+      setFeedback(
+        firstSaveError
+          ? userFacingError(firstSaveError, SAVE_ERROR_MESSAGE, "Falha ao aplicar privacidade dos livros.")
+          : "Não foi possível salvar essa alteração agora.",
+      );
       return;
     }
 

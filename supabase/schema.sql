@@ -741,6 +741,8 @@ create table if not exists public.feedback (
 
 comment on table public.feedback is
 'Private beta feedback submitted by authenticated SERENE users.';
+comment on column public.feedback.type is
+'Stored beta feedback type. UI labels cover erro, sugestao, confusao, elogio, ideia, and dificuldade while preserving the existing feedback flow.';
 
 -- ============================================================================
 -- Triggers (updated_at)
@@ -1082,7 +1084,23 @@ create policy book_manual_categories_insert_own
 on public.book_manual_categories
 for insert
 to authenticated
-with check ((select auth.uid()) = user_id);
+with check (
+  (select auth.uid()) = user_id
+  and exists (
+    select 1
+    from public.books b
+    where b.id = book_id
+      and b.user_id = (select auth.uid())
+      and b.deleted_at is null
+  )
+  and exists (
+    select 1
+    from public.manual_categories c
+    where c.id = category_id
+      and c.user_id = (select auth.uid())
+      and c.deleted_at is null
+  )
+);
 
 drop policy if exists book_manual_categories_update_own on public.book_manual_categories;
 create policy book_manual_categories_update_own
@@ -1090,7 +1108,23 @@ on public.book_manual_categories
 for update
 to authenticated
 using ((select auth.uid()) = user_id)
-with check ((select auth.uid()) = user_id);
+with check (
+  (select auth.uid()) = user_id
+  and exists (
+    select 1
+    from public.books b
+    where b.id = book_id
+      and b.user_id = (select auth.uid())
+      and b.deleted_at is null
+  )
+  and exists (
+    select 1
+    from public.manual_categories c
+    where c.id = category_id
+      and c.user_id = (select auth.uid())
+      and c.deleted_at is null
+  )
+);
 
 drop policy if exists shelves_select_own on public.shelves;
 create policy shelves_select_own
@@ -1185,7 +1219,22 @@ create policy book_automatic_mente_categories_insert_own
 on public.book_automatic_mente_categories
 for insert
 to authenticated
-with check ((select auth.uid()) = user_id);
+with check (
+  (select auth.uid()) = user_id
+  and exists (
+    select 1
+    from public.books b
+    where b.id = book_id
+      and b.user_id = (select auth.uid())
+      and b.deleted_at is null
+  )
+  and exists (
+    select 1
+    from public.automatic_mente_categories c
+    where c.id = automatic_category_id
+      and c.user_id = (select auth.uid())
+  )
+);
 
 drop policy if exists book_automatic_mente_categories_update_own on public.book_automatic_mente_categories;
 create policy book_automatic_mente_categories_update_own
@@ -1193,7 +1242,22 @@ on public.book_automatic_mente_categories
 for update
 to authenticated
 using ((select auth.uid()) = user_id)
-with check ((select auth.uid()) = user_id);
+with check (
+  (select auth.uid()) = user_id
+  and exists (
+    select 1
+    from public.books b
+    where b.id = book_id
+      and b.user_id = (select auth.uid())
+      and b.deleted_at is null
+  )
+  and exists (
+    select 1
+    from public.automatic_mente_categories c
+    where c.id = automatic_category_id
+      and c.user_id = (select auth.uid())
+  )
+);
 
 drop policy if exists reading_sessions_select_own on public.reading_sessions;
 create policy reading_sessions_select_own
@@ -1207,7 +1271,16 @@ create policy reading_sessions_insert_own
 on public.reading_sessions
 for insert
 to authenticated
-with check ((select auth.uid()) = user_id);
+with check (
+  (select auth.uid()) = user_id
+  and exists (
+    select 1
+    from public.books b
+    where b.id = book_id
+      and b.user_id = (select auth.uid())
+      and b.deleted_at is null
+  )
+);
 
 drop policy if exists reading_sessions_update_own on public.reading_sessions;
 create policy reading_sessions_update_own
@@ -1215,7 +1288,16 @@ on public.reading_sessions
 for update
 to authenticated
 using ((select auth.uid()) = user_id)
-with check ((select auth.uid()) = user_id);
+with check (
+  (select auth.uid()) = user_id
+  and exists (
+    select 1
+    from public.books b
+    where b.id = book_id
+      and b.user_id = (select auth.uid())
+      and b.deleted_at is null
+  )
+);
 
 drop policy if exists reading_pauses_select_own on public.reading_pauses;
 create policy reading_pauses_select_own
@@ -1229,7 +1311,16 @@ create policy reading_pauses_insert_own
 on public.reading_pauses
 for insert
 to authenticated
-with check ((select auth.uid()) = user_id);
+with check (
+  (select auth.uid()) = user_id
+  and exists (
+    select 1
+    from public.reading_sessions rs
+    where rs.id = session_id
+      and rs.user_id = (select auth.uid())
+      and rs.deleted_at is null
+  )
+);
 
 drop policy if exists reading_pauses_update_own on public.reading_pauses;
 create policy reading_pauses_update_own
@@ -1237,7 +1328,16 @@ on public.reading_pauses
 for update
 to authenticated
 using ((select auth.uid()) = user_id)
-with check ((select auth.uid()) = user_id);
+with check (
+  (select auth.uid()) = user_id
+  and exists (
+    select 1
+    from public.reading_sessions rs
+    where rs.id = session_id
+      and rs.user_id = (select auth.uid())
+      and rs.deleted_at is null
+  )
+);
 
 drop policy if exists reading_progress_entries_select_own on public.reading_progress_entries;
 create policy reading_progress_entries_select_own
@@ -1313,7 +1413,41 @@ create policy annotations_insert_own
 on public.annotations
 for insert
 to authenticated
-with check ((select auth.uid()) = user_id);
+with check (
+  (select auth.uid()) = user_id
+  and (
+    book_id is null
+    or exists (
+      select 1
+      from public.books b
+      where b.id = book_id
+        and b.user_id = (select auth.uid())
+        and b.deleted_at is null
+    )
+  )
+  and (
+    session_id is null
+    or exists (
+      select 1
+      from public.reading_sessions rs
+      where rs.id = session_id
+        and rs.user_id = (select auth.uid())
+        and rs.deleted_at is null
+    )
+  )
+  and (
+    book_id is null
+    or session_id is null
+    or exists (
+      select 1
+      from public.reading_sessions rs
+      where rs.id = session_id
+        and rs.book_id = book_id
+        and rs.user_id = (select auth.uid())
+        and rs.deleted_at is null
+    )
+  )
+);
 
 drop policy if exists annotations_update_own on public.annotations;
 create policy annotations_update_own
@@ -1321,7 +1455,41 @@ on public.annotations
 for update
 to authenticated
 using ((select auth.uid()) = user_id)
-with check ((select auth.uid()) = user_id);
+with check (
+  (select auth.uid()) = user_id
+  and (
+    book_id is null
+    or exists (
+      select 1
+      from public.books b
+      where b.id = book_id
+        and b.user_id = (select auth.uid())
+        and b.deleted_at is null
+    )
+  )
+  and (
+    session_id is null
+    or exists (
+      select 1
+      from public.reading_sessions rs
+      where rs.id = session_id
+        and rs.user_id = (select auth.uid())
+        and rs.deleted_at is null
+    )
+  )
+  and (
+    book_id is null
+    or session_id is null
+    or exists (
+      select 1
+      from public.reading_sessions rs
+      where rs.id = session_id
+        and rs.book_id = book_id
+        and rs.user_id = (select auth.uid())
+        and rs.deleted_at is null
+    )
+  )
+);
 
 drop policy if exists annotations_delete_soft_deleted_own on public.annotations;
 create policy annotations_delete_soft_deleted_own
@@ -1342,7 +1510,38 @@ create policy annotation_mural_positions_insert_own
 on public.annotation_mural_positions
 for insert
 to authenticated
-with check ((select auth.uid()) = user_id);
+with check (
+  (select auth.uid()) = user_id
+  and exists (
+    select 1
+    from public.annotations a
+    where a.id = annotation_id
+      and a.user_id = (select auth.uid())
+      and a.deleted_at is null
+      and (book_id is null or a.book_id = book_id)
+  )
+  and (
+    book_id is null
+    or exists (
+      select 1
+      from public.books b
+      where b.id = book_id
+        and b.user_id = (select auth.uid())
+        and b.deleted_at is null
+    )
+  )
+  and (
+    session_id is null
+    or exists (
+      select 1
+      from public.reading_sessions rs
+      where rs.id = session_id
+        and rs.user_id = (select auth.uid())
+        and rs.deleted_at is null
+        and (book_id is null or rs.book_id = book_id)
+    )
+  )
+);
 
 drop policy if exists annotation_mural_positions_update_own on public.annotation_mural_positions;
 create policy annotation_mural_positions_update_own
@@ -1350,7 +1549,38 @@ on public.annotation_mural_positions
 for update
 to authenticated
 using ((select auth.uid()) = user_id)
-with check ((select auth.uid()) = user_id);
+with check (
+  (select auth.uid()) = user_id
+  and exists (
+    select 1
+    from public.annotations a
+    where a.id = annotation_id
+      and a.user_id = (select auth.uid())
+      and a.deleted_at is null
+      and (book_id is null or a.book_id = book_id)
+  )
+  and (
+    book_id is null
+    or exists (
+      select 1
+      from public.books b
+      where b.id = book_id
+        and b.user_id = (select auth.uid())
+        and b.deleted_at is null
+    )
+  )
+  and (
+    session_id is null
+    or exists (
+      select 1
+      from public.reading_sessions rs
+      where rs.id = session_id
+        and rs.user_id = (select auth.uid())
+        and rs.deleted_at is null
+        and (book_id is null or rs.book_id = book_id)
+    )
+  )
+);
 
 drop policy if exists mural_suggestions_select_own on public.mural_suggestions;
 create policy mural_suggestions_select_own
@@ -1364,7 +1594,26 @@ create policy mural_suggestions_insert_own
 on public.mural_suggestions
 for insert
 to authenticated
-with check ((select auth.uid()) = user_id);
+with check (
+  (select auth.uid()) = user_id
+  and exists (
+    select 1
+    from public.reading_sessions rs
+    where rs.id = session_id
+      and rs.user_id = (select auth.uid())
+      and rs.deleted_at is null
+  )
+  and (
+    converted_annotation_id is null
+    or exists (
+      select 1
+      from public.annotations a
+      where a.id = converted_annotation_id
+        and a.user_id = (select auth.uid())
+        and a.deleted_at is null
+    )
+  )
+);
 
 drop policy if exists mural_suggestions_update_own on public.mural_suggestions;
 create policy mural_suggestions_update_own
@@ -1372,7 +1621,26 @@ on public.mural_suggestions
 for update
 to authenticated
 using ((select auth.uid()) = user_id)
-with check ((select auth.uid()) = user_id);
+with check (
+  (select auth.uid()) = user_id
+  and exists (
+    select 1
+    from public.reading_sessions rs
+    where rs.id = session_id
+      and rs.user_id = (select auth.uid())
+      and rs.deleted_at is null
+  )
+  and (
+    converted_annotation_id is null
+    or exists (
+      select 1
+      from public.annotations a
+      where a.id = converted_annotation_id
+        and a.user_id = (select auth.uid())
+        and a.deleted_at is null
+    )
+  )
+);
 
 drop policy if exists annotation_colors_select_own on public.annotation_colors;
 create policy annotation_colors_select_own
@@ -1505,7 +1773,42 @@ create policy timeline_events_insert_own
 on public.timeline_events
 for insert
 to authenticated
-with check ((select auth.uid()) = user_id);
+with check (
+  (select auth.uid()) = user_id
+  and (
+    book_id is null
+    or exists (
+      select 1
+      from public.books b
+      where b.id = book_id
+        and b.user_id = (select auth.uid())
+        and b.deleted_at is null
+    )
+  )
+  and (
+    session_id is null
+    or exists (
+      select 1
+      from public.reading_sessions rs
+      where rs.id = session_id
+        and rs.user_id = (select auth.uid())
+        and rs.deleted_at is null
+        and (book_id is null or rs.book_id = book_id)
+    )
+  )
+  and (
+    annotation_id is null
+    or exists (
+      select 1
+      from public.annotations a
+      where a.id = annotation_id
+        and a.user_id = (select auth.uid())
+        and a.deleted_at is null
+        and (book_id is null or a.book_id is null or a.book_id = book_id)
+        and (session_id is null or a.session_id is null or a.session_id = session_id)
+    )
+  )
+);
 
 drop policy if exists timeline_events_update_own on public.timeline_events;
 create policy timeline_events_update_own
@@ -1513,7 +1816,42 @@ on public.timeline_events
 for update
 to authenticated
 using ((select auth.uid()) = user_id)
-with check ((select auth.uid()) = user_id);
+with check (
+  (select auth.uid()) = user_id
+  and (
+    book_id is null
+    or exists (
+      select 1
+      from public.books b
+      where b.id = book_id
+        and b.user_id = (select auth.uid())
+        and b.deleted_at is null
+    )
+  )
+  and (
+    session_id is null
+    or exists (
+      select 1
+      from public.reading_sessions rs
+      where rs.id = session_id
+        and rs.user_id = (select auth.uid())
+        and rs.deleted_at is null
+        and (book_id is null or rs.book_id = book_id)
+    )
+  )
+  and (
+    annotation_id is null
+    or exists (
+      select 1
+      from public.annotations a
+      where a.id = annotation_id
+        and a.user_id = (select auth.uid())
+        and a.deleted_at is null
+        and (book_id is null or a.book_id is null or a.book_id = book_id)
+        and (session_id is null or a.session_id is null or a.session_id = session_id)
+    )
+  )
+);
 
 drop policy if exists exports_select_own on public.exports;
 create policy exports_select_own
