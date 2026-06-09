@@ -20,7 +20,6 @@ export type VocabularyDialogSubmitValue = {
 
 type VocabularyDialogProps = {
   bookTitle: string;
-  bookLanguage: string | null;
   currentPage: number | null;
   recentEntries: VocabularyEntryRow[];
   onClose: () => void;
@@ -41,7 +40,6 @@ function getResultWord(entry: DictionaryEntry | null, fallback: string) {
 
 export function VocabularyDialog({
   bookTitle,
-  bookLanguage,
   currentPage,
   recentEntries,
   onClose,
@@ -63,10 +61,12 @@ export function VocabularyDialog({
   const searchResultMessage =
     searchResult?.status === "not_found" || searchResult?.status === "error"
       ? searchResult.message
-      : "Nao encontramos essa palavra agora.";
+      : "Não encontramos essa palavra no dicionário em português.";
   const canSearch = normalizedWord.length > 0 && !searching;
-  const canSave = Boolean(searchResult) && normalizedWord.length > 0 && !saving;
-  const showManualDefinition = Boolean(searchResult && searchResult.status !== "found");
+  const canShowSaveFields = Boolean(searchResult && searchResult.status !== "error");
+  const canSave = canShowSaveFields && normalizedWord.length > 0 && !saving;
+  const showManualDefinition = searchResult?.status === "not_found";
+  const showDictionaryError = searchResult?.status === "error";
 
   async function handleSearch() {
     if (!canSearch) {
@@ -80,7 +80,6 @@ export function VocabularyDialog({
 
     const result = await searchDictionaryWord({
       word: normalizedWord,
-      language: bookLanguage ?? "pt",
     });
 
     setSearchResult(result);
@@ -97,7 +96,7 @@ export function VocabularyDialog({
     }
 
     const definition = primaryDefinition ?? normalizeOptionalText(manualDefinition);
-    const source = foundEntry?.source.name ?? null;
+    const source = foundEntry?.source?.name ?? null;
 
     setSaving(true);
     setFeedback(null);
@@ -126,18 +125,18 @@ export function VocabularyDialog({
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--serene-muted)]">
-              Dicionario da leitura
+              Dicionário da leitura
             </p>
             <h2 className="literary mt-2 text-2xl leading-tight">{bookTitle}</h2>
             <p className="mt-2 text-sm leading-relaxed text-[var(--serene-muted)]">
-              Busque o significado agora. Depois, salve apenas as palavras que quiser lembrar.
+              Busque o significado em português. Depois, salve apenas as palavras que quiser lembrar.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
             className="grid size-9 shrink-0 place-items-center rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] text-[var(--serene-muted)] transition hover:text-[var(--serene-fg)]"
-            aria-label="Fechar dicionario"
+            aria-label="Fechar dicionário"
           >
             <X className="size-4" />
           </button>
@@ -151,17 +150,18 @@ export function VocabularyDialog({
           }}
         >
           <label className="grid gap-2 text-sm font-semibold text-[var(--serene-text)]">
-            Qual palavra voce quer entender?
+            Qual palavra em português você quer entender?
             <div className="flex flex-col gap-2 sm:flex-row">
               <input
                 autoFocus
                 value={word}
                 onChange={(event) => {
                   setWord(event.target.value);
+                  setManualDefinition("");
                   setSearchResult(null);
                   setFeedback(null);
                 }}
-                placeholder="Ex.: contemplacao"
+                placeholder="Ex.: contemplação"
                 className="min-h-11 flex-1 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-4 py-3 font-normal text-[var(--serene-fg)] outline-none transition focus:border-[var(--serene-accent)] focus:ring-2 focus:ring-[var(--serene-accent-soft)]"
               />
               <button
@@ -178,10 +178,10 @@ export function VocabularyDialog({
           <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--serene-muted)]">
             <span className="inline-flex items-center gap-2 rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface-soft)_74%,transparent)] px-3 py-1.5">
               <BookOpen className="size-3.5 text-[var(--serene-accent)]" />
-              {currentPage !== null ? `Pagina ${currentPage}` : "Pagina nao informada"}
+              {currentPage !== null ? `Página ${currentPage}` : "Página não informada"}
             </span>
             <span className="rounded-full border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface-soft)_74%,transparent)] px-3 py-1.5">
-              Idioma: {bookLanguage?.trim() || "portugues"}
+              Dicionário em português
             </span>
           </div>
         </form>
@@ -189,7 +189,7 @@ export function VocabularyDialog({
         {!searchResult && recentEntries.length > 0 && (
           <div className="mt-4 rounded-[1.25rem] border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-3">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--serene-muted)]">
-              Vocabulario deste livro
+              Vocabulário deste livro
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               {recentEntries.slice(0, 5).map((entry) => (
@@ -221,9 +221,9 @@ export function VocabularyDialog({
                   {foundEntry.word}
                 </h3>
               </div>
-              {foundEntry.definitions[0]?.partOfSpeech && (
+              {foundEntry.partOfSpeech && (
                 <span className="rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-1.5 text-xs text-[var(--serene-muted)]">
-                  {foundEntry.definitions[0].partOfSpeech}
+                  {foundEntry.partOfSpeech}
                 </span>
               )}
             </div>
@@ -239,26 +239,17 @@ export function VocabularyDialog({
               </div>
             )}
 
-            {foundEntry.definitions[0]?.example && (
+            {foundEntry.example && (
               <p className="literary mt-3 rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-surface)] px-3 py-2 text-sm leading-relaxed text-[var(--serene-muted)]">
-                {foundEntry.definitions[0].example}
+                {foundEntry.example}
               </p>
             )}
 
-            {foundEntry.definitions.length > 1 && (
-              <div className="mt-4 space-y-2">
-                {foundEntry.definitions.slice(1, 4).map((item, index) => (
-                  <p key={`${item.definition}-${index}`} className="text-xs leading-relaxed text-[var(--serene-muted)]">
-                    {item.partOfSpeech ? `${item.partOfSpeech}: ` : ""}
-                    {item.definition}
-                  </p>
-                ))}
-              </div>
+            {foundEntry.source && (
+              <p className="mt-4 text-[11px] text-[var(--serene-muted)]">
+                Fonte: {foundEntry.source.name}
+              </p>
             )}
-
-            <p className="mt-4 text-[11px] text-[var(--serene-muted)]">
-              Fonte: {foundEntry.source.name}
-            </p>
           </section>
         )}
 
@@ -268,7 +259,7 @@ export function VocabularyDialog({
               {searchResultMessage}
             </p>
             <p className="mt-1 text-xs leading-relaxed text-[var(--serene-muted)]">
-              Voce ainda pode salvar a palavra no vocabulario deste livro, sem definicao automatica.
+              Você ainda pode salvar a palavra no vocabulário deste livro, sem definição automática.
             </p>
             <label className="mt-3 grid gap-2 text-sm font-semibold text-[var(--serene-text)]">
               Significado manual, se quiser
@@ -276,21 +267,29 @@ export function VocabularyDialog({
                 value={manualDefinition}
                 onChange={(event) => setManualDefinition(event.target.value)}
                 rows={3}
-                placeholder="Escreva com suas palavras. O SERENE nao vai inventar uma definicao."
+                placeholder="Escreva com suas palavras. O SERENE não vai inventar uma definição."
                 className="resize-none rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-4 py-3 font-normal text-[var(--serene-fg)] outline-none transition focus:border-[var(--serene-accent)] focus:ring-2 focus:ring-[var(--serene-accent-soft)]"
               />
             </label>
           </section>
         )}
 
-        {searchResult && (
+        {showDictionaryError && (
+          <section className="mt-4 rounded-[1.5rem] border border-[var(--serene-border)] bg-[var(--serene-surface-soft)] p-4">
+            <p className="text-sm font-semibold text-[var(--serene-text)]">
+              {searchResultMessage}
+            </p>
+          </section>
+        )}
+
+        {canShowSaveFields && (
           <label className="mt-4 grid gap-2 text-sm font-semibold text-[var(--serene-text)]">
-            Observacao opcional
+            Observação opcional
             <textarea
               value={note}
               onChange={(event) => setNote(event.target.value)}
               rows={2}
-              placeholder="Contexto da frase, sensacao, duvida..."
+              placeholder="Contexto da frase, sensação, dúvida..."
               className="resize-none rounded-2xl border border-[var(--serene-border)] bg-[var(--serene-input)] px-4 py-3 font-normal text-[var(--serene-fg)] outline-none transition focus:border-[var(--serene-accent)] focus:ring-2 focus:ring-[var(--serene-accent-soft)]"
             />
           </label>
@@ -310,7 +309,7 @@ export function VocabularyDialog({
           >
             Fechar
           </button>
-          {searchResult && (
+          {canShowSaveFields && (
             <button
               type="button"
               onClick={() => void handleSave()}
@@ -318,7 +317,7 @@ export function VocabularyDialog({
               className="inline-flex items-center gap-2 rounded-full bg-[var(--serene-accent)] px-4 py-2 text-sm font-semibold text-white shadow-[var(--serene-shadow-soft)] transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Check className="size-4" />
-              {saving ? "Salvando..." : "Salvar no vocabulario deste livro"}
+              {saving ? "Salvando..." : "Salvar no vocabulário deste livro"}
             </button>
           )}
         </div>

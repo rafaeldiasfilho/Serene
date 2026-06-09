@@ -10,6 +10,11 @@ export const dynamic = "force-dynamic";
 
 const REQUEST_TIMEOUT_MS = 8000;
 const MAX_DEFINITIONS = 5;
+const PORTUGUESE_LANGUAGE = "pt-BR";
+const DICIONARIO_ABERTO_SOURCE = {
+  name: "Dicionário Aberto",
+  url: "https://api.dicionario-aberto.net/",
+};
 
 type DicionarioAbertoEntry = {
   word?: string;
@@ -17,38 +22,8 @@ type DicionarioAbertoEntry = {
   xml?: string;
 };
 
-type FreeDictionaryApiEntry = {
-  word?: string;
-  phonetic?: string;
-  meanings?: Array<{
-    partOfSpeech?: string;
-    definitions?: Array<{
-      definition?: string;
-      example?: string;
-    }>;
-  }>;
-};
-
 function normalizeWord(value: string | null) {
-  return value?.trim().replace(/\s+/g, " ") ?? "";
-}
-
-function normalizeLanguage(value: string | null) {
-  const normalized = value?.trim().toLowerCase() ?? "";
-
-  if (!normalized) {
-    return "pt";
-  }
-
-  if (normalized.startsWith("pt") || normalized.includes("portugu")) {
-    return "pt";
-  }
-
-  if (normalized.startsWith("en") || normalized.includes("english") || normalized.includes("ingles")) {
-    return "en";
-  }
-
-  return normalized.split(/[-_]/)[0] || "pt";
+  return value?.trim().replace(/\s+/g, " ").toLocaleLowerCase(PORTUGUESE_LANGUAGE) ?? "";
 }
 
 function decodeXmlText(value: string) {
@@ -208,77 +183,31 @@ async function searchDicionarioAberto(word: string): Promise<DictionaryEntry | n
     0,
     MAX_DEFINITIONS,
   );
+  const primaryDefinition = definitions[0];
 
-  if (definitions.length === 0) {
+  if (!primaryDefinition) {
     return null;
   }
 
   return {
     word: parsedEntries[0]?.word ?? (payload[0] as DicionarioAbertoEntry).word ?? word,
-    language: "pt",
+    language: PORTUGUESE_LANGUAGE,
     phonetic: null,
-    source: {
-      name: "Dicionario Aberto",
-      url: "https://api.dicionario-aberto.net/",
-    },
+    definition: primaryDefinition.definition,
+    partOfSpeech: primaryDefinition.partOfSpeech,
+    example: primaryDefinition.example,
+    source: DICIONARIO_ABERTO_SOURCE,
     definitions,
   };
 }
 
-async function searchFreeDictionaryApi(
-  word: string,
-  language: string,
-): Promise<DictionaryEntry | null> {
-  const url = `https://api.dictionaryapi.dev/api/v2/entries/${encodeURIComponent(language)}/${encodeURIComponent(word)}`;
-  const payload = await fetchJson(url);
-
-  if (!Array.isArray(payload) || payload.length === 0) {
-    return null;
-  }
-
-  const entries = payload as FreeDictionaryApiEntry[];
-  const definitions = dedupeDefinitions(
-    entries.flatMap((entry) =>
-      (entry.meanings ?? []).flatMap((meaning) =>
-        (meaning.definitions ?? []).map((item) => ({
-          partOfSpeech: meaning.partOfSpeech?.trim() || null,
-          definition: item.definition?.trim() ?? "",
-          example: item.example?.trim() || null,
-        })),
-      ),
-    ),
-  )
-    .filter((item) => item.definition.length > 0)
-    .slice(0, MAX_DEFINITIONS);
-
-  if (definitions.length === 0) {
-    return null;
-  }
-
-  return {
-    word: entries[0]?.word?.trim() || word,
-    language,
-    phonetic: entries.find((entry) => entry.phonetic)?.phonetic?.trim() ?? null,
-    source: {
-      name: "Free Dictionary API",
-      url: "https://dictionaryapi.dev/",
-    },
-    definitions,
-  };
-}
-
-async function lookupDictionary(word: string, language: string) {
-  if (language === "pt") {
-    return searchDicionarioAberto(word);
-  }
-
-  return searchFreeDictionaryApi(word, language);
+async function lookupPortugueseDictionary(word: string) {
+  return searchDicionarioAberto(word);
 }
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const word = normalizeWord(url.searchParams.get("word"));
-  const language = normalizeLanguage(url.searchParams.get("language"));
 
   if (!word) {
     return NextResponse.json(
@@ -301,12 +230,12 @@ export async function GET(request: Request) {
   }
 
   try {
-    const entry = await lookupDictionary(word, language);
+    const entry = await lookupPortugueseDictionary(word);
 
     if (!entry) {
       return NextResponse.json({
         status: "not_found",
-        message: "Nao encontramos essa palavra agora.",
+        message: "Não encontramos essa palavra no dicionário em português.",
       } satisfies DictionarySearchResponse);
     }
 
@@ -317,7 +246,7 @@ export async function GET(request: Request) {
   } catch {
     return NextResponse.json({
       status: "error",
-      message: "Nao foi possivel consultar o dicionario agora.",
+      message: "Não foi possível consultar o dicionário agora.",
     } satisfies DictionarySearchResponse);
   }
 }

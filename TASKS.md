@@ -744,7 +744,7 @@ Validation:
 - [x] `npm run lint` passes.
 - [x] `npm run build` passes.
 
-## Phase 17B - Dicionario funcional na leitura
+## Phase 17B - Dicionário funcional na leitura
 
 Goal:
 - [x] Make the reading tool work first as a dictionary, with saved vocabulary as a consequence.
@@ -752,41 +752,44 @@ Goal:
 - [x] Never invent definitions without a source.
 
 A. Dictionary lookup:
-- [x] Rename the reading action to `Dicionario`.
+- [x] Rename the reading action to `Dicionário`.
 - [x] Replace the manual-only modal with a search-first modal.
-- [x] Use `Qual palavra voce quer entender?` and support Enter/search button.
+- [x] Use `Qual palavra em português você quer entender?` and support Enter/search button.
 - [x] Add `/api/dictionary` as a normalized dictionary route.
-- [x] Use Dicionario Aberto for Portuguese lookups.
-- [x] Use Free Dictionary API for non-Portuguese language codes supported by that provider.
+- [x] Use Dicionário Aberto for Portuguese lookups.
+- [x] Keep English dictionary, translation, language auto-detection, and multilingual lookup out of this version.
 - [x] Show loading, found, not found, and error states without technical errors.
-- [x] Show word, part of speech when available, main definition, short alternate definitions, example when available, and source.
+- [x] Show word, part of speech when available, main definition, example when available, and source.
+- [x] Do not invent definitions; show unavailable/not-found messages when the source cannot provide a result.
 
 B. Saving vocabulary:
 - [x] Let the user consult without saving.
-- [x] Save only when the user chooses `Salvar no vocabulario deste livro`.
+- [x] Save only when the user chooses `Salvar no vocabulário deste livro`.
 - [x] Store trusted definition and source when available.
 - [x] Allow manual saving if no definition is found, without inventing meaning.
 - [x] Prevent duplicate saved words in the same book.
-- [x] Update missing definition/source/note on an existing saved word when useful.
+- [x] Show `Essa palavra já está no vocabulário deste livro.` when the word already exists for the book.
 
 C. History and safety:
-- [x] Keep Anotacoes as the secondary `Vocabulario` folder.
-- [x] Keep Dicionario out of the annotation `+` type list and out of primary navigation.
-- [x] Rename the reading history section to `Vocabulario deste livro` and show only saved words.
+- [x] Keep Anotacoes as the secondary `Vocabulário` folder.
+- [x] Keep Dicionário out of the annotation `+` type list and out of primary navigation.
+- [x] Rename the reading history section to `Vocabulário deste livro` and show only saved words.
 - [x] Add soft removal for saved vocabulary through `deleted_at`.
 - [x] Add `supabase/fixes/015_vocabulary_dictionary_lookup.sql`.
+- [x] Add `supabase/fixes/017_portuguese_dictionary_only.sql`.
 
 Future:
-- [ ] Multilingual UI for selecting word language manually.
+- [ ] English dictionary support.
 - [ ] Translation.
+- [ ] Multilingual UI for selecting word language manually.
 - [ ] Synonyms.
 - [ ] Richer contextual examples.
 - [ ] Configurable external dictionary/API provider.
 - [ ] IA meaning suggestions only with source/confirmation.
 
 Validation:
-- [ ] Manual flow: open Dicionario during reading, search a Portuguese word, view definition, and close without saving.
-- [ ] Manual flow: search a word, save it, verify it appears in `Vocabulario deste livro`.
+- [ ] Manual flow: open Dicionário during reading, search a Portuguese word, view definition, and close without saving.
+- [ ] Manual flow: search a word, save it, verify it appears in `Vocabulário deste livro`.
 - [ ] Manual flow: search/save same word twice and verify it does not duplicate.
 - [ ] Manual flow: remove a saved word from reading/Anotacoes and verify it disappears from normal lists.
 - [ ] Browser visual pass for the reading dictionary modal when the in-app browser connector is available.
@@ -998,7 +1001,7 @@ Validation:
 Goal:
 - [x] Revisar o beta fechado existente sem recriar `/beta`, feedback, perfis ou fluxos de acesso.
 - [x] Preservar perfis beta, acesso ativo/inativo/pendente, `last_seen_at`, painel `/beta`, politicas admin e remocao do login demo publico.
-- [x] Reforcar RLS/grants das tabelas usadas por Vocabulario/Dicionario, `reading_progress_entries`, cadastro inteligente, Biblioteca/Estantes, Mural, Mente e Anotacoes em pastas.
+- [x] Reforcar RLS/grants das tabelas usadas por Vocabulário/Dicionário, `reading_progress_entries`, cadastro inteligente, Biblioteca/Estantes, Mural, Mente e Anotacoes em pastas.
 - [x] Adicionar `supabase/fixes/016_beta_release_review.sql` como fix idempotente de revisao do beta.
 - [x] Manter `public.feedback` como tabela unica de feedback beta.
 - [x] Garantir labels de feedback para Erro, Sugestao, Confusao, Elogio, Ideia e Dificuldade.
@@ -1028,7 +1031,7 @@ Teste real com dois usuarios:
 - [ ] Usuario A atualiza pagina.
 - [ ] Usuario A cria anotacao.
 - [ ] Usuario A cria post-it.
-- [ ] Usuario A consulta/salva palavra no Dicionario.
+- [ ] Usuario A consulta/salva palavra no Dicionário.
 - [ ] Usuario A abre Mural.
 - [ ] Usuario A envia feedback.
 - [ ] Usuario B entra em outra conta.

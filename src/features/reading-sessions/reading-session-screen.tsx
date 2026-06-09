@@ -53,7 +53,6 @@ import {
   listVocabularyEntriesForBook,
   listVocabularyEntriesForSession,
   softDeleteVocabularyEntry,
-  updateVocabularyEntry,
   type VocabularyEntryRow,
 } from "@/features/vocabulary/vocabulary-services";
 
@@ -640,40 +639,10 @@ export function ReadingSessionScreen() {
     );
 
     if (existingEntry) {
-      const shouldUpdateDefinition = !existingEntry.definition && Boolean(value.definition);
-      const shouldUpdateSource = !existingEntry.source && Boolean(value.source);
-      const shouldUpdateNote = !existingEntry.note && Boolean(value.note);
-
-      if (shouldUpdateDefinition || shouldUpdateSource || shouldUpdateNote) {
-        const updateResult = await updateVocabularyEntry(existingEntry.id, user.id, {
-          definition: shouldUpdateDefinition ? value.definition : existingEntry.definition,
-          source: shouldUpdateSource ? value.source : existingEntry.source,
-          note: shouldUpdateNote ? value.note : existingEntry.note,
-        });
-
-        if (updateResult.error || !updateResult.data) {
-          return {
-            ok: false,
-            message: updateResult.error
-              ? userFacingError(updateResult.error, SAVE_ERROR_MESSAGE, "Falha ao atualizar palavra salva.")
-              : "Não foi possível salvar essa alteração agora.",
-          };
-        }
-
-        setBookVocabularyEntries((current) =>
-          current.map((entry) => (entry.id === updateResult.data.id ? updateResult.data : entry)),
-        );
-        setVocabularyFeedback("Essa palavra ja estava no vocabulario deste livro. Atualizei os detalhes.");
-        return {
-          ok: true,
-          message: "Essa palavra ja estava no vocabulario deste livro. Atualizei os detalhes.",
-        };
-      }
-
-      setVocabularyFeedback("Essa palavra ja esta no vocabulario deste livro.");
+      setVocabularyFeedback("Essa palavra já está no vocabulário deste livro.");
       return {
         ok: true,
-        message: "Essa palavra ja esta no vocabulario deste livro.",
+        message: "Essa palavra já está no vocabulário deste livro.",
       };
     }
 
@@ -698,8 +667,8 @@ export function ReadingSessionScreen() {
     }
 
     setBookVocabularyEntries((current) => [result.data, ...current]);
-    setVocabularyFeedback("Palavra salva no vocabulario deste livro.");
-    return { ok: true, message: "Palavra salva." };
+    setVocabularyFeedback("Palavra salva");
+    return { ok: true, message: "Palavra salva" };
   }
 
   async function handleRemoveVocabularyEntry(entry: VocabularyEntryRow) {
@@ -707,7 +676,7 @@ export function ReadingSessionScreen() {
       return;
     }
 
-    const confirmed = window.confirm("Remover esta palavra do vocabulario deste livro?");
+    const confirmed = window.confirm("Remover esta palavra do vocabulário deste livro?");
     if (!confirmed) {
       return;
     }
@@ -722,7 +691,7 @@ export function ReadingSessionScreen() {
     }
 
     setBookVocabularyEntries((current) => current.filter((item) => item.id !== entry.id));
-    setVocabularyFeedback("Palavra removida do vocabulario deste livro.");
+    setVocabularyFeedback("Palavra removida do vocabulário deste livro.");
   }
 
   async function handleReviewLater() {
@@ -1112,7 +1081,6 @@ export function ReadingSessionScreen() {
       {!summary && vocabularyDialogOpen && (
         <VocabularyDialog
           bookTitle={book.title}
-          bookLanguage={book.language}
           currentPage={currentPage}
           recentEntries={bookVocabularyEntries}
           onClose={() => setVocabularyDialogOpen(false)}

@@ -8,10 +8,13 @@ export type DictionaryEntry = {
   word: string;
   language: string;
   phonetic: string | null;
+  definition: string;
+  partOfSpeech: string | null;
+  example: string | null;
   source: {
     name: string;
     url: string | null;
-  };
+  } | null;
   definitions: DictionaryDefinition[];
 };
 
@@ -30,5 +33,5 @@ export type DictionarySearchResponse =
     };
 
 export function getPrimaryDictionaryDefinition(entry: DictionaryEntry | null) {
-  return entry?.definitions[0]?.definition ?? null;
+  return entry?.definition ?? null;
 }

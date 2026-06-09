@@ -83,6 +83,10 @@ Phase 22 reviews the existing closed beta after the newer product flows:
 
 - `supabase/fixes/016_beta_release_review.sql`
 
+The Portuguese-only dictionary update reinforces the initial dictionary scope:
+
+- `supabase/fixes/017_portuguese_dictionary_only.sql`
+
 Private beta users must use individual Supabase Auth accounts. Do not use one shared demo account for testers. To enable a beta user, create their Auth user, then mark their profile:
 
 ```sql
@@ -234,8 +238,11 @@ No authentication, reading/session logic, annotation CRUD logic, beta access rul
 
 Phase 17 adds a light reading vocabulary aid without making SERENE a study app:
 
-- Reading has a secondary `Dicionario` tool for looking up a word during an active session.
-- Phase 17B adds a real lookup flow through `/api/dictionary`, using Dicionario Aberto for Portuguese and Free Dictionary API for other supported language codes.
+- Reading has a secondary `Dicionário` tool for looking up a Portuguese word during an active session.
+- Phase 17B/17C adds a real lookup flow through `/api/dictionary`, using Dicionário Aberto for Portuguese definitions only.
+- The dictionary does not call English providers, translate, auto-detect language, or show non-Portuguese results in this version.
+- Dicionário Aberto is a public source and does not require an API key; no dictionary secret is needed in `.env.example`.
+- If the source is unavailable, SERENE shows `Não foi possível consultar o dicionário agora.` instead of inventing a definition.
 - The reader can consult a word without saving it.
 - `public.vocabulary_entries` stores only saved words by user, book, optional reading session, page, date, optional definition, optional note, and source.
 - Saved vocabulary entries now support `deleted_at` so removing a word from the vocabulary is reversible at the data layer.

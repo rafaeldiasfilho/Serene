@@ -505,7 +505,7 @@ export function HomeClient() {
               ler fora do app.
             </p>
             <p className="mt-2">
-              Na leitura, o + guarda anotacoes, o Dicionario salva palavras e o Mural organiza
+              Na leitura, o + guarda anotações, o Dicionário salva palavras e o Mural organiza
               ideias. Se algo confundir, envie feedback pelo Menu.
             </p>
           </div>

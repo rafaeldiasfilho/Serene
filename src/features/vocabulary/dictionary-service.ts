@@ -2,14 +2,10 @@ import type { DictionarySearchResponse } from "@/features/vocabulary/dictionary-
 
 type SearchDictionaryInput = {
   word: string;
-  language?: string | null;
 };
 
-export async function searchDictionaryWord({
-  word,
-  language,
-}: SearchDictionaryInput): Promise<DictionarySearchResponse> {
-  const normalizedWord = word.trim();
+export async function searchDictionaryWord({ word }: SearchDictionaryInput): Promise<DictionarySearchResponse> {
+  const normalizedWord = word.trim().replace(/\s+/g, " ");
 
   if (!normalizedWord) {
     return {
@@ -20,10 +16,6 @@ export async function searchDictionaryWord({
 
   const params = new URLSearchParams({ word: normalizedWord });
 
-  if (language?.trim()) {
-    params.set("language", language.trim());
-  }
-
   try {
     const response = await fetch(`/api/dictionary?${params.toString()}`, {
       cache: "no-store",
@@ -32,7 +24,7 @@ export async function searchDictionaryWord({
     if (!response.ok) {
       return {
         status: "error",
-        message: "Nao foi possivel consultar o dicionario agora.",
+        message: "Não foi possível consultar o dicionário agora.",
       };
     }
 
@@ -40,7 +32,7 @@ export async function searchDictionaryWord({
   } catch {
     return {
       status: "error",
-      message: "Nao foi possivel consultar o dicionario agora.",
+      message: "Não foi possível consultar o dicionário agora.",
     };
   }
 }
