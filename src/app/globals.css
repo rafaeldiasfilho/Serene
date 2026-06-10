@@ -208,6 +208,11 @@ body {
   animation: serene-brain-breathe 2800ms var(--serene-ease-calm) infinite;
 }
 
+.serene-mente-brain-illustration {
+  animation: serene-mente-brain-breathe 9400ms var(--serene-ease-calm) infinite;
+  transform-origin: center;
+}
+
 .reading-presence {
   display: inline-flex;
   align-items: center;
@@ -986,6 +991,17 @@ html[data-theme="dark"] .annotation-tone-ocr {
   50% {
     opacity: 0.62;
     transform: scale(1);
+  }
+}
+
+@keyframes serene-mente-brain-breathe {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(0, -4px, 0) scale(1.006);
   }
 }
 

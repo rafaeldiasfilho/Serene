@@ -20,6 +20,7 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { AuthPanel } from "@/components/auth/auth-panel";
+import { MenteBrainIllustration } from "@/components/illustrations/MenteBrainIllustration";
 import { useAppState } from "@/components/providers/app-state-provider";
 import { BrainLoader } from "@/components/ui/brain-loader";
 import {
@@ -242,7 +243,9 @@ function MenteEmptyState() {
           </div>
         </div>
         <div className="relative min-h-[220px] rounded-[1.75rem] border border-[var(--serene-border)] bg-[color-mix(in_oklab,var(--serene-surface-soft)_62%,transparent)] p-4">
-          <Brain className="absolute left-1/2 top-1/2 size-28 -translate-x-1/2 -translate-y-1/2 text-[var(--serene-accent)] opacity-35" />
+          <div className="pointer-events-none absolute inset-4 grid place-items-center text-[var(--serene-accent)] opacity-45">
+            <MenteBrainIllustration className="serene-mente-brain-illustration w-40 max-w-[82%] motion-reduce:animate-none" />
+          </div>
           <div className="absolute left-6 top-7 h-12 w-28 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] shadow-[var(--serene-shadow-soft)]" />
           <div className="absolute bottom-8 right-7 h-12 w-32 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] shadow-[var(--serene-shadow-soft)]" />
           <div className="absolute bottom-12 left-10 h-10 w-24 rounded-full border border-[var(--serene-border)] bg-[var(--serene-surface)] shadow-[var(--serene-shadow-soft)]" />
@@ -316,27 +319,9 @@ function MenteBrainMap({
       </div>
 
       <div className="relative mt-5 min-h-[360px] overflow-hidden rounded-[1.75rem] border border-[color-mix(in_oklab,var(--serene-border)_72%,transparent)] bg-[color-mix(in_oklab,var(--serene-surface-soft)_42%,transparent)] p-4">
-        <svg
-          aria-hidden="true"
-          className="absolute inset-0 h-full w-full text-[var(--serene-accent)] opacity-80"
-          viewBox="0 0 560 360"
-          preserveAspectRatio="none"
-        >
-          <path
-            d="M162 257C95 240 63 183 85 128c17-43 58-61 96-49 20-45 76-59 119-31 35-23 87-12 106 26 47 3 86 42 82 91-4 56-54 88-111 80-38 36-96 39-136 7-23 14-51 17-79 5Z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-          <path
-            d="M184 95c-6 44 14 72 54 85m52-128c-27 47-13 92 31 121m74-89c-44 22-63 58-57 108M120 165c46-1 83 15 112 49m132-12c31 3 65-4 101-24M234 246c-2-36 14-62 47-78"
-            fill="none"
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeWidth="1.4"
-            opacity="0.38"
-          />
-        </svg>
+        <div className="pointer-events-none absolute inset-x-4 top-[54%] z-0 flex -translate-y-1/2 justify-center text-[var(--serene-fg)] opacity-25 dark:text-[var(--serene-accent)] dark:opacity-40 sm:inset-x-8">
+          <MenteBrainIllustration className="serene-mente-brain-illustration w-full max-w-[590px] motion-reduce:animate-none" />
+        </div>
 
         {visibleCategories.map((category, index) => {
           const position = brainNodePositions[index];
@@ -348,7 +333,7 @@ function MenteBrainMap({
               type="button"
               onClick={() => onSelectCategory(category.id)}
               className={[
-                "absolute max-w-[170px] -translate-x-1/2 -translate-y-1/2 rounded-[1.35rem] border bg-[color-mix(in_oklab,var(--serene-surface)_88%,transparent)] px-3 py-2 text-left shadow-[var(--serene-shadow-soft)] backdrop-blur transition hover:-translate-y-[calc(50%+2px)] hover:shadow-[var(--serene-shadow-lift)]",
+                "absolute z-10 max-w-[170px] -translate-x-1/2 -translate-y-1/2 rounded-[1.35rem] border bg-[color-mix(in_oklab,var(--serene-surface)_88%,transparent)] px-3 py-2 text-left shadow-[var(--serene-shadow-soft)] backdrop-blur transition hover:-translate-y-[calc(50%+2px)] hover:shadow-[var(--serene-shadow-lift)]",
                 selected
                   ? "border-[var(--serene-accent)] ring-2 ring-[var(--serene-accent-soft)]"
                   : "border-[var(--serene-border)]",
